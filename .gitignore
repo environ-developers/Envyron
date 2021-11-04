@@ -1,0 +1,8 @@
+# developer files
+.vscode
+__pycache__
+
+# build files
+build
+dist
+*.egg-info
