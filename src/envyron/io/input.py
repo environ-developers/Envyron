@@ -6,9 +6,6 @@ from json import load
 
 class Entry:
     """Representation of an input entry."""
-
-    BOOLEAN_STATES = {'true': True, 'false': False}
-
     def __init__(
         self,
         section: str,
@@ -52,9 +49,10 @@ class Entry:
 
     def _boolean(self, value: str) -> bool:
         """Convert value to boolean."""
-        if value.lower() in self.BOOLEAN_STATES:
-            return self.BOOLEAN_STATES[value.lower()]
-        raise ValueError(f"{value} not a boolean")
+        boolean_states = {'true': True, 'false': False}
+        boolean = boolean_states.get(value.lower())
+        if boolean is None: raise ValueError(f"{value} not a boolean")
+        return boolean
 
     def __str__(self) -> str:
         return f"{self.name} -> {self.description}"
@@ -208,10 +206,6 @@ class Input:
         if pbc_dim.value == 1:
             raise ValueError("1D periodic boundary correction not implemented")
 
-    def get_parameters(self) -> Any:
-        """Return input parameters as a class."""
-        return type('InputParams', (), self.to_dict())
-
     def to_dict(self) -> Dict[str, Any]:
         """"""
         param_dict = {opt.name: opt.value for opt in self.entries.values()}
@@ -221,16 +215,26 @@ class Input:
 
         return param_dict
 
+    def get_parameters(self):
+        """Return input parameters as a class."""
+        return type('InputParams', (), self.to_dict())
+
     def _read_defaults(self) -> None:
         """Read and process default values."""
         here = Path(__file__).parent  # io directory
 
+        # read input parameter attributes
         with open(here.joinpath('params.json')) as f:
             self.params: Dict[str, Dict[str, dict]] = load(f)
 
+        # read input parameter default values
         with open(here.joinpath('defaults.json')) as f:
             self.defaults: Dict[str, Dict[str, dict]] = load(f)
 
+        self._build_entry_dictionary()
+
+    def _build_entry_dictionary(self) -> None:
+        """Generate dictionary of entry objects from param/default data."""
         self.entries: Dict[str, Entry] = {}
 
         for section in self.params:
@@ -248,78 +252,56 @@ class Input:
                 else:
                     entry = Entry(section, param, **attrs)
 
+                # set default value (validated internally)
                 entry.value = self.defaults[section][param]
 
                 self.entries[param] = entry
 
-    def _process_user_input(self):
-        """Convert user input file to expected data types."""
+    def _process_user_input(self) -> None:
+        """Convert user input to expected data types."""
 
         # check for simultaneous cionmax/rion setting
         cionmax = self.parser.get('Environ', 'cionmax', fallback=None)
         rion = self.parser.get('Environ', 'rion', fallback=None)
 
-        if all(p is not None for p in (cionmax, rion)):
+        if cionmax is not None and rion is not None:
             raise ValueError("Cannot set both cionmax and rion")
 
+        self._process_input_sections()
+
+    def _process_input_sections(self) -> None:
+        """Process input sections in user input file."""
+
         for section in self.parser.sections():
+
+            if section not in self.params:
+                raise ValueError(f"Unexpected {section} section")
 
             if section == 'Externals':
                 self._process_externals()
             elif section == 'Regions':
                 self._process_regions()
             else:
-                if section not in self.params:
-                    raise ValueError(f"Unexpected {section} section")
+                self._process_input_options(section)
 
-                for opt, val in self.parser.items(section):
+    def _process_input_options(self, section: str) -> None:
+        """Process input options for given section."""
 
-                    # verify that option belongs to this section
-                    if opt not in self.params[section]:
-                        raise ValueError(
-                            f"Unexpected {opt} option for {section} section")
+        for opt, val in self.parser.items(section):
 
-                    # get entry object
-                    if self.entries[opt].__class__ is ArrayEntry:
-                        param: ArrayEntry = self.entries[opt]
-                        self._allocate_array_sizes(param, val)
-                    else:
-                        param: Entry = self.entries[opt]
+            # verify that option belongs to this section
+            if opt not in self.params[section]:
+                raise ValueError(
+                    f"Unexpected {opt} option for {section} section")
 
-                    param.value = val
-
-    def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
-        """Assign array sizes for allocatable arrays."""
-
-        if param.size == 0:
-
-            # assign allocation size for ion values
-            if param.name in {'atomicspread', 'corespread', 'solvationrad'}:
-                param.size = self.natoms
-
-            # assign allocation size for electrolyte values
-            elif param.name == 'electrolyte_formula':
-                parts = value.split()
-                n = len(parts)
-
-                # check for sufficient charges
-                if n < 4: raise ValueError("Multiplicity/charge sets < 2")
-
-                # check for complete formula
-                if n % 2 != 0: raise ValueError("Missing multiplicity/charge")
-
-                # check for charge neutrality
-                m = [int(i) for i in parts[::2]]  # multiplicities
-                z = [int(i) for i in parts[1::2]]  # charges
-                s = sum(i * j for i, j in zip(m, z))
-
-                if s != 0: raise ValueError("Electrolyte is not neutral")
-
-                param.size = n
-
-            # missing pre-defined size in defaults
+            # get entry object
+            if self.entries[opt].__class__ is ArrayEntry:
+                param: ArrayEntry = self.entries[opt]
+                self._allocate_array_sizes(param, val)
             else:
-                raise ValueError(f"Unexpected allocatable array: {param.name}")
+                param: Entry = self.entries[opt]
+
+            param.value = val
 
     def _process_externals(self) -> None:
         """Process Externals input section."""
@@ -443,6 +425,39 @@ class Input:
             # add region to list
             self.regions[group].append(region)
 
+    def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
+        """Assign array sizes for allocatable arrays."""
+
+        if param.size == 0:
+
+            # assign allocation size for ion values
+            if param.name in {'atomicspread', 'corespread', 'solvationrad'}:
+                param.size = self.natoms
+
+            # assign allocation size for electrolyte values
+            elif param.name == 'electrolyte_formula':
+                parts = value.split()
+                n = len(parts)
+
+                # check for sufficient charges
+                if n < 4: raise ValueError("Multiplicity/charge sets < 2")
+
+                # check for complete formula
+                if n % 2 != 0: raise ValueError("Missing multiplicity/charge")
+
+                # check for charge neutrality
+                m = [int(i) for i in parts[::2]]  # multiplicities
+                z = [int(i) for i in parts[1::2]]  # charges
+                s = sum(i * j for i, j in zip(m, z))
+
+                if s != 0: raise ValueError("Electrolyte is not neutral")
+
+                param.size = n
+
+            # missing pre-defined size in defaults
+            else:
+                raise ValueError(f"Unexpected allocatable array: {param.name}")
+
 
 if __name__ == '__main__':
 
@@ -453,7 +468,6 @@ if __name__ == '__main__':
     if Path(__file__).parent.joinpath('test.ini').exists():
         my_input.read('test.ini')
 
-    my_input.validate()
     params = my_input.to_dict()
     del my_input
 
