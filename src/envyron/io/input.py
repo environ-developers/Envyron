@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, ValuesView
+from typing import Any, Dict, List, Tuple
 from configparser import ConfigParser
 from pathlib import Path
 from json import load
@@ -114,8 +114,12 @@ class ArrayEntry(Entry):
 class Input:
     """Container for Environ input."""
     def __init__(self, natoms: int = 0) -> None:
-        self.parser = ConfigParser()
         self.natoms = natoms
+
+        self.parser = ConfigParser()  # user-input parser
+
+        self.externals = None
+        self.regions = None
 
         self._read_defaults()
 
@@ -152,8 +156,13 @@ class Input:
             raise ValueError("1D periodic boundary correction not implemented")
 
     def to_dict(self) -> Dict[str, Any]:
-        """Return input as {option: value} dictionary."""
-        return {opt.name: opt.value for opt in self.entries.values()}
+        """"""
+        param_dict = {opt.name: opt.value for opt in self.entries.values()}
+
+        if self.externals: param_dict['externals'] = self.externals
+        if self.regions: param_dict['regions'] = self.regions
+
+        return param_dict
 
     def _read_defaults(self) -> None:
         """Read and process default values."""
@@ -198,24 +207,29 @@ class Input:
 
         for section in self.parser.sections():
 
-            if section not in self.params:
-                raise ValueError(f"Unexpected {section} section")
+            if section == 'Externals':
+                self._process_externals()
+            elif section == 'Regions':
+                self._process_regions()
+            else:
+                if section not in self.params:
+                    raise ValueError(f"Unexpected {section} section")
 
-            for opt, val in self.parser.items(section):
+                for opt, val in self.parser.items(section):
 
-                # verify that option belongs to this section
-                if opt not in self.params[section]:
-                    raise ValueError(
-                        f"Unexpected {opt} option for {section} section")
+                    # verify that option belongs to this section
+                    if opt not in self.params[section]:
+                        raise ValueError(
+                            f"Unexpected {opt} option for {section} section")
 
-                # get entry object
-                if self.entries[opt].__class__ is ArrayEntry:
-                    param: ArrayEntry = self.entries[opt]
-                    self._allocate_array_sizes(param, val)
-                else:
-                    param: Entry = self.entries[opt]
+                    # get entry object
+                    if self.entries[opt].__class__ is ArrayEntry:
+                        param: ArrayEntry = self.entries[opt]
+                        self._allocate_array_sizes(param, val)
+                    else:
+                        param: Entry = self.entries[opt]
 
-                param.value = val
+                    param.value = val
 
     def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
         """Assign array sizes for allocatable arrays."""
@@ -250,16 +264,144 @@ class Input:
             else:
                 raise ValueError(f"Unexpected allocatable array: {param.name}")
 
+    def _process_externals(self) -> None:
+        """Process Externals input section."""
+        self.externals: List[List[dict]] = []
+
+        section = 'Externals'
+
+        # set up template for external object
+        defaults: dict = self.params[section]
+
+        template: Dict[str, Entry] = {
+            'units': Entry(section, 'units', **defaults['units']),
+            'group': Entry(section, 'group', **defaults['group']),
+            'charge': Entry(section, 'charge', **defaults['charge']),
+            'pos': ArrayEntry(section, 'position', **defaults['position']),
+            'spread': Entry(section, 'spread', **defaults['spread']),
+            'dim': Entry(section, 'dim', **defaults['dim']),
+            'axis': Entry(section, 'axis', **defaults['axis']),
+        }
+
+        # set units for externals
+        template['units'].value = self.parser.get(section, 'units')
+
+        group = -1
+
+        # iterate over external functions
+        for function in self.parser.get(section, 'functions').split('\n'):
+
+            # get values
+            g, c, x, y, z, s, d, a = function.split()
+
+            # convert, validate, and set values
+            template['group'].value = g
+            template['charge'].value = c
+            template['pos'].value = " ".join((x, y, z))
+            template['spread'].value = s
+            template['dim'].value = d
+            template['axis'].value = a
+
+            # add new externals group if necessary
+            if template['group'].value != group + 1:
+                self.externals.append([])
+                group += 1
+
+            # set external values
+            external = {
+                'charge': template['charge'].value,
+                'pos': template['pos'].value,
+                'spread': template['spread'].value,
+                'dim': template['dim'].value,
+                'axis': template['axis'].value
+            }
+
+            # add external to list
+            self.externals[group].append(external)
+
+    def _process_regions(self) -> None:
+        """Process Regions input section."""
+        self.regions: List[List[dict]] = []
+
+        section = 'Regions'
+
+        # set up template for region object
+        defaults: dict = self.params[section]
+        
+        template: Dict[str, Entry] = {
+            'units': Entry(section, 'units', **defaults['units']),
+            'group': Entry(section, 'group', **defaults['group']),
+            'static': Entry(section, 'static', **defaults['static']),
+            'optical': Entry(section, 'optical', **defaults['optical']),
+            'pos': ArrayEntry(section, 'position', **defaults['position']),
+            'width': Entry(section, 'width', **defaults['width']),
+            'spread': Entry(section, 'spread', **defaults['spread']),
+            'dim': Entry(section, 'dim', **defaults['dim']),
+            'axis': Entry(section, 'axis', **defaults['axis']),
+        }
+
+        # set units for regions
+        template['units'].value = self.parser.get(section, 'units')
+
+        group = -1
+
+        # iterate over region functions
+        for function in self.parser.get(section, 'functions').split('\n'):
+
+            # get values
+            g, eps, opt, x, y, z, w, s, d, a = function.split()
+
+            # convert and validate values
+            template['group'].value = g
+            template['static'].value = eps
+            template['optical'].value = opt
+            template['pos'].value = " ".join((x, y, z))
+            template['width'].value = w
+            template['spread'].value = s
+            template['dim'].value = d
+            template['axis'].value = a
+
+            # add new regions group if necessary
+            if template['group'].value != group + 1:
+                self.regions.append([])
+                group += 1
+
+            # set region values
+            region = {
+                'static': template['static'].value,
+                'optical': template['optical'].value,
+                'pos': template['pos'].value,
+                'width': template['width'].value,
+                'spread': template['spread'].value,
+                'dim': template['dim'].value,
+                'axis': template['axis'].value
+            }
+
+            # add region to list
+            self.regions[group].append(region)
+
 
 if __name__ == '__main__':
 
     natoms = 5
 
     my_input = Input(natoms)
-    my_input.read()
+
+    if Path(__file__).parent.joinpath('test.ini').exists():
+        my_input.read('test.ini')
+
     my_input.validate()
     params = my_input.to_dict()
     del my_input
 
     for k, v in params.items():
-        print(f"{k} = {v}")
+
+        if k in {'externals', 'regions'}:
+            print(f"\n{k.upper()}")
+            for i, l in enumerate(v):
+                print(f"\nGROUP {i + 1}")
+                for d in l:
+                    print(d)
+
+        else:
+            print(f"{k} = {v}")
