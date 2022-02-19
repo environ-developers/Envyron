@@ -208,6 +208,10 @@ class Input:
         if pbc_dim.value == 1:
             raise ValueError("1D periodic boundary correction not implemented")
 
+    def get_parameters(self) -> Any:
+        """Return input parameters as a class."""
+        return type('InputParams', (), self.to_dict())
+
     def to_dict(self) -> Dict[str, Any]:
         """"""
         param_dict = {opt.name: opt.value for opt in self.entries.values()}
