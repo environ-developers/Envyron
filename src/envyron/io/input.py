@@ -14,7 +14,6 @@ class Entry:
         section: str,
         name: str,
         type: str,
-        value: Any,
         condition: str = True,
         description: str = "",
     ) -> None:
@@ -22,51 +21,40 @@ class Entry:
         self.section = section
         self.name = name
         self.type = type
-        self.value = value
-        self.condition = condition
+        self.__value = None
+        self.valid = eval(f"lambda x: {condition}")
         self.description = description
 
-    def convert_value(self) -> None:
+    @property
+    def value(self) -> Any:
+        """docstring"""
+        return self.__value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        """Setter for Entry value."""
+        value = self._convert(value)
+        self._validate(value)
+        self.__value = value
+
+    def _convert(self, value: Any) -> Any:
         """Convert str value to expected data type."""
-        if self.type == 'str':
-            value = self.value
-        elif self.type == 'int':
-            value = int(self.value)
-        elif self.type == 'float':
-            value = float(self.value)
-        elif self.type == 'bool':
-            value = self.boolean(self.value)
-        else:
-            raise TypeError(f"Unexpected {self.type} type")
+        if not isinstance(value, str) or self.type == 'str': return value
+        if self.type == 'int': return int(value)
+        if self.type == 'float': return float(value)
+        if self.type == 'bool': return self._boolean(value)
+        raise TypeError(f"Unexpected {self.type} type")
 
-        self.validate(value)
-        self.value = value
-
-    def validate(self, user_input: Any) -> bool:
+    def _validate(self, user_input: Any) -> bool:
         """Check if value is within criteria."""
+        if not self.valid(user_input):
+            raise ValueError(f"{user_input} is invalid for {self.name}")
 
-        # check if array
-        if isinstance(user_input, tuple):
-            for v in user_input:
-                self.validate(v)
-
-        # validate input
-        else:
-            valid = eval(f"lambda x: {self.condition}")
-
-            if not valid(user_input):
-                raise ValueError(f"{user_input} is invalid for {self.name}")
-            else:
-                return True
-
-    def boolean(self, value: str) -> bool:
+    def _boolean(self, value: str) -> bool:
         """Convert value to boolean."""
-
-        # ensure that value is a pre-defined boolean state
-        if value.lower() not in self.BOOLEAN_STATES:
-            raise ValueError(f"{value} not a boolean")
-
-        return self.BOOLEAN_STATES[value.lower()]
+        if value.lower() in self.BOOLEAN_STATES:
+            return self.BOOLEAN_STATES[value.lower()]
+        raise ValueError(f"{value} not a boolean")
 
     def __str__(self) -> str:
         return f"{self.name} -> {self.description}"
@@ -80,39 +68,47 @@ class ArrayEntry(Entry):
         name: str,
         type: str,
         size: int,
-        value: Any,
         condition: str = True,
         description: str = "",
     ) -> None:
         """ArrayEntry constructor."""
-        super().__init__(section, name, type, value, condition, description)
+        super().__init__(section, name, type, condition, description)
         self.size = size
 
-    def convert_value(self) -> Any:
+    def _convert(self, value: Any) -> Tuple[Any]:
         """Convert str value to expected data type."""
-        string: str = self.value
-        values = string.split()
+
+        if isinstance(value, list):
+            values = value
+        elif isinstance(value, str):
+            values = value.split()
+        else:
+            values = tuple((value, ))
 
         if self.type == 'str':
-            values = self.value
+            values = tuple(self.value)
         elif self.type == 'int':
             values = tuple([int(v) for v in values])
         elif self.type == 'float':
             values = tuple([float(v) for v in values])
         elif self.type == 'bool':
-            values = tuple([self.boolean(v) for v in values])
+            values = tuple([self._boolean(v) for v in values])
         else:
             raise TypeError(f"Unexpected {self.type} type")
 
-        n = len(values)
+        if self.size is not None:
+            n = len(values)
+            if n == 1:
+                values = tuple([values[0]] * self.size)  # extrapolate to size
+            else:
+                if n != self.size: raise ValueError("Not enough values")
 
-        if n == 1:
-            values = tuple([values[0]] * self.size)  # extrapolate to size
-        else:
-            if n != self.size: raise ValueError("Not enough values")
+        return values
 
-        self.validate(values)
-        self.value = values
+    def _validate(self, user_input: Any) -> bool:
+        """Check if value is within criteria."""
+        for v in user_input:
+            super()._validate(v)
 
 
 class Input:
@@ -121,6 +117,46 @@ class Input:
         self.parser = ConfigParser()
         self.natoms = natoms
 
+        self._read_defaults()
+
+    def read(self, filename: str = 'environ.ini') -> None:
+        """Overwrite defaults with user input."""
+        if not Path(filename).exists():
+            raise FileNotFoundError(f"Missing {filename} in working directory")
+
+        self.parser.read(filename)
+
+        self._process_user_input()
+
+    def validate(self) -> None:
+        """Check for unreasonable input values."""
+
+        # rhomax/rhomin validation
+        rhomax: Entry = self.params.get('rhomax')
+        rhomin: Entry = self.params.get('rhomin')
+
+        if rhomax.value < rhomin.value:
+            raise ValueError("rhomax < rhomin")
+
+        # electrolyte rhomax/rhomin validation
+        rhomax: Entry = self.params.get('electrolyte_rhomax')
+        rhomin: Entry = self.params.get('electrolyte_rhomin')
+
+        if rhomax.value < rhomin.value:
+            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
+
+        # pbc_dim validation
+        pbc_dim: Entry = self.params.get('pbc_dim')
+
+        if pbc_dim.value == 1:
+            raise ValueError("1D periodic boundary correction not implemented")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """"""
+        return {opt.name: opt.value for opt in self.params.values()}
+
+    def _read_defaults(self) -> None:
+        """Read and process default values."""
         here = Path(__file__).parent  # io directory
 
         with open(here.joinpath('params.json')) as f:
@@ -136,6 +172,8 @@ class Input:
             # instantiate entries
             for param in self.defaults[section]:
                 attrs: dict = self.defaults[section][param]
+                value = attrs['value']
+                del attrs['value']
 
                 # check for array input
                 if 'size' in attrs:
@@ -143,41 +181,9 @@ class Input:
                 else:
                     entry = Entry(section, param, **attrs)
 
+                entry.value = value
+
                 self.params[param] = entry
-
-    def read(self, filename: str = 'environ.ini') -> None:
-        """Overwrite defaults with user input."""
-        if not Path(filename).exists():
-            raise FileNotFoundError(f"Missing {filename} in working directory")
-
-        self.parser.read(filename)
-
-        self._process_user_input()
-
-    def final_validation(self) -> None:
-        """Check final input state."""
-
-        # rhomax/rhomin validation
-        rhomax: Entry = self.params.get('rhomax')
-        rhomin: Entry = self.params.get('rhomin')
-
-        if rhomax.value < rhomin.value:
-            raise ValueError("rhomax < rhomin")
-
-        rhomax: Entry = self.params.get('electrolyte_rhomax')
-        rhomin: Entry = self.params.get('electrolyte_rhomin')
-
-        if rhomax.value < rhomin.value:
-            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
-
-        # pbc_dim validation
-        pbc_dim: Entry = self.params.get('pbc_dim')
-        if pbc_dim.value == 1:
-            raise ValueError("1D PBC corrections not yet implemented")
-
-    def to_dict(self) -> Dict[str, Any]:
-        """"""
-        return {opt.name: opt.value for opt in self.params.values()}
 
     def _process_user_input(self):
         """Convert user input file to expected data types."""
@@ -196,10 +202,12 @@ class Input:
 
             for opt, val in self.parser.items(section):
 
+                # verify that option belongs to this section
                 if opt not in self.defaults[section]:
                     raise ValueError(
-                        f"Unexpected {opt} option in {section} section")
+                        f"Unexpected {opt} option for {section} section")
 
+                # get entry object
                 if self.params[opt].__class__ is ArrayEntry:
                     param: ArrayEntry = self.params[opt]
                     self._allocate_array_sizes(param, val)
@@ -207,13 +215,11 @@ class Input:
                     param: Entry = self.params[opt]
 
                 param.value = val
-                param.convert_value()
 
     def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
         """Assign array sizes for allocatable arrays."""
 
-        # assign array sizes
-        if param.size is None:
+        if param.size == 0:
 
             # assign allocation size for ion values
             if param.name in {'atomicspread', 'corespread', 'solvationrad'}:
@@ -250,7 +256,7 @@ if __name__ == '__main__':
 
     my_input = Input(natoms)
     my_input.read()
-    my_input.final_validation()
+    my_input.validate()
     params = my_input.to_dict()
     del my_input
 

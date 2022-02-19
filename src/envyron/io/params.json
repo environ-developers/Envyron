@@ -36,6 +36,13 @@
       "type": "str",
       "value": "input"
     },
+    "nrep": {
+      "description": "",
+      "condition": "x >= 0",
+      "type": "int",
+      "size": 3,
+      "value": 0
+    },
     "system_ntyp": {
       "description": "",
       "condition": "x >= 0",
@@ -54,19 +61,12 @@
       "type": "int",
       "value": 3
     },
-    "nrep": {
-      "description": "",
-      "condition": "x >= 0",
-      "type": "int",
-      "size": 3,
-      "value": 0
-    },
     "system_pos": {
       "description": "",
       "condition": "True",
       "type": "float",
       "size": 3,
-      "value": 0
+      "value": 0e0
     },
     "need_electrostatic": {
       "description": "",
@@ -78,15 +78,15 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": null,
-      "value": -5e-1
+      "size": 0,
+      "value": 5e-1
     },
     "corespread": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": null,
-      "value": -5e-1
+      "size": 0,
+      "value": 5e-1
     },
     "static_permittivity": {
       "description": "",
@@ -98,36 +98,36 @@
       "description": "",
       "condition": "x >= 1",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "surface_tension": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "pressure": {
       "description": "",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "confine": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "electrolyte_concentration": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "electrolyte_formula": {
       "description": "",
       "condition": "True",
       "type": "int",
-      "size": null,
+      "size": 0,
       "value": 0
     },
     "electrolyte_linearized": {
@@ -146,13 +146,13 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "rion": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "temperature": {
       "description": "",
@@ -164,13 +164,13 @@
       "description": "",
       "condition": "x >= 1",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "sc_carrier_density": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "external_charges": {
       "description": "",
@@ -202,7 +202,7 @@
       "description": "",
       "condition": "x > 0",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "softness": {
       "description": "",
@@ -214,8 +214,8 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": null,
-      "value": -3
+      "size": 0,
+      "value": 0e0
     },
     "stype": {
       "description": "",
@@ -245,7 +245,7 @@
       "description": "",
       "condition": "x > 0",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "solvent_spread": {
       "description": "",
@@ -257,13 +257,13 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "radial_scale": {
       "description": "",
       "condition": "x >= 1",
       "type": "float",
-      "value": 2
+      "value": 2e0
     },
     "radial_spread": {
       "description": "",
@@ -287,7 +287,7 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "sc_spread": {
       "description": "",
@@ -305,7 +305,7 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "electrolyte_spread": {
       "description": "",
@@ -335,7 +335,7 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "electrolyte_softness": {
       "description": "",
@@ -347,13 +347,13 @@
       "description": "",
       "condition": "any(x == s for s in ('default', 'fft', 'chain', 'highmen', 'lowmem'))",
       "type": "str",
-      "value": "value"
+      "value": "default"
     },
     "deriv_method": {
       "description": "",
       "condition": "any(x == s for s in ('default', 'fft', 'chain', 'highmen', 'lowmem'))",
       "type": "str",
-      "value": "value"
+      "value": "default"
     },
     "deriv_core": {
       "description": "",
@@ -439,7 +439,7 @@
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "core": {
       "description": "",
@@ -493,7 +493,7 @@
       "description": "",
       "condition": "-3 <= x <= 3",
       "type": "int",
-      "value": -3
+      "value": 0
     },
     "pbc_axis": {
       "description": "",
@@ -513,14 +513,14 @@
       "description": "",
       "condition": "",
       "type": "float",
-      "value": 0
+      "value": 0e0
     },
     "position": {
       "description": "",
       "condition": "",
       "type": "float",
       "size": 3,
-      "value": 0
+      "value": 0e0
     },
     "spread": {
       "description": "",
@@ -552,26 +552,26 @@
       "description": "",
       "condition": "",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "optical_permittivity": {
       "description": "",
       "condition": "",
       "type": "float",
-      "value": 1
+      "value": 1e0
     },
     "position": {
       "description": "",
       "condition": "",
       "type": "float",
       "size": 3,
-      "value": 0
+      "value": 0e0
     },
     "width": {
       "description": "",
       "condition": "",
-      "type": "",
-      "value": 0
+      "type": "float",
+      "value": 0e0
     },
     "spread": {
       "description": "",
