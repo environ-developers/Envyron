@@ -183,29 +183,6 @@ class Input:
 
         self._process_user_input()
 
-    def validate(self) -> None:
-        """Check for unreasonable input values."""
-
-        # rhomax/rhomin validation
-        rhomax: Entry = self.entries.get('rhomax')
-        rhomin: Entry = self.entries.get('rhomin')
-
-        if rhomax.value < rhomin.value:
-            raise ValueError("rhomax < rhomin")
-
-        # electrolyte rhomax/rhomin validation
-        rhomax: Entry = self.entries.get('electrolyte_rhomax')
-        rhomin: Entry = self.entries.get('electrolyte_rhomin')
-
-        if rhomax.value < rhomin.value:
-            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
-
-        # pbc_dim validation
-        pbc_dim: Entry = self.entries.get('pbc_dim')
-
-        if pbc_dim.value == 1:
-            raise ValueError("1D periodic boundary correction not implemented")
-
     def to_dict(self) -> Dict[str, Any]:
         """"""
         param_dict = {opt.name: opt.value for opt in self.entries.values()}
@@ -268,6 +245,8 @@ class Input:
             raise ValueError("Cannot set both cionmax and rion")
 
         self._process_input_sections()
+        self._adjust_input()
+        self._validate_input()
 
     def _process_input_sections(self) -> None:
         """Process input sections in user input file."""
@@ -457,6 +436,286 @@ class Input:
             # missing pre-defined size in defaults
             else:
                 raise ValueError(f"Unexpected allocatable array: {param.name}")
+
+    def _adjust_input(self) -> None:
+        """Adjust input parameters based on user input."""
+        self._adjust_environment()
+        self._adjust_derivatives_method()
+        self._adjust_electrostatics()
+
+    def _adjust_environment(self) -> None:
+        """Adjust environment properties according to environment type."""
+        environment_type = self._get_value('env_type')
+
+        # set up vacuum environment
+        if environment_type == 'vacuum':
+            self.entries['static_permittivity'].value = 1.0
+            self.entries['optical_permittivity'].value = 1.0
+            self.entries['surface_tension'].value = 0.0
+            self.entries['pressure'].value = 0.0
+
+        # set up water environment
+        elif 'water' in environment_type:
+            self.entries['static_permittivity'].value = 78.3
+            self.entries['optical_permittivity'].value = 1.776
+
+            solvent_mode = self._get_value('solvent_mode')
+
+            # non-ionic interfaces
+            if solvent_mode in {'electronic', 'full'}:
+                if environment_type == 'water':
+                    self.entries['surface_tension'].value = 50.0
+                    self.entries['pressure'].value = -0.35
+                    self.entries['rhomax'].value = 5e-3
+                    self.entries['rhomin'].value = 1e-4
+
+                elif environment_type == 'water-cation':
+                    self.entries['surface_tension'].value = 50.0
+                    self.entries['pressure'].value = -0.35
+                    self.entries['rhomax'].value = 5e-3
+                    self.entries['rhomin'].value = 1e-4
+
+                elif environment_type == 'water-anion':
+                    self.entries['surface_tension'].value = 50.0
+                    self.entries['pressure'].value = -0.35
+                    self.entries['rhomax'].value = 5e-3
+                    self.entries['rhomin'].value = 1e-4
+
+            # ionic interface
+            if solvent_mode == 'ionic':
+                self.entries['surface_tension'].value = 50.0
+                self.entries['pressure'].value = -0.35
+                self.entries['softness'].value = 0.5
+                self.entries['radius_mode'].value = 'uff'
+
+                if environment_type == 'water':
+                    self.entries['alpha'].value = 1.12
+
+                elif environment_type == 'water-cation':
+                    self.entries['alpha'].value = 1.1
+
+                elif environment_type == 'water-anion':
+                    self.entries['alpha'].value = 0.98
+
+    def _adjust_derivatives_method(self) -> None:
+        """Adjust derivatives method according to solvent mode."""
+        mode = self._get_value('solvent_mode')
+        method = self._get_value('deriv_method')
+
+        if method == 'default':
+
+            # non-ionic interfaces
+            if mode in {'electronic', 'full', 'system'}:
+                self.entries['deriv_method'].value = 'chain'
+
+            # ionic interface
+            elif mode == 'ionic':
+                self.entries['deriv_method'].value = 'lowmem'
+
+    def _adjust_electrostatics(self) -> None:
+        """Adjust electrostatics according to solvent properties."""
+        correction = self._get_value('pbc_correction')
+        self._check_electrolyte_input(correction)
+        self._check_dielectric_input(correction)
+
+    def _check_electrolyte_input(self, correction: str) -> None:
+        """Adjust electrostatics according to electrolyte input."""
+        mode = self._get_value('electrolyte_mode')
+        formula: ArrayEntry = self._get_entry('electrolyte_formula')
+
+        if correction == 'gcs':
+            if mode != 'system':
+                self.entries['electrolyte_mode'].value = 'system'
+
+            if formula.size != 0:
+                rion = self._get_value('rion')
+                cionmax = self._get_value('cionmax')
+                linearized = self._get_value('electrolyte_linearized')
+                solver = self._get_value('solver')
+
+                if linearized:  # Linearized Poisson-Boltzmann problem
+                    if cionmax > 0.0 or rion > 0.0:
+                        self.entries['problem'].value = 'linmodpb'
+                    elif self.entries['problem'].value == 'none':
+                        self.entries['problem'].value = 'linpb'
+
+                    if solver == 'none':
+                        self.entries['solver'].value = 'cg'
+
+                else:  # Poisson-Boltzmann problem
+                    if cionmax > 0.0 or rion > 0.0:
+                        self.entries['problem'].value = 'modpb'
+                    elif self.entries['problem'].value == 'none':
+                        self.entries['problem'].value = 'pb'
+
+                    if solver == 'none':
+                        self.entries['solver'].value = 'newton'
+
+        if correction == 'gcs' or formula.size != 0:
+            method = self._get_value('electrolyte_deriv_method')
+
+            if method == 'default':
+
+                # non-ionic interfaces
+                if mode in {'electronic', 'full', 'system'}:
+                    self.entries['electrolyte_deriv_method'].value = 'chain'
+
+                # ionic interface
+                elif mode == 'ionic':
+                    self.entries['electrolyte_deriv_method'].value = 'lowmem'
+
+    def _check_dielectric_input(self, correction: str) -> None:
+        """Adjust electrostatics according to dielectric input."""
+        static_permittivity = self._get_value('static_permittivity')
+        num_of_regions = self._get_value('dielectric_regions')
+        problem = self._get_value('problem')
+        solver = self._get_value('solver')
+        auxiliary = self._get_value('auxiliary')
+
+        if static_permittivity > 1.0 or num_of_regions > 0:
+            if problem == 'none': self.entries['problem'].value = 'generalized'
+
+            if correction != 'gcs':
+                if solver == 'none': self.entries['solver'].value = 'cg'
+            elif solver != 'fixed-point':
+                self.entries['solver'].value = 'fixed-point'
+
+        else:
+            if problem == 'none': self.entries['problem'].value = 'poisson'
+            if solver == 'none': self.entries['solver'].value = 'direct'
+
+        if self._get_value('solver') == 'fixed-point' and auxiliary == 'none':
+            self.entries['auxiliary'].value = 'full'
+
+    def _validate_input(self) -> None:
+        """Check for bad input values."""
+        self._validate_derivatives_method()
+        self._validate_electrostatics()
+
+    def _validate_derivatives_method(self) -> None:
+        """Check for bad derivatives method."""
+
+        # derivatives method validation
+        mode = self._get_value('solvent_mode')
+        method = self._get_value('deriv_method')
+
+        # non-ionic interfaces
+        if mode in {'electronic', 'full', 'system'}:
+            if 'mem' in method:
+                raise ValueError(
+                    "Only 'fft' or 'chain' are allowed with electronic interfaces"
+                )
+
+        # ionic interface
+        elif mode == 'ionic':
+            if method == 'chain':
+                raise ValueError(
+                    "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
+                )
+
+    def _validate_electrostatics(self) -> None:
+        """Check for bad electrostatics input."""
+
+        # rhomax/rhomin validation
+        rhomax = self._get_value('rhomax')
+        rhomin = self._get_value('rhomin')
+
+        if rhomax < rhomin: raise ValueError("rhomax < rhomin")
+
+        # electrolyte rhomax/rhomin validation
+        rhomax = self._get_value('electrolyte_rhomax')
+        rhomin = self._get_value('electrolyte_rhomin')
+
+        if rhomax < rhomin:
+            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
+
+        # pbc_dim validation
+        pbc_dim = self._get_value('pbc_dim')
+
+        if pbc_dim == 1:
+            raise ValueError("1D periodic boundary correction not implemented")
+
+        # electrolyte validation
+        correction = self._get_value('pbc_correction')
+        formula: ArrayEntry = self._get_entry('electrolyte_formula')
+
+        if correction == 'gcs':
+            distance = self.entries['electrolyte_distance']
+
+            if distance == 0.0:
+                raise ValueError(
+                    "electrolyte_distance must be greater than zero for gcs correction"
+                )
+
+        if correction == 'gcs' or formula.size != 0:
+            mode = self._get_value('electrolyte_mode')
+            method = self._get_value('electrolyte_deriv_method')
+
+            # non-ionic interfaces
+            if mode in {'electronic', 'full', 'system'}:
+                if 'mem' in method:
+                    raise ValueError(
+                        "Only 'fft' or 'chain' are allowed with electronic interfaces"
+                    )
+
+            # ionic interface
+            elif mode == 'ionic':
+                if method == 'chain':
+                    raise ValueError(
+                        "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
+                    )
+
+        # problem/solver validation
+        problem = self._get_value('problem')
+        solver = self._get_value('solver')
+        inner_solver = self._get_value('inner_solver')
+
+        if problem == 'generalized':
+
+            if solver == 'direct' or inner_solver == 'direct':
+                raise ValueError(
+                    "Cannot use a direct solver for the Generalized Poisson eq."
+                )
+
+        elif "pb" in problem:
+
+            if "lin" in problem:
+                solvers = {'none', 'cg', 'sd'}
+
+                if solver not in solvers or inner_solver not in solvers:
+                    raise ValueError(
+                        "Only gradient-based solver for the linearized Poisson-Boltzmann eq."
+                    )
+
+                if correction != 'parabolic':
+                    raise ValueError(
+                        "Linearized-PB problem requires parabolic pbc correction"
+                    )
+
+            else:
+                solvers = {'direct', 'cg', 'sd'}
+
+                if solver in solvers or inner_solver in solvers:
+                    raise ValueError(
+                        "No direct or gradient-based solver for the full Poisson-Boltzmann eq."
+                    )
+
+        problems = {'pb, modpb, generalized'}
+
+        if inner_solver != 'none' and problem not in problems:
+            raise ValueError("Only pb or modpb problems allow inner solver")
+
+    def _get_entry(self, option: str) -> Entry:
+        """Return entry object if exists."""
+        entry: Entry = self.entries.get(option)
+        if entry is None: raise ValueError(f"Missing {option} entry")
+        return entry
+
+    def _get_value(self, option: str) -> Any:
+        """Return entry value if exists."""
+        entry: Entry = self.entries.get(option)
+        if entry is None: raise ValueError(f"Missing {option} entry")
+        return entry.value
 
 
 if __name__ == '__main__':
