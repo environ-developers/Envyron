@@ -21,9 +21,9 @@ class Entry:
         self.section = section
         self.name = name
         self.type = type
-        self.__value = None
         self.valid = eval(f"lambda x: {condition}")
         self.description = description
+        self.__value = None
 
     @property
     def value(self) -> Any:
@@ -132,48 +132,49 @@ class Input:
         """Check for unreasonable input values."""
 
         # rhomax/rhomin validation
-        rhomax: Entry = self.params.get('rhomax')
-        rhomin: Entry = self.params.get('rhomin')
+        rhomax: Entry = self.entries.get('rhomax')
+        rhomin: Entry = self.entries.get('rhomin')
 
         if rhomax.value < rhomin.value:
             raise ValueError("rhomax < rhomin")
 
         # electrolyte rhomax/rhomin validation
-        rhomax: Entry = self.params.get('electrolyte_rhomax')
-        rhomin: Entry = self.params.get('electrolyte_rhomin')
+        rhomax: Entry = self.entries.get('electrolyte_rhomax')
+        rhomin: Entry = self.entries.get('electrolyte_rhomin')
 
         if rhomax.value < rhomin.value:
             raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
 
         # pbc_dim validation
-        pbc_dim: Entry = self.params.get('pbc_dim')
+        pbc_dim: Entry = self.entries.get('pbc_dim')
 
         if pbc_dim.value == 1:
             raise ValueError("1D periodic boundary correction not implemented")
 
     def to_dict(self) -> Dict[str, Any]:
-        """"""
-        return {opt.name: opt.value for opt in self.params.values()}
+        """Return input as {option: value} dictionary."""
+        return {opt.name: opt.value for opt in self.entries.values()}
 
     def _read_defaults(self) -> None:
         """Read and process default values."""
         here = Path(__file__).parent  # io directory
 
         with open(here.joinpath('params.json')) as f:
-            self.defaults: dict = load(f)
+            self.params: Dict[str, Dict[str, dict]] = load(f)
 
-        self.params: Dict[str, Entry] = {}
+        with open(here.joinpath('defaults.json')) as f:
+            self.defaults: Dict[str, Dict[str, dict]] = load(f)
 
-        for section in self.defaults:
+        self.entries: Dict[str, Entry] = {}
+
+        for section in self.params:
 
             # skip template sections
             if section in {'Externals', 'Regions'}: continue
 
             # instantiate entries
-            for param in self.defaults[section]:
-                attrs: dict = self.defaults[section][param]
-                value = attrs['value']
-                del attrs['value']
+            for param in self.params[section]:
+                attrs: dict = self.params[section][param]
 
                 # check for array input
                 if 'size' in attrs:
@@ -181,9 +182,9 @@ class Input:
                 else:
                     entry = Entry(section, param, **attrs)
 
-                entry.value = value
+                entry.value = self.defaults[section][param]
 
-                self.params[param] = entry
+                self.entries[param] = entry
 
     def _process_user_input(self):
         """Convert user input file to expected data types."""
@@ -197,22 +198,22 @@ class Input:
 
         for section in self.parser.sections():
 
-            if section not in self.defaults:
+            if section not in self.params:
                 raise ValueError(f"Unexpected {section} section")
 
             for opt, val in self.parser.items(section):
 
                 # verify that option belongs to this section
-                if opt not in self.defaults[section]:
+                if opt not in self.params[section]:
                     raise ValueError(
                         f"Unexpected {opt} option for {section} section")
 
                 # get entry object
-                if self.params[opt].__class__ is ArrayEntry:
-                    param: ArrayEntry = self.params[opt]
+                if self.entries[opt].__class__ is ArrayEntry:
+                    param: ArrayEntry = self.entries[opt]
                     self._allocate_array_sizes(param, val)
                 else:
-                    param: Entry = self.params[opt]
+                    param: Entry = self.entries[opt]
 
                 param.value = val
 

@@ -3,593 +3,507 @@
     "debug": {
       "description": "General debugging flag",
       "condition": "True",
-      "type": "bool",
-      "value": false
+      "type": "bool"
     },
     "restart": {
       "description": "True if host calculation has been restarted from previous calculation",
       "condition": "True",
-      "type": "bool",
-      "value": false
+      "type": "bool"
     },
     "verbosity": {
       "description": "Level of output",
       "condition": "x >= 0",
-      "type": "int",
-      "value": 0
+      "type": "int"
     },
     "threshold": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 1e-1
+      "type": "float"
     },
     "nskip": {
       "description": "",
       "condition": "x >= 0",
-      "type": "int",
-      "value": 1
+      "type": "int"
     },
     "env_type": {
       "description": "",
       "condition": "any(x == s for s in ('vacuum', 'water', 'water-cation', 'water-anion', 'input'))",
-      "type": "str",
-      "value": "input"
+      "type": "str"
     },
     "nrep": {
       "description": "",
       "condition": "x >= 0",
       "type": "int",
-      "size": 3,
-      "value": 0
+      "size": 3
     },
     "system_ntyp": {
       "description": "",
       "condition": "x >= 0",
-      "type": "int",
-      "value": 0
+      "type": "int"
     },
     "system_dim": {
       "description": "",
       "condition": "0 <= x <= 3",
-      "type": "int",
-      "value": 0
+      "type": "int"
     },
     "system_axis": {
       "description": "",
       "condition": "1 <= x <= 3",
-      "type": "int",
-      "value": 3
+      "type": "int"
     },
     "system_pos": {
       "description": "",
       "condition": "True",
       "type": "float",
-      "size": 3,
-      "value": 0e0
+      "size": 3
     },
     "need_electrostatic": {
       "description": "",
       "condition": "True",
-      "type": "bool",
-      "value": false
+      "type": "bool"
     },
     "atomicspread": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": 0,
-      "value": 5e-1
+      "size": 0
     },
     "corespread": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": 0,
-      "value": 5e-1
+      "size": 0
     },
     "static_permittivity": {
       "description": "",
       "condition": "x >= 1",
-      "type": "float",
-      "value": 1
+      "type": "float"
     },
     "optical_permittivity": {
       "description": "",
       "condition": "x >= 1",
-      "type": "float",
-      "value": 1e0
+      "type": "float"
     },
     "surface_tension": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "pressure": {
       "description": "",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "confine": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "electrolyte_concentration": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "electrolyte_formula": {
       "description": "",
       "condition": "True",
       "type": "int",
-      "size": 0,
-      "value": 0
+      "size": 0
     },
     "electrolyte_linearized": {
       "description": "",
       "condition": "True",
-      "type": "bool",
-      "value": false
+      "type": "bool"
     },
     "electrolyte_entropy": {
       "description": "",
       "condition": "any(x == s for s in ('ions', 'full'))",
-      "type": "str",
-      "value": "full"
+      "type": "str"
     },
     "cionmax": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "rion": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "temperature": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 3e2
+      "type": "float"
     },
     "sc_permittivity": {
       "description": "",
       "condition": "x >= 1",
-      "type": "float",
-      "value": 1e0
+      "type": "float"
     },
     "sc_carrier_density": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "external_charges": {
       "description": "",
       "condition": "x >= 0",
-      "type": "int",
-      "value": 0
+      "type": "int"
     },
     "dielectric_regions": {
       "description": "",
       "condition": "x >= 0",
-      "type": "int",
-      "value": 0
+      "type": "int"
     }
   },
   "Boundary": {
     "solvent_mode": {
       "description": "",
       "condition": "any(x == s for s in ('electronic', 'ionic', 'full', 'system'))",
-      "type": "str",
-      "value": "electronic"
+      "type": "str"
     },
     "radius_mode": {
       "description": "",
       "condition": "any(x == s for s in ('pauling', 'bondi', 'uff', 'muff'))",
-      "type": "str",
-      "value": "uff"
+      "type": "str"
     },
     "alpha": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 1e0
+      "type": "float"
     },
     "softness": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "solvationrad": {
       "description": "",
       "condition": "x >= 0",
       "type": "float",
-      "size": 0,
-      "value": 0e0
+      "size": 0
     },
     "stype": {
       "description": "",
       "condition": "0 <= x <= 2",
-      "type": "int",
-      "value": 2
+      "type": "int"
     },
     "rhomax": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 5e-3
+      "type": "float"
     },
     "rhomin": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 1e-4
+      "type": "float"
     },
     "tbeta": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 4.8
+      "type": "float"
     },
     "solvent_distance": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 1e0
+      "type": "float"
     },
     "solvent_spread": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "solvent_radius": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "radial_scale": {
       "description": "",
       "condition": "x >= 1",
-      "type": "float",
-      "value": 2e0
+      "type": "float"
     },
     "radial_spread": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "filling_threshold": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 8.25e-1
+      "type": "float"
     },
     "filling_spread": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 2e-2
+      "type": "float"
     },
     "sc_distance": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "sc_spread": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "electrolyte_mode": {
       "description": "",
       "condition": "any(x == s for s in ('electronic', 'ionic', 'full', 'system'))",
-      "type": "str",
-      "value": "electronic"
+      "type": "str"
     },
     "electrolyte_distance": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "electrolyte_spread": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "electrolyte_rhomax": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 5e-3
+      "type": "float"
     },
     "electrolyte_rhomin": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 1e-4
+      "type": "float"
     },
     "electrolyte_tbeta": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 4.8
+      "type": "float"
     },
     "electrolyte_alpha": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 1e0
+      "type": "float"
     },
     "electrolyte_softness": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "electrolyte_deriv_method": {
       "description": "",
       "condition": "any(x == s for s in ('default', 'fft', 'chain', 'highmen', 'lowmem'))",
-      "type": "str",
-      "value": "default"
+      "type": "str"
     },
     "deriv_method": {
       "description": "",
       "condition": "any(x == s for s in ('default', 'fft', 'chain', 'highmen', 'lowmem'))",
-      "type": "str",
-      "value": "default"
+      "type": "str"
     },
     "deriv_core": {
       "description": "",
       "condition": "any(x == s for s in ('fft',))",
-      "type": "str",
-      "value": "fft"
+      "type": "str"
     }
   },
   "Electrostatic": {
     "problem": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'poisson', 'generalized', 'pb', 'modpb', 'linpb', 'linmodpb'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "tol": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 1e-5
+      "type": "float"
     },
     "solver": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'cg', 'sd', 'fixed-point', 'newton', 'nested', 'direct'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "auxiliary": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'full', 'ioncc'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "step_type": {
       "description": "",
       "condition": "any(x == s for s in ('optimal', 'input', 'random'))",
-      "type": "str",
-      "value": "optimal"
+      "type": "str"
     },
     "step": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 3e-1
+      "type": "float"
     },
     "maxstep": {
       "description": "",
       "condition": "x > 1",
-      "type": "int",
-      "value": 200
+      "type": "int"
     },
     "mix_type": {
       "description": "",
       "condition": "any(x == s for s in ('linear', 'anderson', 'diis', 'broyden'))",
-      "type": "str",
-      "value": "linear"
+      "type": "str"
     },
     "ndiis": {
       "description": "",
       "condition": "x > 0",
-      "type": "int",
-      "value": 1
+      "type": "int"
     },
     "mix": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "preconditioner": {
       "description": "",
       "condition": "any(x == s for s in ('sqrt', 'left'))",
-      "type": "str",
-      "value": "sqrt"
+      "type": "str"
     },
     "screening_type": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'input', 'linear', 'optimal'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "screening": {
       "description": "",
       "condition": "x >= 0",
-      "type": "float",
-      "value": 0e0
+      "type": "float"
     },
     "core": {
       "description": "",
       "condition": "any(x == s for s in ('fft',))",
-      "type": "str",
-      "value": "fft"
+      "type": "str"
     },
     "inner_solver": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'cg', 'sd', 'fixed-point', 'direct'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "inner_core": {
       "description": "",
       "condition": "any(x == s for s in ('fft',))",
-      "type": "str",
-      "value": "fft"
+      "type": "str"
     },
     "inner_tol": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 1e-10
+      "type": "float"
     },
     "inner_maxstep": {
       "description": "",
       "condition": "x > 1",
-      "type": "int",
-      "value": 200
+      "type": "int"
     },
     "inner_mix": {
       "description": "",
       "condition": "x > 0",
-      "type": "float",
-      "value": 5e-1
+      "type": "float"
     },
     "pbc_correction": {
       "description": "",
       "condition": "any(x == s for s in ('none', 'parabolic', 'gcs', 'ms'))",
-      "type": "str",
-      "value": "none"
+      "type": "str"
     },
     "pbc_core": {
       "description": "",
       "condition": "any(x == s for s in ('1da',))",
-      "type": "str",
-      "value": "1da"
+      "type": "str"
     },
     "pbc_dim": {
       "description": "",
       "condition": "-3 <= x <= 3",
-      "type": "int",
-      "value": 0
+      "type": "int"
     },
     "pbc_axis": {
       "description": "",
       "condition": "1 <= x <= 3",
-      "type": "int",
-      "value": 3
+      "type": "int"
     }
   },
   "Externals": {
     "units": {
       "description": "",
       "condition": "any(x == s for s in ('bohr', 'angstrom'))",
-      "type": "str",
-      "value": "bohr"
+      "type": "str"
+    },
+    "group": {
+      "description": "",
+      "condition": "x > 0",
+      "type": "int"
     },
     "charge": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 0e0
+      "condition": "x != 0",
+      "type": "float"
     },
     "position": {
       "description": "",
-      "condition": "",
+      "condition": "True",
       "type": "float",
-      "size": 3,
-      "value": 0e0
+      "size": 3
     },
     "spread": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 5e-1
+      "condition": "x >= 0",
+      "type": "float"
     },
     "dim": {
       "description": "",
-      "condition": "",
-      "type": "int",
-      "value": 0
+      "condition": "0 <= x <= 3",
+      "type": "int"
     },
     "axis": {
       "description": "",
-      "condition": "",
-      "type": "int",
-      "value": 3
+      "condition": "1 <= x <= 3",
+      "type": "int"
     }
   },
   "Regions": {
     "units": {
       "description": "",
       "condition": "any(x == s for s in ('bohr', 'angstrom'))",
-      "type": "str",
-      "value": "bohr"
+      "type": "str"
     },
-    "static_permittivity": {
+    "group": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 1e0
+      "condition": "x > 0",
+      "type": "int"
     },
-    "optical_permittivity": {
+    "static": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 1e0
+      "condition": "x >= 1",
+      "type": "float"
+    },
+    "optical": {
+      "description": "",
+      "condition": "x >= 1",
+      "type": "float"
     },
     "position": {
       "description": "",
-      "condition": "",
+      "condition": "True",
       "type": "float",
-      "size": 3,
-      "value": 0e0
+      "size": 3
     },
     "width": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 0e0
+      "condition": "x >= 0",
+      "type": "float"
     },
     "spread": {
       "description": "",
-      "condition": "",
-      "type": "float",
-      "value": 5e-1
+      "condition": "x >= 0",
+      "type": "float"
     },
     "dim": {
       "description": "",
-      "condition": "",
-      "type": "int",
-      "value": 0
+      "condition": "0 <= x <= 3",
+      "type": "int"
     },
     "axis": {
       "description": "",
-      "condition": "",
-      "type": "int",
-      "value": 3
+      "condition": "1 <= x <= 3",
+      "type": "int"
     }
   }
 }
