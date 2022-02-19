@@ -2,12 +2,10 @@
   "Environ": {
     "debug": {
       "description": "General debugging flag",
-      "condition": "True",
       "type": "bool"
     },
     "restart": {
       "description": "True if host calculation has been restarted from previous calculation",
-      "condition": "True",
       "type": "bool"
     },
     "verbosity": {
@@ -53,13 +51,11 @@
     },
     "system_pos": {
       "description": "",
-      "condition": "True",
       "type": "float",
       "size": 3
     },
     "need_electrostatic": {
       "description": "",
-      "condition": "True",
       "type": "bool"
     },
     "atomicspread": {
@@ -105,13 +101,11 @@
     },
     "electrolyte_formula": {
       "description": "",
-      "condition": "True",
       "type": "int",
       "size": 0
     },
     "electrolyte_linearized": {
       "description": "",
-      "condition": "True",
       "type": "bool"
     },
     "electrolyte_entropy": {
@@ -438,7 +432,6 @@
     },
     "position": {
       "description": "",
-      "condition": "True",
       "type": "float",
       "size": 3
     },
@@ -481,7 +474,6 @@
     },
     "position": {
       "description": "",
-      "condition": "True",
       "type": "float",
       "size": 3
     },
