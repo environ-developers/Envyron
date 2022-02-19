@@ -111,6 +111,59 @@ class ArrayEntry(Entry):
             super()._validate(v)
 
 
+class Card:
+    """Parent class for card input."""
+    def __repr__(self) -> str:
+        return f"{self.__dict__}"
+
+    def __str__(self) -> str:
+        return f"{self.__dict__}"
+
+
+class ExternalInput(Card):
+    """Input representation of an external charge input."""
+
+    units = ''
+
+    def __init__(
+        self,
+        charge: float,
+        pos: List[str],
+        spread: float,
+        dim: int,
+        axis: int,
+    ) -> None:
+        self.charge = charge
+        self.pos = pos
+        self.spread = spread
+        self.dim = dim
+        self.axis = axis
+
+
+class RegionInput(Card):
+    """Input representation of a dielectric region."""
+
+    units = ''
+
+    def __init__(
+        self,
+        static: float,
+        optical: float,
+        pos: List[str],
+        width: float,
+        spread: float,
+        dim: int,
+        axis: int,
+    ) -> None:
+        self.static = static
+        self.optical = optical
+        self.pos = pos
+        self.width = width
+        self.spread = spread
+        self.dim = dim
+        self.axis = axis
+
+
 class Input:
     """Container for Environ input."""
     def __init__(self, natoms: int = 0) -> None:
@@ -285,6 +338,7 @@ class Input:
 
         # set units for externals
         template['units'].value = self.parser.get(section, 'units')
+        ExternalInput.units = template['units'].value
 
         group = -1
 
@@ -308,13 +362,15 @@ class Input:
                 group += 1
 
             # set external values
-            external = {
-                'charge': template['charge'].value,
-                'pos': template['pos'].value,
-                'spread': template['spread'].value,
-                'dim': template['dim'].value,
-                'axis': template['axis'].value
-            }
+            keys = (
+                'charge',
+                'pos',
+                'spread',
+                'dim',
+                'axis',
+            )
+            attrs = {k: template[k].value for k in keys}
+            external = ExternalInput(**attrs)
 
             # add external to list
             self.externals[group].append(external)
@@ -327,7 +383,7 @@ class Input:
 
         # set up template for region object
         defaults: dict = self.params[section]
-        
+
         template: Dict[str, Entry] = {
             'units': Entry(section, 'units', **defaults['units']),
             'group': Entry(section, 'group', **defaults['group']),
@@ -342,6 +398,7 @@ class Input:
 
         # set units for regions
         template['units'].value = self.parser.get(section, 'units')
+        RegionInput.units = template['units'].value
 
         group = -1
 
@@ -367,15 +424,17 @@ class Input:
                 group += 1
 
             # set region values
-            region = {
-                'static': template['static'].value,
-                'optical': template['optical'].value,
-                'pos': template['pos'].value,
-                'width': template['width'].value,
-                'spread': template['spread'].value,
-                'dim': template['dim'].value,
-                'axis': template['axis'].value
-            }
+            keys = (
+                'static',
+                'optical',
+                'pos',
+                'width',
+                'spread',
+                'dim',
+                'axis',
+            )
+            attrs = {k: template[k].value for k in keys}
+            region = RegionInput(**attrs)
 
             # add region to list
             self.regions[group].append(region)
