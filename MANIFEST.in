@@ -1,3 +1,4 @@
 include MANIFEST.in
 include README.md
 include LICENSE.txt
+include src/envyron/io/*.json
