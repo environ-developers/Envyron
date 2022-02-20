@@ -203,11 +203,11 @@ class Input:
         here = Path(__file__).parent  # io directory
 
         # read input parameter attributes
-        with open(here.joinpath('params.json')) as f:
+        with open(here / 'params.json') as f:
             self.params: Dict[str, Dict[str, dict]] = load(f)
 
         # read input parameter default values
-        with open(here.joinpath('defaults.json')) as f:
+        with open(here / 'defaults.json') as f:
             self.defaults: Dict[str, Dict[str, dict]] = load(f)
 
         self._build_entry_dictionary()
