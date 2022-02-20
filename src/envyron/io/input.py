@@ -114,6 +114,14 @@ class ArrayEntry(Entry):
 
 class Card:
     """Parent class for card input."""
+
+    units = ''
+
+    @classmethod
+    def set_units(cls, units: str) -> None:
+        """Set Card units."""
+        cls.units = units
+
     def __repr__(self) -> str:
         return f"{self.__dict__}"
 
@@ -123,9 +131,6 @@ class Card:
 
 class ExternalInput(Card):
     """Input representation of an external charge input."""
-
-    units = ''
-
     def __init__(
         self,
         charge: float,
@@ -143,9 +148,6 @@ class ExternalInput(Card):
 
 class RegionInput(Card):
     """Input representation of a dielectric region."""
-
-    units = ''
-
     def __init__(
         self,
         static: float,
@@ -305,7 +307,7 @@ class Input:
 
         # set units for externals
         template['units'].value = self.parser.get(section, 'units')
-        ExternalInput.units = template['units'].value
+        ExternalInput.set_units(template['units'].value)
 
         group = -1
 
@@ -364,7 +366,7 @@ class Input:
 
         # set units for regions
         template['units'].value = self.parser.get(section, 'units')
-        RegionInput.units = template['units'].value
+        RegionInput.set_units(template['units'].value)
 
         group = -1
 
