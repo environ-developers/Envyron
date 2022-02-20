@@ -27,3 +27,9 @@ Documentation = "https://environ.readthedocs.io/en/latest/"
 [project.optional-dependencies]
 test = ["pytest >=2.7.3"]
 doc = ["sphinx"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-rN -v --tb=short"
+testpaths = "tests"
+markers = ["datadir: change directory to data location"]
