@@ -169,8 +169,10 @@ class Input:
 
         self.parser = ConfigParser()  # user-input parser
 
-        self.externals = None
-        self.regions = None
+        self.entries: Dict[str, Union[Entry, ArrayEntry]] = {}
+
+        self.externals: List[List[ExternalInput]] = []
+        self.regions: List[List[RegionInput]] = []
 
         self._read_defaults()
 
@@ -212,7 +214,6 @@ class Input:
 
     def _build_entry_dictionary(self) -> None:
         """Generate dictionary of entry objects from param/default data."""
-        self.entries: Dict[str, Entry] = {}
 
         for section in self.params:
 
@@ -284,7 +285,6 @@ class Input:
 
     def _process_externals(self) -> None:
         """Process Externals input section."""
-        self.externals: List[List[dict]] = []
 
         section = 'Externals'
 
@@ -342,7 +342,6 @@ class Input:
 
     def _process_regions(self) -> None:
         """Process Regions input section."""
-        self.regions: List[List[dict]] = []
 
         section = 'Regions'
 
