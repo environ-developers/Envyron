@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 from configparser import ConfigParser
 from pathlib import Path
 from json import load
@@ -18,7 +18,7 @@ class Entry:
         section: str,
         name: str,
         type: str,
-        condition: str = True,
+        condition: str = 'True',
         description: str = "",
     ) -> None:
         """Entry constructor."""
@@ -42,14 +42,14 @@ class Entry:
         self.__value = value
 
     def _convert(self, value: Any) -> Any:
-        """Convert str value to expected data type."""
+        """Convert value to expected data type."""
         if not isinstance(value, str) or self.type == 'str': return value
         if self.type == 'int': return int(value)
         if self.type == 'float': return float(value)
         if self.type == 'bool': return self._boolean(value)
         raise TypeError(f"Unexpected {self.type} type")
 
-    def _validate(self, user_input: Any) -> bool:
+    def _validate(self, user_input: Any) -> None:
         """Check if value is within criteria."""
         if not self.valid(user_input):
             raise ValueError(f"{user_input} is invalid for {self.name}")
@@ -73,7 +73,7 @@ class ArrayEntry(Entry):
         name: str,
         type: str,
         size: int,
-        condition: str = True,
+        condition: str = 'True',
         description: str = "",
     ) -> None:
         """ArrayEntry constructor."""
@@ -102,7 +102,7 @@ class ArrayEntry(Entry):
 
         return tuple(values)
 
-    def _validate(self, user_input: Any) -> bool:
+    def _validate(self, user_input: Any) -> None:
         """Check if value is within criteria."""
         for v in user_input:
             super()._validate(v)
@@ -222,13 +222,12 @@ class Input:
 
             # instantiate entries
             for param in self.params[section]:
-                attrs: dict = self.params[section][param]
+
+                attrs = self.params[section][param]
 
                 # check for array input
-                if 'size' in attrs:
-                    entry = ArrayEntry(section, param, **attrs)
-                else:
-                    entry = Entry(section, param, **attrs)
+                entry = ArrayEntry(section, param, **attrs) \
+                    if 'size' in attrs else Entry(section, param, **attrs)
 
                 # set default value (validated internally)
                 entry.value = self.defaults[section][param]
@@ -275,11 +274,10 @@ class Input:
                     f"Unexpected {opt} option for {section} section")
 
             # get entry object
-            if self.entries[opt].__class__ is ArrayEntry:
-                param: ArrayEntry = self.entries[opt]
+            param = self.entries[opt]
+
+            if isinstance(param, ArrayEntry):
                 self._allocate_array_sizes(param, val)
-            else:
-                param: Entry = self.entries[opt]
 
             param.value = val
 
@@ -520,13 +518,15 @@ class Input:
     def _check_electrolyte_input(self, correction: str) -> None:
         """Adjust electrostatics according to electrolyte input."""
         mode = self._get_value('electrolyte_mode')
-        formula: ArrayEntry = self._get_entry('electrolyte_formula')
+        formula = self._get_entry('electrolyte_formula')
+
+        size = formula.size if isinstance(formula, ArrayEntry) else 0
 
         if correction == 'gcs':
             if mode != 'system':
                 self.entries['electrolyte_mode'].value = 'system'
 
-            if formula.size != 0:
+            if size != 0:
                 rion = self._get_value('rion')
                 cionmax = self._get_value('cionmax')
                 linearized = self._get_value('electrolyte_linearized')
@@ -550,7 +550,7 @@ class Input:
                     if solver == 'none':
                         self.entries['solver'].value = 'newton'
 
-        if correction == 'gcs' or formula.size != 0:
+        if correction == 'gcs' or size != 0:
             method = self._get_value('electrolyte_deriv_method')
 
             if method == 'default':
@@ -636,7 +636,9 @@ class Input:
 
         # electrolyte validation
         correction = self._get_value('pbc_correction')
-        formula: ArrayEntry = self._get_entry('electrolyte_formula')
+        formula = self._get_entry('electrolyte_formula')
+
+        size = formula.size if isinstance(formula, ArrayEntry) else 0
 
         if correction == 'gcs':
             distance = self.entries['electrolyte_distance']
@@ -646,7 +648,7 @@ class Input:
                     "electrolyte_distance must be greater than zero for gcs correction"
                 )
 
-        if correction == 'gcs' or formula.size != 0:
+        if correction == 'gcs' or size != 0:
             mode = self._get_value('electrolyte_mode')
             method = self._get_value('electrolyte_deriv_method')
 
@@ -704,15 +706,15 @@ class Input:
         if inner_solver != 'none' and problem not in problems:
             raise ValueError("Only pb or modpb problems allow inner solver")
 
-    def _get_entry(self, option: str) -> Entry:
+    def _get_entry(self, option: str) -> Union[Entry, ArrayEntry]:
         """Return entry object if exists."""
-        entry: Entry = self.entries.get(option)
+        entry = self.entries.get(option)
         if entry is None: raise ValueError(f"Missing {option} entry")
         return entry
 
     def _get_value(self, option: str) -> Any:
         """Return entry value if exists."""
-        entry: Entry = self.entries.get(option)
+        entry = self.entries.get(option)
         if entry is None: raise ValueError(f"Missing {option} entry")
         return entry.value
 
