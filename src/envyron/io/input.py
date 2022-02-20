@@ -80,35 +80,27 @@ class ArrayEntry(Entry):
         super().__init__(section, name, type, condition, description)
         self.size = size
 
-    def _convert(self, value: Any) -> Tuple[Any]:
-        """Convert str value to expected data type."""
+    def _convert(self, value: Any) -> Tuple:
+        """Convert value to expected data type."""
 
-        if isinstance(value, list):
-            values = value
+        if isinstance(value, list) or isinstance(value, tuple):
+            pre_conversion = value
         elif isinstance(value, str):
-            values = value.split()
+            pre_conversion = value.split()
         else:
-            values = tuple((value, ))
+            pre_conversion = [value]
 
-        if self.type == 'str':
-            values = tuple(self.value)
-        elif self.type == 'int':
-            values = tuple([int(v) for v in values])
-        elif self.type == 'float':
-            values = tuple([float(v) for v in values])
-        elif self.type == 'bool':
-            values = tuple([self._boolean(v) for v in values])
+        values = []
+        for val in pre_conversion:
+            values.append(super()._convert(val))
+
+        n = len(values)
+        if n == 1:
+            values = [values[0]] * self.size  # extrapolate to size
         else:
-            raise TypeError(f"Unexpected {self.type} type")
+            if n != self.size: raise ValueError("Not enough values")
 
-        if self.size is not None:
-            n = len(values)
-            if n == 1:
-                values = tuple([values[0]] * self.size)  # extrapolate to size
-            else:
-                if n != self.size: raise ValueError("Not enough values")
-
-        return values
+        return tuple(values)
 
     def _validate(self, user_input: Any) -> bool:
         """Check if value is within criteria."""
