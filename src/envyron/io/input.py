@@ -83,13 +83,17 @@ class ArrayEntry(Entry):
     def _convert(self, value: Any) -> Tuple:
         """Convert value to expected data type."""
 
-        if isinstance(value, list) or isinstance(value, tuple):
+        # cast value as array
+        if isinstance(value, (list, tuple)):
             pre_conversion = value
         elif isinstance(value, str):
             pre_conversion = value.split()
-        else:
+        elif isinstance(value, (int, float, bool)):
             pre_conversion = [value]
+        else:
+            raise TypeError("Unexpected type")
 
+        # convert array elements
         values = []
         for val in pre_conversion:
             values.append(super()._convert(val))
