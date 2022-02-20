@@ -717,7 +717,7 @@ class Input:
         return entry.value
 
 
-if __name__ == '__main__':
+def main():
 
     natoms = 5
 
@@ -740,3 +740,7 @@ if __name__ == '__main__':
 
         else:
             print(f"{k} = {v}")
+
+
+if __name__ == '__main__':
+    main()
