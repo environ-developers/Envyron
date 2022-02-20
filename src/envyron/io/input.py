@@ -4,6 +4,13 @@ from pathlib import Path
 from json import load
 
 
+class Params:
+    """Collection of input parameters."""
+    def __init__(self, params: dict) -> None:
+        for param, value in params.items():
+            setattr(self, param, value)
+
+
 class Entry:
     """Representation of an input entry."""
     def __init__(
@@ -194,9 +201,10 @@ class Input:
 
         return param_dict
 
-    def get_parameters(self):
+    def get_parameters(self) -> Params:
         """Return input parameters as a class."""
-        return type('InputParams', (), self.to_dict())
+        parameters = self.to_dict()
+        return Params(parameters)
 
     def _read_defaults(self) -> None:
         """Read and process default values."""
