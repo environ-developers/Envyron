@@ -2,11 +2,13 @@ from typing import Any, Dict, List, Union
 from configparser import ConfigParser
 from pathlib import Path
 from json import load
-from input_utils import Entry, ArrayEntry, ExternalCard, RegionCard
+
+from .utils import Entry, ArrayEntry, ExternalCard, RegionCard
 
 
 class Params:
     """Collection of input parameters."""
+
     def __init__(self, params: dict) -> None:
         for param, value in params.items():
             setattr(self, param, value)
@@ -14,6 +16,7 @@ class Params:
 
 class Input:
     """Container for Environ input."""
+
     def __init__(self, natoms: int = 0) -> None:
         self.natoms = natoms
 

@@ -1,6 +1,6 @@
 from pytest import mark
 from pathlib import Path
-from envyron.io import *
+from envyron.io.input import *
 
 ENTRY = {
     'section': 'Environ',
