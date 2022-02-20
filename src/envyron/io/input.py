@@ -49,10 +49,10 @@ class Entry:
         if self.type == 'bool': return self._boolean(value)
         raise TypeError(f"Unexpected {self.type} type")
 
-    def _validate(self, user_input: Any) -> None:
+    def _validate(self, value: Any) -> None:
         """Check if value is within criteria."""
-        if not self.valid(user_input):
-            raise ValueError(f"{user_input} is invalid for {self.name}")
+        if not self.valid(value):
+            raise ValueError(f"{value} is invalid for {self.name}")
 
     def _boolean(self, value: str) -> bool:
         """Convert value to boolean."""
@@ -80,36 +80,36 @@ class ArrayEntry(Entry):
         super().__init__(section, name, type, condition, description)
         self.size = size
 
-    def _convert(self, value: Any) -> Tuple:
+    def _convert(self, values: Any) -> Tuple:
         """Convert value to expected data type."""
 
         # cast value as array
-        if isinstance(value, (list, tuple)):
-            pre_conversion = value
-        elif isinstance(value, str):
-            pre_conversion = value.split()
-        elif isinstance(value, (int, float, bool)):
-            pre_conversion = [value]
+        if isinstance(values, (list, tuple)):
+            pre_conversion = values
+        elif isinstance(values, str):
+            pre_conversion = values.split()
+        elif isinstance(values, (int, float, bool)):
+            pre_conversion = [values]
         else:
             raise TypeError("Unexpected type")
 
         # convert array elements
-        values = []
+        converted = []
         for val in pre_conversion:
-            values.append(super()._convert(val))
+            converted.append(super()._convert(val))
 
-        n = len(values)
+        n = len(converted)
         if n == 1:
-            values = [values[0]] * self.size  # extrapolate to size
+            converted = [converted[0]] * self.size  # extrapolate to size
         else:
             if n != self.size: raise ValueError("Not enough values")
 
-        return tuple(values)
+        return tuple(converted)
 
-    def _validate(self, user_input: Any) -> None:
-        """Check if value is within criteria."""
-        for v in user_input:
-            super()._validate(v)
+    def _validate(self, values: Any) -> None:
+        """Check if each value in values is within criteria."""
+        for value in values:
+            super()._validate(value)
 
 
 class Card:
