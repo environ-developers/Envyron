@@ -242,14 +242,7 @@ class Input:
 
     def _process_user_input(self) -> None:
         """Convert user input to expected data types."""
-
-        # check for simultaneous cionmax/rion setting
-        cionmax = self.parser.get('Environ', 'cionmax', fallback=None)
-        rion = self.parser.get('Environ', 'rion', fallback=None)
-
-        if cionmax is not None and rion is not None:
-            raise ValueError("Cannot set both cionmax and rion")
-
+        self._check_simultaneous_cionmax_rion_setting()
         self._process_input_sections()
         self._adjust_input()
         self._validate_input()
@@ -441,7 +434,7 @@ class Input:
                 raise ValueError(f"Unexpected allocatable array: {param.name}")
 
     def _adjust_input(self) -> None:
-        """Adjust input parameters based on user input."""
+        """Adjust input/default parameters based on user input."""
         self._adjust_environment()
         self._adjust_derivatives_method()
         self._adjust_electrostatics()
@@ -520,6 +513,15 @@ class Input:
         correction = self._get_value('pbc_correction')
         self._check_electrolyte_input(correction)
         self._check_dielectric_input(correction)
+
+    def _check_simultaneous_cionmax_rion_setting(self) -> None:
+        """Raise error if both cionmax and rion are given in input."""
+
+        cionmax = self.parser.get('Environ', 'cionmax', fallback=None)
+        rion = self.parser.get('Environ', 'rion', fallback=None)
+
+        if cionmax is not None and rion is not None:
+            raise ValueError("Cannot set both cionmax and rion")
 
     def _check_electrolyte_input(self, correction: str) -> None:
         """Adjust electrostatics according to electrolyte input."""
