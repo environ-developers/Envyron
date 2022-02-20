@@ -119,7 +119,7 @@ class Card:
         return f"{self.__dict__}"
 
 
-class ExternalInput(Card):
+class ExternalCard(Card):
     """Input representation of an external charge input."""
     def __init__(
         self,
@@ -136,7 +136,7 @@ class ExternalInput(Card):
         self.axis = axis
 
 
-class RegionInput(Card):
+class RegionCard(Card):
     """Input representation of a dielectric region."""
     def __init__(
         self,

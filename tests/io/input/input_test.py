@@ -153,7 +153,7 @@ def test_processing_externals(datadir: Path) -> None:
     group = externals[0]
     assert len(group) == 3, "wrong number of external charges in group 1"
 
-    external: ExternalInput = group[0]
+    external: ExternalCard = group[0]
     assert external.units == 'bohr', "wrong units for external charges"
     assert external.charge == 2.0, "wrong charge for external charge 1"
     assert len(external.pos) == 3, "external position not properly converted"
@@ -180,7 +180,7 @@ def test_processing_regions(datadir: Path) -> None:
     group = regions[0]
     assert len(group) == 3, "wrong number of regions in group 1"
 
-    region: RegionInput = group[0]
+    region: RegionCard = group[0]
     assert region.units == 'bohr', "wrong units for external charges"
     assert region.static == 100.0, "wrong static permittivity for region 1"
     assert len(region.pos) == 3, "region position not properly converted"

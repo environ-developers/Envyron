@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Union
 from configparser import ConfigParser
 from pathlib import Path
 from json import load
-from input_utils import Entry, ArrayEntry, ExternalInput, RegionInput
+from input_utils import Entry, ArrayEntry, ExternalCard, RegionCard
 
 
 class Params:
@@ -21,8 +21,8 @@ class Input:
 
         self.entries: Dict[str, Union[Entry, ArrayEntry]] = {}
 
-        self.externals: List[List[ExternalInput]] = []
-        self.regions: List[List[RegionInput]] = []
+        self.externals: List[List[ExternalCard]] = []
+        self.regions: List[List[RegionCard]] = []
 
         self._read_defaults()
 
@@ -145,7 +145,7 @@ class Input:
 
         # set units for externals
         template['units'].value = self.parser.get(section, 'units')
-        ExternalInput.set_units(template['units'].value)
+        ExternalCard.set_units(template['units'].value)
 
         group = -1
 
@@ -177,7 +177,7 @@ class Input:
                 'axis',
             )
             attrs = {k: template[k].value for k in keys}
-            external = ExternalInput(**attrs)
+            external = ExternalCard(**attrs)
 
             # add external to list
             self.externals[group].append(external)
@@ -204,7 +204,7 @@ class Input:
 
         # set units for regions
         template['units'].value = self.parser.get(section, 'units')
-        RegionInput.set_units(template['units'].value)
+        RegionCard.set_units(template['units'].value)
 
         group = -1
 
@@ -240,7 +240,7 @@ class Input:
                 'axis',
             )
             attrs = {k: template[k].value for k in keys}
-            region = RegionInput(**attrs)
+            region = RegionCard(**attrs)
 
             # add region to list
             self.regions[group].append(region)
