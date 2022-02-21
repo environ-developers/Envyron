@@ -53,7 +53,7 @@ class Entry:
         """Convert value to boolean."""
         boolean_states = {'true': True, 'false': False}
         boolean = boolean_states.get(value.lower())
-        if boolean is None: raise ValueError(f"{value} not a boolean")
+        if boolean is None: raise TypeError(f"{value} not a boolean")
         return boolean
 
     def __str__(self) -> str:
@@ -62,6 +62,7 @@ class Entry:
 
 class ArrayEntry(Entry):
     """Representation of an input array entry."""
+
     def __init__(
         self,
         section: str,
@@ -127,6 +128,7 @@ class Card:
 
 class ExternalCard(Card):
     """Input representation of an external charge input."""
+
     def __init__(
         self,
         charge: float,
@@ -144,6 +146,7 @@ class ExternalCard(Card):
 
 class RegionCard(Card):
     """Input representation of a dielectric region."""
+
     def __init__(
         self,
         static: float,
