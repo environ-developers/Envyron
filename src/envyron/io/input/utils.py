@@ -3,6 +3,7 @@ from typing import Any, List, Tuple
 
 class Entry:
     """Representation of an input entry."""
+
     def __init__(
         self,
         section: str,
@@ -15,21 +16,24 @@ class Entry:
         self.section = section
         self.name = name
         self.type = type
-        self.valid = eval(f"lambda x: {condition}")
         self.description = description
         self.__value = None
 
+        self._set_validator(condition)
+
     @property
     def value(self) -> Any:
-        """docstring"""
         return self.__value
 
     @value.setter
     def value(self, value: Any) -> None:
-        """Setter for Entry value."""
         value = self._convert(value)
         self._validate(value)
         self.__value = value
+
+    def _set_validator(self, condition: str) -> None:
+        """Set the condition for the value of the Entry."""
+        self.valid = eval(f"lambda x: {condition}")
 
     def _convert(self, value: Any) -> Any:
         """Convert value to expected data type."""
