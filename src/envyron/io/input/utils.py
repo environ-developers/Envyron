@@ -38,10 +38,14 @@ class Entry:
     def _convert(self, value: Any) -> Any:
         """Convert value to expected data type."""
         if not isinstance(value, str) or self.type == 'str': return value
-        if self.type == 'int': return int(value)
-        if self.type == 'float': return float(value)
-        if self.type == 'bool': return self._boolean(value)
-        raise TypeError(f"Unexpected {self.type} type")
+
+        try:
+            if self.type == 'int': return int(value)
+            if self.type == 'float': return float(value)
+            if self.type == 'bool': return self._boolean(value)
+            raise TypeError(f"Unexpected {self.type} type")
+        except:
+            raise TypeError(f"{value} is not of type {self.type}")
 
     def _validate(self, value: Any) -> bool:
         """Check if value is within criteria."""
