@@ -1,6 +1,7 @@
 # developer files
 .vscode
 __pycache__
+venv
 
 # build files
 build
