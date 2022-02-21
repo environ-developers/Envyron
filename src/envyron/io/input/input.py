@@ -581,8 +581,10 @@ def main():
 
     my_input = Input(natoms)
 
-    if Path(__file__).parent.joinpath('test.ini').exists():
-        my_input.read('test.ini')
+    file = Path(__file__).parent.joinpath('test.ini')
+
+    if file.exists():
+        my_input.read(file)
 
     params = my_input.to_dict()
     del my_input
