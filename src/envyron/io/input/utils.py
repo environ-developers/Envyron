@@ -43,10 +43,11 @@ class Entry:
         if self.type == 'bool': return self._boolean(value)
         raise TypeError(f"Unexpected {self.type} type")
 
-    def _validate(self, value: Any) -> None:
+    def _validate(self, value: Any) -> bool:
         """Check if value is within criteria."""
         if not self.valid(value):
             raise ValueError(f"{value} is invalid for {self.name}")
+        return True
 
     def _boolean(self, value: str) -> bool:
         """Convert value to boolean."""
@@ -100,10 +101,11 @@ class ArrayEntry(Entry):
 
         return tuple(converted)
 
-    def _validate(self, values: Any) -> None:
+    def _validate(self, values: Any) -> bool:
         """Check if each value in values is within criteria."""
         for value in values:
             super()._validate(value)
+        return True
 
 
 class Card:
