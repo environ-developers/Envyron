@@ -600,7 +600,3 @@ def main():
 
         else:
             print(f"{k} = {v}")
-
-
-if __name__ == '__main__':
-    main()
