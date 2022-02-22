@@ -67,17 +67,6 @@ def test_conversion_to_dictionary() -> None:
         assert option in params, f"missing '{option}' parameter"
 
 
-def test_conversion_to_class() -> None:
-    """Test conversion of input parameters to dynamic class."""
-    test = Input()
-
-    params = test.get_parameters()
-    assert isinstance(params, Params), "failed to convert input to class"
-
-    for option in test.entries:
-        assert option in params.__dict__, f"missing '{option}' parameter"
-
-
 @mark.datadir('data')
 def test_reading_user_input_file(datadir: Path) -> None:
     """Test reading from user input file."""
@@ -109,12 +98,12 @@ def test_processing_user_input(datadir: Path) -> None:
     test = Input()
 
     test.read()
-    params = test.get_parameters()
+    params = test.to_dict()
 
-    assert isinstance(params.debug, bool), f"wrong type for 'debug'"
-    assert isinstance(params.verbosity, int), f"wrong type for 'verbosity'"
-    assert isinstance(params.threshold, float), f"wrong type for 'threshold'"
-    assert isinstance(params.env_type, str), f"wrong type for 'env_type'"
+    assert isinstance(params['restart'], bool), f"wrong type for 'restart'"
+    assert isinstance(params['nskip'], int), f"wrong type for 'nskip'"
+    assert isinstance(params['pressure'], float), f"wrong type for 'pressure'"
+    assert isinstance(params['env_type'], str), f"wrong type for 'env_type'"
 
 
 @mark.datadir('data')
@@ -124,19 +113,19 @@ def test_processing_user_array_input(datadir: Path) -> None:
     test = Input(natoms)
 
     test.read('spreads.ini')
-    params = test.get_parameters()
+    params = test.to_dict()
 
     # check array input
-    val = params.atomicspread
-    t = eval(test.entries['atomicspread'].dtype)
+    value = params['atomicspread']
+    dtype = eval(test.entries['atomicspread'].dtype)
 
-    assert isinstance(val, tuple), "array not properly converted"
-    assert len(val) == natoms, "wrong array size"
-    assert all(isinstance(i, t) for i in val), "wrong data type"
+    assert isinstance(value, tuple), "array not properly converted"
+    assert len(value) == natoms, "wrong array size"
+    assert all(isinstance(i, dtype) for i in value), "wrong data type"
 
     # check size extrapolation
-    val = params.corespread
-    assert len(val) == natoms, "wrong array size"
+    value = params['corespread']
+    assert len(value) == natoms, "wrong array size"
 
 
 @mark.datadir('data')
@@ -145,9 +134,9 @@ def test_processing_externals(datadir: Path) -> None:
     test = Input()
 
     test.read('externals.ini')
-    params = test.get_parameters()
+    params = test.to_dict()
 
-    externals = params.externals
+    externals = params['externals']
     assert len(externals) == 2, "wrong number of external groups"
 
     group = externals[0]
@@ -172,9 +161,9 @@ def test_processing_regions(datadir: Path) -> None:
     test = Input()
 
     test.read('regions.ini')
-    params = test.get_parameters()
+    params = test.to_dict()
 
-    regions = params.regions
+    regions = params['regions']
     assert len(regions) == 2, "wrong number of region groups"
 
     group = regions[0]
@@ -210,21 +199,21 @@ def test_smart_environment(datadir: Path) -> None:
     test = Input()
 
     test.read('environment.ini')
-    params = test.get_parameters()
+    params = test.to_dict()
 
     # check for water environment with ionic interface
-    assert params.static_permittivity == 78.3
-    assert params.optical_permittivity == 1.776
-    assert params.surface_tension == 50.0
-    assert params.pressure == -0.35
-    assert params.softness == 0.5
-    assert params.radius_mode == 'uff'
-    assert params.alpha == 1.12
+    assert params['static_permittivity'] == 78.3
+    assert params['optical_permittivity'] == 1.776
+    assert params['surface_tension'] == 50.0
+    assert params['pressure'] == -0.35
+    assert params['softness'] == 0.5
+    assert params['radius_mode'] == 'uff'
+    assert params['alpha'] == 1.12
 
-    assert params.deriv_method == 'lowmem'
+    assert params['deriv_method'] == 'lowmem'
 
-    assert params.problem == 'generalized'
-    assert params.solver == 'cg'
+    assert params['problem'] == 'generalized'
+    assert params['solver'] == 'cg'
 
 
 @mark.datadir('data')
@@ -233,10 +222,10 @@ def test_smart_electrolyte(datadir: Path) -> None:
     test = Input()
 
     test.read('electrolyte.ini')
-    params = test.get_parameters()
+    params = test.to_dict()
 
-    assert params.electrolyte_mode == 'system'
-    assert params.electrolyte_deriv_method == 'chain'
-    assert params.problem == 'pb'
-    assert params.solver == 'fixed-point'
-    assert params.auxiliary == 'full'
+    assert params['electrolyte_mode'] == 'system'
+    assert params['electrolyte_deriv_method'] == 'chain'
+    assert params['problem'] == 'pb'
+    assert params['solver'] == 'fixed-point'
+    assert params['auxiliary'] == 'full'

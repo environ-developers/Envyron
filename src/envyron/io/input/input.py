@@ -6,14 +6,6 @@ from json import load
 from .utils import Entry, ArrayEntry, ExternalCard, RegionCard
 
 
-class Params:
-    """Collection of input parameters."""
-
-    def __init__(self, params: dict) -> None:
-        for param, value in params.items():
-            setattr(self, param, value)
-
-
 class Input:
     """Container for Environ input."""
 
@@ -49,11 +41,6 @@ class Input:
         if self.regions: param_dict['regions'] = self.regions
 
         return param_dict
-
-    def get_parameters(self) -> Params:
-        """Return input parameters as a class."""
-        parameters = self.to_dict()
-        return Params(parameters)
 
     def _read_defaults(self) -> None:
         """Read and process default values."""
