@@ -12,7 +12,6 @@ class Entry:
         condition: str = 'True',
         description: str = "",
     ) -> None:
-        """Entry constructor."""
         self.section = section
         self.name = name
         self.type = type
@@ -76,7 +75,6 @@ class ArrayEntry(Entry):
         condition: str = 'True',
         description: str = "",
     ) -> None:
-        """ArrayEntry constructor."""
         super().__init__(section, name, type, condition, description)
         self.size = size
 
