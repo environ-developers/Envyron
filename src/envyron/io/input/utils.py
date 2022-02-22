@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 
 class Entry:
@@ -37,9 +37,8 @@ class Entry:
 
     def _convert(self, value: Any) -> Any:
         """Convert value to expected data type."""
-        if not isinstance(value, str) or self.type == 'str': return value
-
         try:
+            if self.type == 'str': return value
             if self.type == 'int': return int(value)
             if self.type == 'float': return float(value)
             if self.type == 'bool': return self._boolean(value)
@@ -53,8 +52,9 @@ class Entry:
             raise ValueError(f"{value} is invalid for {self.name}")
         return True
 
-    def _boolean(self, value: str) -> bool:
+    def _boolean(self, value: Union[str, bool]) -> bool:
         """Convert value to boolean."""
+        if isinstance(value, bool): return value
         boolean_states = {'true': True, 'false': False}
         boolean = boolean_states.get(value.lower())
         if boolean is None: raise TypeError(f"{value} not a boolean")
