@@ -33,3 +33,6 @@ minversion = "6.0"
 addopts = "-rN -v --tb=short"
 testpaths = "tests"
 markers = ["datadir: change directory to data location"]
+
+[tool.mypy]
+mypy_path = "stubs"
