@@ -5,7 +5,7 @@ from envyron.io.input import *
 ENTRY = {
     'section': 'Environ',
     'name': 'verbosity',
-    'type': 'int',
+    'dtype': 'int',
     'condition': 'x >= 0',
     'description': "",
 }
@@ -30,7 +30,7 @@ def test_reading_parameters() -> None:
 
         # check that all parameters have a type attribute
         for option, attrs in test.params[section].items():
-            assert 'type' in attrs, f"missing 'type' attribute for '{option}'"
+            assert 'dtype' in attrs, f"missing 'dtype' attribute for '{option}'"
 
 
 def test_reading_defaults() -> None:
@@ -52,7 +52,7 @@ def test_reading_defaults() -> None:
             assert len(entry.value) == entry.size, \
                 f"wrong array size for '{entry.name}'"
 
-            assert all(isinstance(i, eval(entry.type)) for i in entry.value), \
+            assert all(isinstance(i, eval(entry.dtype)) for i in entry.value), \
                 f"'{entry.name}' array items not properly converted"
 
 
@@ -128,7 +128,7 @@ def test_processing_user_array_input(datadir: Path) -> None:
 
     # check array input
     val = params.atomicspread
-    t = eval(test.entries['atomicspread'].type)
+    t = eval(test.entries['atomicspread'].dtype)
 
     assert isinstance(val, tuple), "array not properly converted"
     assert len(val) == natoms, "wrong array size"

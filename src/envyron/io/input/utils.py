@@ -8,13 +8,13 @@ class Entry:
         self,
         section: str,
         name: str,
-        type: str,
+        dtype: str,
         condition: str = 'True',
         description: str = "",
     ) -> None:
         self.section = section
         self.name = name
-        self.type = type
+        self.dtype = dtype
         self.description = description
         self.__value = None
 
@@ -37,13 +37,13 @@ class Entry:
     def _convert(self, value: Any) -> Any:
         """Convert value to expected data type."""
         try:
-            if self.type == 'str': return value
-            if self.type == 'int': return int(value)
-            if self.type == 'float': return float(value)
-            if self.type == 'bool': return self._boolean(value)
-            raise TypeError(f"Unexpected {self.type} type")
+            if self.dtype == 'str': return value
+            if self.dtype == 'int': return int(value)
+            if self.dtype == 'float': return float(value)
+            if self.dtype == 'bool': return self._boolean(value)
+            raise TypeError(f"Unexpected {self.dtype} type")
         except:
-            raise TypeError(f"{value} is not of type {self.type}")
+            raise TypeError(f"{value} is not of type {self.dtype}")
 
     def _validate(self, value: Any) -> bool:
         """Check if value is within criteria."""
@@ -70,12 +70,12 @@ class ArrayEntry(Entry):
         self,
         section: str,
         name: str,
-        type: str,
+        dtype: str,
         size: int,
         condition: str = 'True',
         description: str = "",
     ) -> None:
-        super().__init__(section, name, type, condition, description)
+        super().__init__(section, name, dtype, condition, description)
         self.size = size
 
     def _convert(self, values: Any) -> Tuple:
