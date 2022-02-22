@@ -27,6 +27,9 @@ class Input:
         self.externals: List[List[ExternalCard]] = []
         self.regions: List[List[RegionCard]] = []
 
+        self.params: Dict[str, Dict[str, dict]] = {}
+        self.defaults: Dict[str, Dict[str, dict]] = {}
+
         self._read_defaults()
 
     def read(self, filename: str = 'environ.ini') -> None:
@@ -58,11 +61,11 @@ class Input:
 
         # read input parameter attributes
         with open(here / 'params.json') as f:
-            self.params: Dict[str, Dict[str, dict]] = load(f)
+            self.params = load(f)
 
         # read input parameter default values
         with open(here / 'defaults.json') as f:
-            self.defaults: Dict[str, Dict[str, dict]] = load(f)
+            self.defaults = load(f)
 
         self._build_entry_dictionary()
 
