@@ -1,13 +1,13 @@
-from pytest import mark
+from types import LambdaType
+from typing import Any, Sequence, Tuple
+from pytest import mark, raises
 from pathlib import Path
 from envyron.io.input import *
 
 ENTRY = {
-    'section': 'Environ',
-    'name': 'verbosity',
-    'dtype': 'int',
-    'condition': 'x >= 0',
-    'description': "",
+    'section': 'section',
+    'name': 'name',
+    'dtype': 'type',
 }
 
 SECTIONS = (
@@ -17,6 +17,135 @@ SECTIONS = (
     'Externals',
     'Regions',
 )
+
+
+@mark.parametrize(
+    'value, result',
+    [
+        ('true', True),
+        ('false', False),
+    ],
+)
+def test_entry_boolean(value: str, result: bool) -> None:
+    """Test Entry class boolean converter."""
+    entry = Entry(**ENTRY)
+
+    assert entry._boolean(value) == result
+    assert entry._boolean(value.capitalize()) == result
+    assert entry._boolean(value.upper()) == result
+
+    with raises(TypeError):
+        entry._boolean('')
+        entry._boolean('blah')
+
+
+def test_entry_set_validator() -> None:
+    """Test Entry class validator setting."""
+    entry = Entry(**ENTRY)
+
+    entry._set_validator('x != 0')
+
+    assert isinstance(entry.valid, LambdaType)
+
+    assert entry.valid(1)
+    assert not entry.valid(0)
+
+
+@mark.parametrize(
+    'condition, valid, invalid',
+    [
+        (
+            "0 <= x < 3",
+            (0, 1, 2),
+            (-1, 3),
+        ),
+        (
+            "x != 0",
+            (-1, 1),
+            (0, ),
+        ),
+        (
+            "any(x == s for s in ('this', 'that'))",
+            ('this', 'that'),
+            ('these', 'those'),
+        ),
+    ],
+)
+def test_entry_validate(condition: str, valid: Tuple, invalid: Tuple) -> None:
+    """Test Entry class validator."""
+    entry = Entry(**ENTRY)
+
+    entry._set_validator(condition)
+
+    for value in valid:
+        assert entry._validate(value)
+
+    with raises(ValueError):
+        for value in invalid:
+            entry._validate(value)
+
+
+def test_array_entry_validate() -> None:
+    """Test ArrayEntry class validator."""
+    entry = ArrayEntry(**ENTRY, size=3)
+
+    entry._set_validator("x > 0")
+
+    valid = (1, 2, 3)
+    invalid = (-2, -1, 0)
+
+    assert entry._validate(valid)
+
+    with raises(ValueError):
+        entry._validate(invalid)
+
+
+@mark.parametrize(
+    'dtype, value, result, bad_value',
+    [
+        ('str', 'some_value', 'some_value', ''),
+        ('int', '4', 4, 'hello'),
+        ('float', '4.0', 4.0, 'hello'),
+        ('bool', 'true', True, '5'),
+    ],
+)
+def test_entry_convert(
+    dtype: str,
+    value: Any,
+    result: Any,
+    bad_value: Any,
+) -> None:
+    """Test Entry class data type converter."""
+    entry = Entry(**ENTRY)
+
+    entry.dtype = dtype
+    converted = entry._convert(value)
+    assert converted == result
+
+    if bad_value:
+        with raises(TypeError):
+            converted = entry._convert(bad_value)
+
+
+@mark.parametrize(
+    'dtype, values, result',
+    [
+        ('str', '1 1 1', ('1', '1', '1')),
+        ('int', '4 4 4', (4, 4, 4)),
+        ('float', '4.0', (4.0, 4.0, 4.0)),
+        ('bool', True, (True, True, True))
+    ],
+)
+def test_array_entry_convert(
+    dtype: str,
+    values: Sequence[Any],
+    result: Sequence[Any],
+) -> None:
+    """Test ArrayEntry data type converter."""
+    entry = ArrayEntry(**ENTRY, size=3)
+
+    entry.dtype = dtype
+    assert entry._convert(values) == result
 
 
 def test_reading_parameters() -> None:
