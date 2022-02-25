@@ -1,588 +1,171 @@
-from typing import Any, Dict, List, Union
-from configparser import ConfigParser
+from typing import Any, Dict, List
 from pathlib import Path
-from json import load
+from configparser import ConfigParser
 
-from .utils import Entry, ArrayEntry, ExternalCard, RegionCard
+from .validation import (
+    EnvironInputModel,
+    ExternalModel,
+    ExternalsContainer,
+    RegionModel,
+    RegionsContainer,
+)
 
 
 class Input:
-    """Container for Environ input."""
+    """
+    Class for reading, casting, and validating Environ's input parameters.
+    """
 
-    def __init__(self, natoms: int = 0) -> None:
-        self.natoms = natoms
+    def __init__(self, natoms: int = 1, filename: str = 'environ.ini') -> None:
 
-        self.parser = ConfigParser()  # user-input parser
+        # set the number of atoms in the validation model
+        EnvironInputModel.set_number_of_atoms(natoms)
 
-        self.entries: Dict[str, Union[Entry, ArrayEntry]] = {}
-
-        self.externals: List[List[ExternalCard]] = []
-        self.regions: List[List[RegionCard]] = []
-
-        self.params: Dict[str, Dict[str, dict]] = {}
-        self.defaults: Dict[str, Dict[str, dict]] = {}
-
-        self._read_defaults()
-
-    def read(self, filename: str = 'environ.ini') -> None:
-        """Overwrite defaults with user input."""
-        if not Path(filename).exists():
-            raise FileNotFoundError(f"Missing {filename} in working directory")
-
+        # get input parameters from file
         self.file = Path(filename).absolute()
-        self.parser.read(self.file)
+        param_dict = self._get_input_param_dict()
 
-        self._process_user_input()
+        self.params = EnvironInputModel(**param_dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """"""
-        param_dict = {opt.name: opt.value for opt in self.entries.values()}
+    def _get_input_param_dict(self) -> Dict[str, Any]:
+        """
+        Return input file as parameter dictionary.
+        """
+        if not self.file.exists():
+            raise FileNotFoundError(
+                f"Missing {self.file.name} in working directory")
 
-        if self.externals: param_dict['externals'] = self.externals
-        if self.regions: param_dict['regions'] = self.regions
+        # parse config file
+        parser = ConfigParser()
+        parser.read(self.file)
+
+        # build parameter dictionary
+        param_dict = dict.fromkeys(('externals', 'regions'))
+        for section in parser.sections():
+            section_params = dict(parser.items(section))
+
+            if section == 'Externals':
+                externals = self._process_externals(section_params)
+                param_dict['externals'] = externals
+
+            elif section == 'Regions':
+                regions = self._process_regions(section_params)
+                param_dict['regions'] = regions
+
+            else:
+                param_dict.update(section_params)
 
         return param_dict
 
-    def _read_defaults(self) -> None:
-        """Read and process default values."""
-        here = Path(__file__).parent  # io directory
+    def _process_externals(self, data: Dict[str, str]) -> ExternalsContainer:
+        """
+        Convert externals raw data into grouped lists of ExternalModel objects.
+        """
+        functions: List[List[ExternalModel]] = []
 
-        # read input parameter attributes
-        with open(here / 'params.json') as f:
-            self.params = load(f)
+        group = 0
 
-        # read input parameter default values
-        with open(here / 'defaults.json') as f:
-            self.defaults = load(f)
+        for function in sorted(data['functions'].split('\n'), key=by_group):
 
-        self._build_entry_dictionary()
-
-    def _build_entry_dictionary(self) -> None:
-        """Generate dictionary of entry objects from param/default data."""
-
-        for section in self.params:
-
-            # skip template sections
-            if section in {'Externals', 'Regions'}: continue
-
-            # instantiate entries
-            for param in self.params[section]:
-
-                attrs = self.params[section][param]
-
-                # check for array input
-                entry = ArrayEntry(section, param, **attrs) \
-                    if 'size' in attrs else Entry(section, param, **attrs)
-
-                # set default value (validated internally)
-                entry.value = self.defaults[section][param]
-
-                self.entries[param] = entry
-
-    def _process_user_input(self) -> None:
-        """Convert user input to expected data types."""
-        self._check_simultaneous_cionmax_rion_setting()
-        self._process_input_sections()
-        self._adjust_input()
-        self._validate_input()
-
-    def _process_input_sections(self) -> None:
-        """Process input sections in user input file."""
-
-        for section in self.parser.sections():
-
-            if section not in self.params:
-                raise ValueError(f"Unexpected {section} section")
-
-            if section == 'Externals':
-                self._process_externals()
-            elif section == 'Regions':
-                self._process_regions()
-            else:
-                self._process_input_options(section)
-
-    def _process_input_options(self, section: str) -> None:
-        """Process input options for given section."""
-
-        for opt, val in self.parser.items(section):
-
-            # verify that option belongs to this section
-            if opt not in self.params[section]:
-                raise ValueError(
-                    f"Unexpected {opt} option for {section} section")
-
-            # get entry object
-            param = self.entries[opt]
-
-            if isinstance(param, ArrayEntry):
-                self._allocate_array_sizes(param, val)
-
-            param.value = val
-
-    def _process_externals(self) -> None:
-        """Process Externals input section."""
-
-        section = 'Externals'
-
-        # set up template for external object
-        defaults: dict = self.params[section]
-
-        template: Dict[str, Entry] = {
-            'units': Entry(section, 'units', **defaults['units']),
-            'group': Entry(section, 'group', **defaults['group']),
-            'charge': Entry(section, 'charge', **defaults['charge']),
-            'pos': ArrayEntry(section, 'position', **defaults['position']),
-            'spread': Entry(section, 'spread', **defaults['spread']),
-            'dim': Entry(section, 'dim', **defaults['dim']),
-            'axis': Entry(section, 'axis', **defaults['axis']),
-        }
-
-        # set units for externals
-        template['units'].value = self.parser.get(section, 'units')
-        ExternalCard.set_units(template['units'].value)
-
-        group = -1
-
-        # iterate over external functions
-        for function in self.parser.get(section, 'functions').split('\n'):
-
-            # get values
             g, c, x, y, z, s, d, a = function.split()
 
-            # convert, validate, and set values
-            template['group'].value = g
-            template['charge'].value = c
-            template['pos'].value = " ".join((x, y, z))
-            template['spread'].value = s
-            template['dim'].value = d
-            template['axis'].value = a
+            try:
+                if int(g) != group:
+                    functions.append([])
+                    group += 1
+            except:
+                raise ValueError("externals group must be an integer")
 
-            # add new externals group if necessary
-            if template['group'].value != group + 1:
-                self.externals.append([])
-                group += 1
+            func_dict = {
+                'charge': c,
+                'position': [x, y, z],
+                'spread': s,
+                'dim': d,
+                'axis': a,
+            }
 
-            # set external values
-            keys = (
-                'charge',
-                'pos',
-                'spread',
-                'dim',
-                'axis',
-            )
-            attrs = {k: template[k].value for k in keys}
-            external = ExternalCard(**attrs)
+            functions[group - 1].append(ExternalModel(**func_dict))
 
-            # add external to list
-            self.externals[group].append(external)
+        processed_data = {'units': data['units'], 'functions': functions}
 
-    def _process_regions(self) -> None:
-        """Process Regions input section."""
+        externals = ExternalsContainer(**processed_data)
 
-        section = 'Regions'
+        return externals
 
-        # set up template for region object
-        defaults: dict = self.params[section]
+    def _process_regions(self, data: Dict[str, str]) -> RegionsContainer:
+        """
+        Convert regions raw data into grouped lists of RegionModel objects.
+        """
 
-        template: Dict[str, Entry] = {
-            'units': Entry(section, 'units', **defaults['units']),
-            'group': Entry(section, 'group', **defaults['group']),
-            'static': Entry(section, 'static', **defaults['static']),
-            'optical': Entry(section, 'optical', **defaults['optical']),
-            'pos': ArrayEntry(section, 'position', **defaults['position']),
-            'width': Entry(section, 'width', **defaults['width']),
-            'spread': Entry(section, 'spread', **defaults['spread']),
-            'dim': Entry(section, 'dim', **defaults['dim']),
-            'axis': Entry(section, 'axis', **defaults['axis']),
-        }
+        functions: List[List[RegionModel]] = []
 
-        # set units for regions
-        template['units'].value = self.parser.get(section, 'units')
-        RegionCard.set_units(template['units'].value)
+        group = 0
 
-        group = -1
+        for function in sorted(data['functions'].split('\n'), key=by_group):
 
-        # iterate over region functions
-        for function in self.parser.get(section, 'functions').split('\n'):
-
-            # get values
             g, eps, opt, x, y, z, w, s, d, a = function.split()
 
-            # convert and validate values
-            template['group'].value = g
-            template['static'].value = eps
-            template['optical'].value = opt
-            template['pos'].value = " ".join((x, y, z))
-            template['width'].value = w
-            template['spread'].value = s
-            template['dim'].value = d
-            template['axis'].value = a
-
-            # add new regions group if necessary
-            if template['group'].value != group + 1:
-                self.regions.append([])
-                group += 1
-
-            # set region values
-            keys = (
-                'static',
-                'optical',
-                'pos',
-                'width',
-                'spread',
-                'dim',
-                'axis',
-            )
-            attrs = {k: template[k].value for k in keys}
-            region = RegionCard(**attrs)
-
-            # add region to list
-            self.regions[group].append(region)
-
-    def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
-        """Assign array sizes for allocatable arrays."""
-
-        if param.size == 0:
-
-            # assign allocation size for ion values
-            if param.name in {'atomicspread', 'corespread', 'solvationrad'}:
-                param.size = self.natoms
-
-            # assign allocation size for electrolyte values
-            elif param.name == 'electrolyte_formula':
-                parts = value.split()
-                n = len(parts)
-
-                # check for sufficient charges
-                if n < 4: raise ValueError("Multiplicity/charge sets < 2")
-
-                # check for complete formula
-                if n % 2 != 0: raise ValueError("Missing multiplicity/charge")
-
-                # check for charge neutrality
-                m = [int(i) for i in parts[::2]]  # multiplicities
-                z = [int(i) for i in parts[1::2]]  # charges
-                s = sum(i * j for i, j in zip(m, z))
-
-                if s != 0: raise ValueError("Electrolyte is not neutral")
-
-                param.size = n
-
-            # missing pre-defined size in defaults
-            else:
-                raise ValueError(f"Unexpected allocatable array: {param.name}")
-
-    def _adjust_input(self) -> None:
-        """Adjust input/default parameters based on user input."""
-        self._adjust_environment()
-        self._adjust_derivatives_method()
-        self._adjust_electrostatics()
-
-    def _adjust_environment(self) -> None:
-        """Adjust environment properties according to environment type."""
-        environment_type = self._get_value('env_type')
-
-        # set up vacuum environment
-        if environment_type == 'vacuum':
-            self.entries['static_permittivity'].value = 1.0
-            self.entries['optical_permittivity'].value = 1.0
-            self.entries['surface_tension'].value = 0.0
-            self.entries['pressure'].value = 0.0
-
-        # set up water environment
-        elif 'water' in environment_type:
-            self.entries['static_permittivity'].value = 78.3
-            self.entries['optical_permittivity'].value = 1.776
-
-            solvent_mode = self._get_value('solvent_mode')
-
-            # non-ionic interfaces
-            if solvent_mode in {'electronic', 'full'}:
-                if environment_type == 'water':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
-
-                elif environment_type == 'water-cation':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
-
-                elif environment_type == 'water-anion':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
-
-            # ionic interface
-            if solvent_mode == 'ionic':
-                self.entries['surface_tension'].value = 50.0
-                self.entries['pressure'].value = -0.35
-                self.entries['softness'].value = 0.5
-                self.entries['radius_mode'].value = 'uff'
-
-                if environment_type == 'water':
-                    self.entries['alpha'].value = 1.12
-
-                elif environment_type == 'water-cation':
-                    self.entries['alpha'].value = 1.1
-
-                elif environment_type == 'water-anion':
-                    self.entries['alpha'].value = 0.98
-
-    def _adjust_derivatives_method(self) -> None:
-        """Adjust derivatives method according to solvent mode."""
-        mode = self._get_value('solvent_mode')
-        method = self._get_value('deriv_method')
-
-        if method == 'default':
-
-            # non-ionic interfaces
-            if mode in {'electronic', 'full', 'system'}:
-                self.entries['deriv_method'].value = 'chain'
-
-            # ionic interface
-            elif mode == 'ionic':
-                self.entries['deriv_method'].value = 'lowmem'
-
-    def _adjust_electrostatics(self) -> None:
-        """Adjust electrostatics according to solvent properties."""
-        correction = self._get_value('pbc_correction')
-        self._check_electrolyte_input(correction)
-        self._check_dielectric_input(correction)
-
-    def _check_simultaneous_cionmax_rion_setting(self) -> None:
-        """Raise error if both cionmax and rion are given in input."""
-
-        cionmax = self.parser.get('Environ', 'cionmax', fallback=None)
-        rion = self.parser.get('Environ', 'rion', fallback=None)
-
-        if cionmax is not None and rion is not None:
-            raise ValueError("Cannot set both cionmax and rion")
-
-    def _check_electrolyte_input(self, correction: str) -> None:
-        """Adjust electrostatics according to electrolyte input."""
-        mode = self._get_value('electrolyte_mode')
-        formula = self._get_entry('electrolyte_formula')
-
-        size = formula.size if isinstance(formula, ArrayEntry) else 0
-
-        if correction == 'gcs':
-            if mode != 'system':
-                self.entries['electrolyte_mode'].value = 'system'
-
-            if size != 0:
-                rion = self._get_value('rion')
-                cionmax = self._get_value('cionmax')
-                linearized = self._get_value('electrolyte_linearized')
-                solver = self._get_value('solver')
-
-                if linearized:  # Linearized Poisson-Boltzmann problem
-                    if cionmax > 0.0 or rion > 0.0:
-                        self.entries['problem'].value = 'linmodpb'
-                    elif self.entries['problem'].value == 'none':
-                        self.entries['problem'].value = 'linpb'
-
-                    if solver == 'none':
-                        self.entries['solver'].value = 'cg'
-
-                else:  # Poisson-Boltzmann problem
-                    if cionmax > 0.0 or rion > 0.0:
-                        self.entries['problem'].value = 'modpb'
-                    elif self.entries['problem'].value == 'none':
-                        self.entries['problem'].value = 'pb'
-
-                    if solver == 'none':
-                        self.entries['solver'].value = 'newton'
-
-        if correction == 'gcs' or size != 0:
-            method = self._get_value('electrolyte_deriv_method')
-
-            if method == 'default':
-
-                # non-ionic interfaces
-                if mode in {'electronic', 'full', 'system'}:
-                    self.entries['electrolyte_deriv_method'].value = 'chain'
-
-                # ionic interface
-                elif mode == 'ionic':
-                    self.entries['electrolyte_deriv_method'].value = 'lowmem'
-
-    def _check_dielectric_input(self, correction: str) -> None:
-        """Adjust electrostatics according to dielectric input."""
-        static_permittivity = self._get_value('static_permittivity')
-        num_of_regions = self._get_value('dielectric_regions')
-        problem = self._get_value('problem')
-        solver = self._get_value('solver')
-        auxiliary = self._get_value('auxiliary')
-
-        if static_permittivity > 1.0 or num_of_regions > 0:
-            if problem == 'none': self.entries['problem'].value = 'generalized'
-
-            if correction != 'gcs':
-                if solver == 'none': self.entries['solver'].value = 'cg'
-            elif solver != 'fixed-point':
-                self.entries['solver'].value = 'fixed-point'
-
-        else:
-            if problem == 'none': self.entries['problem'].value = 'poisson'
-            if solver == 'none': self.entries['solver'].value = 'direct'
-
-        if self._get_value('solver') == 'fixed-point' and auxiliary == 'none':
-            self.entries['auxiliary'].value = 'full'
-
-    def _validate_input(self) -> None:
-        """Check for bad input values."""
-        self._validate_derivatives_method()
-        self._validate_electrostatics()
-
-    def _validate_derivatives_method(self) -> None:
-        """Check for bad derivatives method."""
-
-        # derivatives method validation
-        mode = self._get_value('solvent_mode')
-        method = self._get_value('deriv_method')
-
-        # non-ionic interfaces
-        if mode in {'electronic', 'full', 'system'}:
-            if 'mem' in method:
-                raise ValueError(
-                    "Only 'fft' or 'chain' are allowed with electronic interfaces"
-                )
-
-        # ionic interface
-        elif mode == 'ionic':
-            if method == 'chain':
-                raise ValueError(
-                    "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
-                )
-
-    def _validate_electrostatics(self) -> None:
-        """Check for bad electrostatics input."""
-
-        # rhomax/rhomin validation
-        rhomax = self._get_value('rhomax')
-        rhomin = self._get_value('rhomin')
-
-        if rhomax < rhomin: raise ValueError("rhomax < rhomin")
-
-        # electrolyte rhomax/rhomin validation
-        rhomax = self._get_value('electrolyte_rhomax')
-        rhomin = self._get_value('electrolyte_rhomin')
-
-        if rhomax < rhomin:
-            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
-
-        # pbc_dim validation
-        pbc_dim = self._get_value('pbc_dim')
-
-        if pbc_dim == 1:
-            raise ValueError("1D periodic boundary correction not implemented")
-
-        # electrolyte validation
-        correction = self._get_value('pbc_correction')
-        formula = self._get_entry('electrolyte_formula')
-
-        size = formula.size if isinstance(formula, ArrayEntry) else 0
-
-        if correction == 'gcs':
-            distance = self.entries['electrolyte_distance']
-
-            if distance == 0.0:
-                raise ValueError(
-                    "electrolyte_distance must be greater than zero for gcs correction"
-                )
-
-        if correction == 'gcs' or size != 0:
-            mode = self._get_value('electrolyte_mode')
-            method = self._get_value('electrolyte_deriv_method')
-
-            # non-ionic interfaces
-            if mode in {'electronic', 'full', 'system'}:
-                if 'mem' in method:
-                    raise ValueError(
-                        "Only 'fft' or 'chain' are allowed with electronic interfaces"
-                    )
-
-            # ionic interface
-            elif mode == 'ionic':
-                if method == 'chain':
-                    raise ValueError(
-                        "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
-                    )
-
-        # problem/solver validation
-        problem = self._get_value('problem')
-        solver = self._get_value('solver')
-        inner_solver = self._get_value('inner_solver')
-
-        if problem == 'generalized':
-
-            if solver == 'direct' or inner_solver == 'direct':
-                raise ValueError(
-                    "Cannot use a direct solver for the Generalized Poisson eq."
-                )
-
-        elif "pb" in problem:
-
-            if "lin" in problem:
-                solvers = {'none', 'cg', 'sd'}
-
-                if solver not in solvers or inner_solver not in solvers:
-                    raise ValueError(
-                        "Only gradient-based solver for the linearized Poisson-Boltzmann eq."
-                    )
-
-                if correction != 'parabolic':
-                    raise ValueError(
-                        "Linearized-PB problem requires parabolic pbc correction"
-                    )
-
-            else:
-                solvers = {'direct', 'cg', 'sd'}
-
-                if solver in solvers or inner_solver in solvers:
-                    raise ValueError(
-                        "No direct or gradient-based solver for the full Poisson-Boltzmann eq."
-                    )
-
-        problems = {'pb, modpb, generalized'}
-
-        if inner_solver != 'none' and problem not in problems:
-            raise ValueError("Only pb or modpb problems allow inner solver")
-
-    def _get_entry(self, option: str) -> Union[Entry, ArrayEntry]:
-        """Return entry object if exists."""
-        entry = self.entries.get(option)
-        if entry is None: raise ValueError(f"Missing {option} entry")
-        return entry
-
-    def _get_value(self, option: str) -> Any:
-        """Return entry value if exists."""
-        entry = self.entries.get(option)
-        if entry is None: raise ValueError(f"Missing {option} entry")
-        return entry.value
+            try:
+                if int(g) != group:
+                    functions.append([])
+                    group += 1
+            except:
+                raise ValueError("regions group must be an integer")
+
+            func_dict = {
+                'static': eps,
+                'optical': opt,
+                'position': [x, y, z],
+                'spread': s,
+                'width': w,
+                'dim': d,
+                'axis': a,
+            }
+
+            functions[group - 1].append(RegionModel(**func_dict))
+
+        processed_data = {'units': data['units'], 'functions': functions}
+
+        regions = RegionsContainer(**processed_data)
+
+        return regions
+
+
+def by_group(x):
+    """
+    Sort card functions by group.
+    """
+    return x[0]
 
 
 def main():
 
-    my_input = Input(natoms=5)
+    my_input = Input(natoms=5, filename='test.ini').params
 
-    my_input.read(filename='test.ini')
+    for k, v in my_input:
+        if any(k == s for s in ('externals', 'regions')): continue
+        print(f"{k} = {v}")
 
-    params = my_input.to_dict()
-    del my_input
+    externals = my_input.externals
 
-    for k, v in params.items():
+    print(f"\nexternals | units = {externals.units}")
 
-        if k in {'externals', 'regions'}:
-            print(f"\n{k.upper()}")
-            for i, l in enumerate(v):
-                print(f"\nGROUP {i + 1}")
-                for d in l:
-                    print(d)
+    for group in range(len(externals.functions)):
+        print(f"\ngroup = {group + 1}\n")
 
-        else:
-            print(f"{k} = {v}")
+        for function in externals.functions[group]:
+            print(function)
+
+    regions = my_input.regions
+
+    print(f"\nregions | units = {regions.units}")
+
+    for group in range(len(regions.functions)):
+        print(f"\ngroup = {group + 1}\n")
+
+        for function in regions.functions[group]:
+            print(function)
+
+
+if __name__ == '__main__':
+    main()
