@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from typing import Any, Dict, List
 from pathlib import Path
 from configparser import ConfigParser
@@ -140,7 +141,27 @@ def by_group(x):
 
 def main():
 
-    my_input = Input(natoms=5, filename='test.ini').params
+    parser = ArgumentParser()
+
+    parser.add_argument(
+        '-n',
+        metavar='natoms',
+        help='Number of atoms',
+        type=int,
+        default=1,
+    )
+
+    parser.add_argument(
+        '-f',
+        metavar='filename',
+        help='Input file name',
+        type=str,
+        default='test.ini',
+    )
+
+    natoms, filename = vars(parser.parse_args()).values()
+
+    my_input = Input(natoms=natoms, filename=filename).params
 
     for k, v in my_input:
         if any(k == s for s in ('externals', 'regions')): continue
