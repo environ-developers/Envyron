@@ -111,6 +111,8 @@ class EnvironInputModel(BaseModel):
     Model for Environ input.
     """
 
+    natoms = 1
+
     # Environ section
 
     debug = False
@@ -218,6 +220,15 @@ class EnvironInputModel(BaseModel):
         cls.natoms = natoms
 
     # Environ section
+
+    @validator(
+        'natoms',
+        pre=True,
+    )
+    def _check_number_of_atoms(cls, value: int) -> int:
+        """Verify the number of atoms is non-zero."""
+        assert value != 0, f"number of atoms must not be zero"
+        return value
 
     @validator(
         'nrep',

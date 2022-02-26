@@ -17,7 +17,7 @@ class Input:
     Class for reading, casting, and validating Environ's input parameters.
     """
 
-    def __init__(self, natoms: int = 1, filename: str = 'environ.ini') -> None:
+    def __init__(self, natoms: int, filename: str = 'environ.ini') -> None:
 
         # set the number of atoms in the validation model
         EnvironInputModel.set_number_of_atoms(natoms)
@@ -25,6 +25,7 @@ class Input:
         # get input parameters from file
         self.file = Path(filename).absolute()
         param_dict = self._get_input_param_dict()
+        param_dict.update({'natoms': natoms})
 
         self.params = EnvironInputModel(**param_dict)
 
