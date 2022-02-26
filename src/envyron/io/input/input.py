@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 import ruamel.yaml as yaml
 
-from .validation import EnvironInputModel
+from .validation import InputModel
 
 
 class Input:
@@ -12,18 +12,13 @@ class Input:
 
     def __init__(self, natoms: int, filename: str = 'environ.ini') -> None:
 
-        # set the number of atoms in the validation model
-        EnvironInputModel.set_number_of_atoms(natoms)
-
-        # get input parameters from file
-        self.file = Path(filename).absolute()
-
+        # read input file
+        self.file = Path(filename).absolute()        
         with open(self.file) as f:
             param_dict: dict = yaml.safe_load(f)
 
-        param_dict.update({'natoms': natoms})
-
-        self.params = EnvironInputModel(**param_dict)
+        # validate and set input parameters
+        self.params = InputModel(natoms, **param_dict)
 
 
 def main():
@@ -50,29 +45,28 @@ def main():
 
     my_input = Input(natoms=natoms, filename=filename).params
 
-    for k, v in my_input:
-        if any(k == s for s in ('externals', 'regions')): continue
-        print(f"{k} = {v}")
+    for section in my_input:
+        name, fields = section
 
-    externals = my_input.externals
+        print(f"\n{name}\n")
 
-    print(f"\nexternals | units = {externals.units}")
+        for field in fields:
+            name, value = field
 
-    for group in range(len(externals.functions)):
-        print(f"\ngroup = {group + 1}\n")
+            if name == 'functions':
 
-        for function in externals.functions[group]:
-            print(function)
+                print()
 
-    regions = my_input.regions
+                for i, group in enumerate(value, 1):
+                    print(f"group {i}")
 
-    print(f"\nregions | units = {regions.units}")
+                    for function in group:
+                        print(function)
 
-    for group in range(len(regions.functions)):
-        print(f"\ngroup = {group + 1}\n")
+                    print()
 
-        for function in regions.functions[group]:
-            print(function)
+            else:
+                print(f"{name} = {value}")
 
 
 if __name__ == '__main__':
