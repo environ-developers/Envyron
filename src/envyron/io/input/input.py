@@ -10,7 +10,7 @@ class Input:
     Class for reading, casting, and validating Environ's input parameters.
     """
 
-    def __init__(self, natoms: int, filename: str = 'environ.ini') -> None:
+    def __init__(self, natoms: int, filename: str = 'environ.yml') -> None:
 
         # read input file
         self.file = Path(filename).absolute()        
@@ -38,7 +38,7 @@ def main():
         metavar='filename',
         help='Input file name',
         type=str,
-        default='test.ini',
+        default='test.yml',
     )
 
     natoms, filename = vars(parser.parse_args()).values()
