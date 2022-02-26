@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 from typing_extensions import TypeAlias
 from pydantic import BaseModel, validator
-from pydantic.fields import ModelField
+from pydantic_yaml import YamlModelMixin
 
 IntFloat: TypeAlias = Union[int, float]
 
 
-class CardModel(BaseModel):
+class CardModel(YamlModelMixin, BaseModel):
     """
     Model for card input.
     """
@@ -74,7 +74,7 @@ class RegionModel(CardModel):
         return value
 
 
-class CardContainer(BaseModel):
+class CardContainer(YamlModelMixin, BaseModel):
     """
     Container for card functions.
     """
@@ -106,7 +106,7 @@ class RegionsContainer(CardContainer):
     functions: List[List[RegionModel]] = []
 
 
-class EnvironInputModel(BaseModel):
+class EnvironInputModel(YamlModelMixin, BaseModel):
     """
     Model for Environ input.
     """
@@ -239,24 +239,20 @@ class EnvironInputModel(BaseModel):
         'solvationrad',
         pre=True,
     )
-    def _split_string(cls, value: str) -> List[str]:
-        """Preprocess string into a list of values."""
-        if ' ' in value: return value.split()
-        return [value]
+    def _vectorize(cls, value: IntFloat) -> List[IntFloat]:
+        """Cast value as list."""
+        if not isinstance(value, list): value = [value]
+        return value
 
     @validator(
         'nrep',
         'system_pos',
         pre=True,
     )
-    def _adjust_vector_size(
-        cls,
-        value: List[str],
-        field: ModelField,
-    ) -> List[str]:
+    def _adjust_vector_size(cls, value: List[IntFloat]) -> List[IntFloat]:
         """Scale vector input to 3D."""
         if len(value) == 1: value = value * 3
-        assert len(value) == 3, f"{field.name} array size should be 3"
+        assert len(value) == 3, "array size should be 3"
         return value
 
     @validator(
@@ -265,15 +261,11 @@ class EnvironInputModel(BaseModel):
         'solvationrad',
         pre=True,
     )
-    def _adjust_to_natoms(
-        cls,
-        value: List[str],
-        field: ModelField,
-    ) -> List[str]:
+    def _adjust_to_natoms(cls, value: List[IntFloat]) -> List[IntFloat]:
         """Scale ion input arrays to size of number of atoms."""
         if len(value) == 1 and cls.natoms != 1: value = value * cls.natoms
         assert len(value) == cls.natoms, \
-            f"{field.name} array size not equal to number of atoms"
+            "array size not equal to number of atoms"
         return value
 
     @validator(
