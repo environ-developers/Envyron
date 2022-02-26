@@ -1,4 +1,4 @@
-from .validation import InputModel as InputModel
+from .base import InputModel as InputModel
 from typing import Any
 
 class Input:

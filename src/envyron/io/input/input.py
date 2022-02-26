@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 import ruamel.yaml as yaml
 
-from .validation import InputModel
+from .base import InputModel
 
 
 class Input:
