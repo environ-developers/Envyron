@@ -29,7 +29,8 @@ class Input:
         if not Path(filename).exists():
             raise FileNotFoundError(f"Missing {filename} in working directory")
 
-        self.parser.read(filename)
+        self.file = Path(filename).absolute()
+        self.parser.read(self.file)
 
         self._process_user_input()
 
@@ -567,14 +568,9 @@ class Input:
 
 def main():
 
-    natoms = 5
+    my_input = Input(natoms=5)
 
-    my_input = Input(natoms)
-
-    file = Path(__file__).parent.joinpath('test.ini')
-
-    if file.exists():
-        my_input.read(file)
+    my_input.read(filename='test.ini')
 
     params = my_input.to_dict()
     del my_input
