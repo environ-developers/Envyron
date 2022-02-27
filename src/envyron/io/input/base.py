@@ -117,20 +117,8 @@ class ControlModel(YamlModelMixin, BaseModel):
     nrep: List[int] = [0, 0, 0]
     need_electrostatic = False
 
-    @validator(
-        'nrep',
-        pre=True,
-    )
-    def _vectorize(cls, value: IntFloat) -> List[IntFloat]:
-        """Cast value as list."""
-        if not isinstance(value, list): value = [value]
-        return value
-
-    @validator(
-        'nrep',
-        pre=True,
-    )
-    def _adjust_vector_size(cls, value: List[IntFloat]) -> List[IntFloat]:
+    @validator('nrep')
+    def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]:
         """Scale vector input to 3D."""
         if len(value) == 1: value = value * 3
         assert len(value) == 3, "array size should be 3"
@@ -213,17 +201,6 @@ class IonsModel(YamlModelMixin, BaseModel):
         'atomicspread',
         'corespread',
         'solvationrad',
-        pre=True,
-    )
-    def _vectorize(cls, value: IntFloat) -> List[IntFloat]:
-        """Cast value as list."""
-        if not isinstance(value, list): value = [value]
-        return value
-
-    @validator(
-        'atomicspread',
-        'corespread',
-        'solvationrad',
         each_item=True,
     )
     def _ge_zero_many(cls, value: IntFloat) -> IntFloat:
@@ -241,20 +218,8 @@ class SystemModel(YamlModelMixin, BaseModel):
     axis = 3
     pos: List[float] = [0.0, 0.0, 0.0]
 
-    @validator(
-        'pos',
-        pre=True,
-    )
-    def _vectorize(cls, value: IntFloat) -> List[IntFloat]:
-        """Cast value as list."""
-        if not isinstance(value, list): value = [value]
-        return value
-
-    @validator(
-        'pos',
-        pre=True,
-    )
-    def _adjust_vector_size(cls, value: List[IntFloat]) -> List[IntFloat]:
+    @validator('pos')
+    def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]:
         """Scale vector input to 3D."""
         if len(value) == 1: value = value * 3
         assert len(value) == 3, "array size should be 3"
@@ -298,15 +263,6 @@ class ElectrolyteModel(YamlModelMixin, BaseModel):
     tbeta = 4.8
     alpha = 1.0
     softness = 0.5
-
-    @validator(
-        'formula',
-        pre=True,
-    )
-    def _vectorize(cls, value: IntFloat) -> List[IntFloat]:
-        """Cast value as list."""
-        if not isinstance(value, list): value = [value]
-        return value
 
     @validator(
         'spread',
