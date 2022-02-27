@@ -48,25 +48,25 @@ def main():
     for section in my_input:
         name, fields = section
 
-        print(f"\n{name}\n")
+        if fields:
 
-        for field in fields:
-            name, value = field
+            print(f"\n{name}\n")
 
-            if name == 'functions':
+            for field in fields:
+                name, value = field
 
-                print()
+                if name == 'functions':
 
-                for i, group in enumerate(value, 1):
-                    print(f"group {i}")
+                    for i, group in enumerate(value, 1):
+                        print(f"\ngroup {i}")
 
-                    for function in group:
-                        print(function)
+                        for function in group:
+                            print(function)
 
-                    print()
+                else:
+                    print(f"{name} = {value}")
 
-            else:
-                print(f"{name} = {value}")
+    print()
 
 
 if __name__ == '__main__':
