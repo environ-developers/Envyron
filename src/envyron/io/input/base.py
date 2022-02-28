@@ -1,9 +1,18 @@
 from typing import Any, Dict, List, Optional, Union
 from typing_extensions import TypeAlias
-from pydantic import BaseModel, validator
+from pydantic import validator, BaseModel as PydanticBaseModel
 from pydantic_yaml import YamlModelMixin
 
 IntFloat: TypeAlias = Union[int, float]
+
+
+class BaseModel(PydanticBaseModel):
+    """
+    Class for global configuration of validation mechanics.
+    """
+
+    class Config:
+        validate_assignment = True
 
 
 class CardModel(YamlModelMixin, BaseModel):
