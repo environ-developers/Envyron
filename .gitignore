@@ -8,6 +8,7 @@ venv
 *test*.yml
 *test*.yaml
 *test*.json
+*test*.ipynb
 
 # build files
 build
