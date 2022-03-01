@@ -1,9 +1,34 @@
-from typing import Any, Dict, List, Optional, Union
-from typing_extensions import TypeAlias
-from pydantic import validator, BaseModel as PydanticBaseModel
+from typing import Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Annotated
+
+from pydantic import (
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveFloat,
+    PositiveInt,
+    confloat,
+    conint,
+    conlist,
+    validator,
+    BaseModel as PydanticBaseModel,
+)
 from pydantic_yaml import YamlModelMixin
 
-IntFloat: TypeAlias = Union[int, float]
+# type aliases/variable
+IntFloat = Union[int, float]
+IntGT1 = Annotated[int, conint(gt=1)]
+IntVector = Annotated[List[int], conlist(int, min_items=1, max_items=3)]
+FloatGE1 = Annotated[float, confloat(ge=1)]
+FloatList = Annotated[List[float], conlist(float, min_items=1)]
+FloatVector = Annotated[List[float], conlist(float, min_items=1, max_items=3)]
+Dimensions = Annotated[int, conint(ge=0, le=3)]
+Axis = Annotated[int, conint(ge=1, le=3)]
+
+
+def _valid_option(value: str, valid: Tuple[str, ...]) -> str:
+    """Check that value is a valid option."""
+    assert any(value == v for v in valid), f"value is not one of {valid}"
+    return value
 
 
 class BaseModel(PydanticBaseModel):
@@ -20,21 +45,9 @@ class CardModel(YamlModelMixin, BaseModel):
     Model for card input.
     """
     pos: List[float] = [0.0, 0.0, 0.0]
-    spread = 0.5
-    dim = 0
-    axis = 3
-
-    @validator('dim')
-    def valid_dimension(cls, value: int) -> int:
-        """Check that dimensions are reasonable (0<=>3)."""
-        assert 0 <= value <= 3, "dimensions out of range (0<=dim<=3)"
-        return value
-
-    @validator('axis')
-    def valid_axis(cls, value: int) -> int:
-        """Check that axis is reasonable (1<=>3)."""
-        assert 1 <= value <= 3, "axis out of range (1<=axis<=3)"
-        return value
+    spread: NonNegativeFloat = 0.5
+    dim: Dimensions = 0
+    axis: Axis = 3
 
 
 class ExternalModel(CardModel):
@@ -49,38 +62,14 @@ class ExternalModel(CardModel):
         assert value != 0, "must be non-zero"
         return value
 
-    @validator('spread')
-    def ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
 
 class RegionModel(CardModel):
     """
     Model for a single region function.
     """
-    static = 1.0
-    optical = 1.0
-    width = 0.0
-
-    @validator(
-        'spread',
-        'width',
-    )
-    def ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator(
-        'static',
-        'optical',
-    )
-    def ge_one(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to one."""
-        assert value >= 1, "must be greater than or equal to one"
-        return value
+    static: FloatGE1 = 1.0
+    optical: FloatGE1 = 1.0
+    width: NonNegativeFloat = 0.0
 
 
 class CardContainer(YamlModelMixin, BaseModel):
@@ -96,8 +85,7 @@ class CardContainer(YamlModelMixin, BaseModel):
             'bohr',
             'angstrom',
         )
-        assert any(value == v for v in valid), "units must be bohr or angstrom"
-        return value
+        return _valid_option(value, valid)
 
 
 class ExternalsContainer(CardContainer):
@@ -120,10 +108,10 @@ class ControlModel(YamlModelMixin, BaseModel):
     """
     debug = False
     restart = False
-    verbosity = 0
-    threshold = 0.1
-    nskip = 1
-    nrep: List[int] = [0, 0, 0]
+    verbosity: NonNegativeInt = 0
+    threshold: NonNegativeFloat = 0.1
+    nskip: NonNegativeInt = 1
+    nrep: IntVector = [0, 0, 0]
     need_electrostatic = False
 
     @validator('nrep')
@@ -131,16 +119,6 @@ class ControlModel(YamlModelMixin, BaseModel):
         """Scale vector input to 3D."""
         if len(value) == 1: value = value * 3
         assert len(value) == 3, "array size should be 3"
-        return value
-
-    @validator(
-        'verbosity',
-        'threshold',
-        'nskip',
-    )
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
         return value
 
     @validator(
@@ -158,31 +136,12 @@ class EnvironmentModel(YamlModelMixin, BaseModel):
     Model for environment parameters.
     """
     type = 'input'
-    surface_tension = 0.0
+    surface_tension: NonNegativeFloat = 0.0
     pressure = 0.0
-    confine = 0.0
-    static_permittivity = 1.0
-    optical_permittivity = 1.0
-    temperature = 300.0
-
-    @validator(
-        'surface_tension',
-        'confine',
-        'temperature',
-    )
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator(
-        'static_permittivity',
-        'optical_permittivity',
-    )
-    def _ge_one(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to one."""
-        assert value >= 1, "must be greater than or equal to one"
-        return value
+    confine: NonNegativeFloat = 0.0
+    static_permittivity: FloatGE1 = 1.0
+    optical_permittivity: FloatGE1 = 1.0
+    temperature: NonNegativeFloat = 300.0
 
     @validator('type')
     def _valid_environment_type(cls, value: str) -> str:
@@ -194,17 +153,16 @@ class EnvironmentModel(YamlModelMixin, BaseModel):
             'water-cation',
             'water-anion',
         )
-        assert any(value == v for v in valid), "unexpected environment type"
-        return value
+        return _valid_option(value, valid)
 
 
 class IonsModel(YamlModelMixin, BaseModel):
     """
     Model for ions parameters.
     """
-    atomicspread: List[float] = [0.5]
-    corespread: List[float] = [0.5]
-    solvationrad: List[float] = [0.0]
+    atomicspread: FloatList = [0.5]
+    corespread: FloatList = [0.5]
+    solvationrad: FloatList = [0.0]
 
     @validator(
         'atomicspread',
@@ -222,34 +180,16 @@ class SystemModel(YamlModelMixin, BaseModel):
     """
     Model for system parameters.
     """
-    ntyp = 0
-    dim = 0
-    axis = 3
-    pos: List[float] = [0.0, 0.0, 0.0]
+    ntyp: NonNegativeInt = 0
+    dim: Dimensions = 0
+    axis: Axis = 3
+    pos: FloatVector = [0.0, 0.0, 0.0]
 
     @validator('pos')
     def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]:
         """Scale vector input to 3D."""
         if len(value) == 1: value = value * 3
         assert len(value) == 3, "array size should be 3"
-        return value
-
-    @validator('ntyp')
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator('dim')
-    def _valid_dimension(cls, value: int) -> int:
-        """Check that the dimensions are reasonable (0<=>3)."""
-        assert 0 <= value <= 3, "dimensions out of range (0<=dim<=3)"
-        return value
-
-    @validator('axis')
-    def _valid_axis(cls, value: int) -> int:
-        """Check that the axis is reasonable (1<=>3)."""
-        assert 1 <= value <= 3, "axis out of range (1<=axis<=3)"
         return value
 
 
@@ -261,161 +201,17 @@ class ElectrolyteModel(YamlModelMixin, BaseModel):
     mode = 'electronic'
     entropy = 'full'
     deriv_method = 'default'
-    concentration = 0.0
+    concentration: NonNegativeFloat = 0.0
     formula: Optional[List[int]] = None
-    cionmax = 0.0
-    rion = 0.0
-    distance = 0.0
-    spread = 0.5
-    rhomax = 5e-3
-    rhomin = 1e-4
-    tbeta = 4.8
-    alpha = 1.0
-    softness = 0.5
-
-    @validator(
-        'spread',
-        'softness',
-    )
-    def _gt_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than zero."""
-        assert value > 0, "must be greater than zero"
-        return value
-
-    @validator(
-        'concentration',
-        'cionmax',
-        'rion',
-        'distance',
-        'rhomax',
-        'rhomin',
-        'tbeta',
-        'alpha',
-    )
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator('mode')
-    def _valid_mode(cls, value: IntFloat) -> IntFloat:
-        """Check value against acceptable solvent/electrolyte modes."""
-        valid = (
-            'electronic',
-            'ionic',
-            'full',
-            'system',
-        )
-        assert any(value == v for v in valid), "unexpected electrolyte mode"
-        return value
-
-    @validator('deriv_method')
-    def _valid_deriv_method(cls, value: str) -> str:
-        """Check value against acceptable derivative methods."""
-        valid = (
-            'default',
-            'fft',
-            'chain',
-            'highmen',
-            'lowmem',
-        )
-        assert any(value == v for v in valid), "unexpected derivative method"
-        return value
-
-    @validator('entropy')
-    def _valid_entropy(cls, value: str) -> str:
-        """Check value against acceptable electrolyte entropy schemes."""
-        valid = (
-            'ions',
-            'full',
-        )
-        assert any(value == v for v in valid), "unexpected entropy scheme"
-        return value
-
-
-class SemiconductorModel(YamlModelMixin, BaseModel):
-    """
-    Model for semiconductor parameters.
-    """
-    permittivity = 1.0
-    carrier_density = 0.0
-    distance = 0.0
-    spread = 0.5
-
-    @validator('spread')
-    def _gt_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than zero."""
-        assert value > 0, "must be greater than zero"
-        return value
-
-    @validator(
-        'carrier_density',
-        'distance',
-    )
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-
-class SolventModel(YamlModelMixin, BaseModel):
-    """
-    Model for solvent parameters.
-    """
-    mode = 'electronic'
-    radius_mode = 'uff'
-    deriv_method = 'default'
-    deriv_core = 'fft'
-    distance = 1.0
-    spread = 0.5
-    radius = 0.0
-    alpha = 1.0
-    softness = 0.5
-    stype = 2
-    rhomax = 5e-3
-    rhomin = 1e-4
-    tbeta = 4.8
-    radial_scale = 2.0
-    radial_spread = 0.5
-    filling_threshold = 0.825
-    filling_spread = 0.02
-
-    @validator(
-        'alpha',
-        'softness',
-        'distance',
-        'spread',
-        'radial_spread',
-        'filling_threshold',
-        'filling_spread',
-    )
-    def _gt_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than zero."""
-        assert value > 0, "must be greater than zero"
-        return value
-
-    @validator(
-        'rhomax',
-        'rhomin',
-        'tbeta',
-        'radius',
-    )
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator('radial_scale')
-    def _ge_one(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to one."""
-        assert value >= 1, "must be greater than or equal to one"
-        return value
-
-    @validator('stype')
-    def _valid_switching_function_type(cls, value: int) -> int:
-        """Check that switching function type is valid."""
-        assert 0 <= value <= 2, "stype out of range (0<=stype<=0)"
-        return value
+    cionmax: NonNegativeFloat = 0.0
+    rion: NonNegativeFloat = 0.0
+    distance: NonNegativeFloat = 0.0
+    spread: PositiveFloat = 0.5
+    rhomax: NonNegativeFloat = 5e-3
+    rhomin: NonNegativeFloat = 1e-4
+    tbeta: NonNegativeFloat = 4.8
+    alpha: NonNegativeFloat = 1.0
+    softness: PositiveFloat = 0.5
 
     @validator('mode')
     def _valid_mode(cls, value: str) -> str:
@@ -426,8 +222,7 @@ class SolventModel(YamlModelMixin, BaseModel):
             'full',
             'system',
         )
-        assert any(value == v for v in valid), "unexpected solvent mode"
-        return value
+        return _valid_option(value, valid)
 
     @validator('deriv_method')
     def _valid_deriv_method(cls, value: str) -> str:
@@ -439,8 +234,72 @@ class SolventModel(YamlModelMixin, BaseModel):
             'highmen',
             'lowmem',
         )
-        assert any(value == v for v in valid), "unexpected derivative method"
-        return value
+        return _valid_option(value, valid)
+
+    @validator('entropy')
+    def _valid_entropy(cls, value: str) -> str:
+        """Check value against acceptable electrolyte entropy schemes."""
+        valid = (
+            'ions',
+            'full',
+        )
+        return _valid_option(value, valid)
+
+
+class SemiconductorModel(YamlModelMixin, BaseModel):
+    """
+    Model for semiconductor parameters.
+    """
+    permittivity: FloatGE1 = 1.0
+    carrier_density: NonNegativeFloat = 0.0
+    distance: NonNegativeFloat = 0.0
+    spread: PositiveFloat = 0.5
+
+
+class SolventModel(YamlModelMixin, BaseModel):
+    """
+    Model for solvent parameters.
+    """
+    mode = 'electronic'
+    radius_mode = 'uff'
+    deriv_method = 'default'
+    deriv_core = 'fft'
+    distance: PositiveFloat = 1.0
+    spread: PositiveFloat = 0.5
+    radius: NonNegativeFloat = 0.0
+    alpha: PositiveFloat = 1.0
+    softness: PositiveFloat = 0.5
+    stype: Annotated[int, conint(ge=0, le=2)] = 2
+    rhomax: NonNegativeFloat = 5e-3
+    rhomin: NonNegativeFloat = 1e-4
+    tbeta: NonNegativeFloat = 4.8
+    radial_scale: FloatGE1 = 2.0
+    radial_spread: PositiveFloat = 0.5
+    filling_threshold: PositiveFloat = 0.825
+    filling_spread: PositiveFloat = 0.02
+
+    @validator('mode')
+    def _valid_mode(cls, value: str) -> str:
+        """Check value against acceptable solvent/electrolyte modes."""
+        valid = (
+            'electronic',
+            'ionic',
+            'full',
+            'system',
+        )
+        return _valid_option(value, valid)
+
+    @validator('deriv_method')
+    def _valid_deriv_method(cls, value: str) -> str:
+        """Check value against acceptable derivative methods."""
+        valid = (
+            'default',
+            'fft',
+            'chain',
+            'highmen',
+            'lowmem',
+        )
+        return _valid_option(value, valid)
 
     @validator('radius_mode')
     def _valid_radius_mode(cls, value: str) -> str:
@@ -451,15 +310,13 @@ class SolventModel(YamlModelMixin, BaseModel):
             'uff',
             'muff',
         )
-        assert any(value == v for v in valid), "unexpected radius mode"
-        return value
+        return _valid_option(value, valid)
 
     @validator('deriv_core')
     def _valid_derivatives_core(cls, value: str) -> str:
         """Check value against acceptable derivatives cores."""
         valid = ('fft', )
-        assert any(value == v for v in valid), "unexpected derivatives core"
-        return value
+        return _valid_option(value, valid)
 
 
 class ElectrostaticsModel(YamlModelMixin, BaseModel):
@@ -467,51 +324,24 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
     Model for numerical parameters.
     """
     problem = 'none'
-    tol = 1e-5
+    tol: PositiveFloat = 1e-5
     solver = 'none'
     auxiliary = 'none'
     step_type = 'optimal'
-    step = 0.3
-    maxstep = 200
+    step: PositiveFloat = 0.3
+    maxstep: IntGT1 = 200
     mix_type = 'linear'
-    ndiis = 1
-    mix = 0.5
+    ndiis: PositiveInt = 1
+    mix: PositiveFloat = 0.5
     preconditioner = 'sqrt'
     screening_type = 'none'
-    screening = 0.0
+    screening: NonNegativeFloat = 0.0
     core = 'fft'
     inner_solver = 'none'
     inner_core = 'fft'
-    inner_tol = 1e-10
-    inner_maxstep = 200
-    inner_mix = 0.5
-
-    @validator(
-        'tol',
-        'step',
-        'ndiis',
-        'inner_tol',
-        'inner_mix',
-    )
-    def _gt_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than zero."""
-        assert value > 0, "must be greater than zero"
-        return value
-
-    @validator('screening')
-    def _ge_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
-
-    @validator(
-        'maxstep',
-        'inner_maxstep',
-    )
-    def _gt_one(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than one."""
-        assert value > 1, f"{value} must be greater than one"
-        return value
+    inner_tol: PositiveFloat = 1e-10
+    inner_maxstep: IntGT1 = 200
+    inner_mix: PositiveFloat = 0.5
 
     @validator('problem')
     def _valid_problem(cls, value: str) -> str:
@@ -525,8 +355,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'linpb',
             'linmodpb',
         )
-        assert any(value == v for v in valid), "unexpected problem"
-        return value
+        return _valid_option(value, valid)
 
     @validator('solver')
     def _valid_solver(cls, value: str) -> str:
@@ -540,8 +369,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'nested',
             'direct',
         )
-        assert any(value == v for v in valid), "unexpected solver"
-        return value
+        return _valid_option(value, valid)
 
     @validator('auxiliary')
     def _valid_auxiliary_scheme(cls, value: str) -> str:
@@ -551,8 +379,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'full',
             'ioncc',
         )
-        assert any(value == v for v in valid), "unexpected auxiliary scheme"
-        return value
+        return _valid_option(value, valid)
 
     @validator('step_type')
     def _valid_step_type(cls, value: str) -> str:
@@ -562,8 +389,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'input',
             'random',
         )
-        assert any(value == v for v in valid), "unexpected step type"
-        return value
+        return _valid_option(value, valid)
 
     @validator('mix_type')
     def _valid_mix_type(cls, value: str) -> str:
@@ -574,8 +400,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'diis',
             'broyden',
         )
-        assert any(value == v for v in valid), "unexpected mix type"
-        return value
+        return _valid_option(value, valid)
 
     @validator('preconditioner')
     def _valid_preconditioner(cls, value: str) -> str:
@@ -584,8 +409,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'sqrt',
             'left',
         )
-        assert any(value == v for v in valid), "unexpected preconditioner"
-        return value
+        return _valid_option(value, valid)
 
     @validator('screening_type')
     def _valid_screening_type(cls, value: str) -> str:
@@ -596,8 +420,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'linear',
             'optimal',
         )
-        assert any(value == v for v in valid), "unexpected screening type"
-        return value
+        return _valid_option(value, valid)
 
     @validator(
         'core',
@@ -606,8 +429,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
     def _valid_core(cls, value: str) -> str:
         """Check value against acceptable electrostatic cores."""
         valid = ('fft', )
-        assert any(value == v for v in valid), "unexpected core"
-        return value
+        return _valid_option(value, valid)
 
     @validator('inner_solver')
     def _valid_inner_solver(cls, value: str) -> str:
@@ -620,8 +442,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
             'newton',
             'direct',
         )
-        assert any(value == v for v in valid), "unexpected inner solver"
-        return value
+        return _valid_option(value, valid)
 
 
 class PBCModel(YamlModelMixin, BaseModel):
@@ -630,8 +451,8 @@ class PBCModel(YamlModelMixin, BaseModel):
     """
     correction = 'none'
     core = '1da'
-    dim = 0
-    axis = 3
+    dim: Dimensions = 0
+    axis: Axis = 3
 
     @validator('correction')
     def _valid_correction(cls, value: str) -> str:
@@ -642,27 +463,13 @@ class PBCModel(YamlModelMixin, BaseModel):
             'gcs',
             'ms',
         )
-        assert any(value == v for v in valid), "unexpected correction"
-        return value
+        return _valid_option(value, valid)
 
     @validator('core')
     def _valid_core(cls, value: str) -> str:
         """Check value against acceptable pbc correction cores."""
         valid = ('1da', )
-        assert any(value == v for v in valid), "unexpected pbc core"
-        return value
-
-    @validator('dim')
-    def _valid_dimension(cls, value: int) -> int:
-        """Check that the dimensions are reasonable (0<=>3)."""
-        assert 0 <= value <= 3, "dimensions out of range (0<=dim<=3)"
-        return value
-
-    @validator('axis')
-    def _valid_axis(cls, value: int) -> int:
-        """Check that the axis is reasonable (1<=>3)."""
-        assert 1 <= value <= 3, "axis out of range (1<=axis<=3)"
-        return value
+        return _valid_option(value, valid)
 
 
 class InputModel(YamlModelMixin, BaseModel):

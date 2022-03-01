@@ -1,9 +1,18 @@
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel, NonNegativeFloat as NonNegativeFloat, NonNegativeInt as NonNegativeInt, PositiveFloat as PositiveFloat, PositiveInt as PositiveInt
 from pydantic_yaml import YamlModelMixin
-from typing import Any, Dict, List, Optional
-from typing_extensions import TypeAlias
+from typing import Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Annotated
 
-IntFloat: TypeAlias
+IntFloat = Union[int, float]
+IntGT1: Any
+IntVector: Any
+FloatGE1: Any
+FloatList: Any
+FloatVector: Any
+Dimensions: Any
+Axis: Any
+
+def _valid_option(value: str, valid: Tuple[str, ...]) -> str: ...
 
 class BaseModel(PydanticBaseModel):
     class Config:
@@ -11,23 +20,18 @@ class BaseModel(PydanticBaseModel):
 
 class CardModel(YamlModelMixin, BaseModel):
     pos: List[float]
-    spread: float
-    dim: int
-    axis: int
-    def valid_dimension(cls, value: int) -> int: ...
-    def valid_axis(cls, value: int) -> int: ...
+    spread: NonNegativeFloat
+    dim: Dimensions
+    axis: Axis
 
 class ExternalModel(CardModel):
     charge: float
     def ne_zero(cls, value: IntFloat) -> IntFloat: ...
-    def ge_zero(cls, value: IntFloat) -> IntFloat: ...
 
 class RegionModel(CardModel):
-    static: float
-    optical: float
-    width: float
-    def ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def ge_one(cls, value: IntFloat) -> IntFloat: ...
+    static: FloatGE1
+    optical: FloatGE1
+    width: NonNegativeFloat
 
 class CardContainer(YamlModelMixin, BaseModel):
     units: str
@@ -42,95 +46,81 @@ class RegionsContainer(CardContainer):
 class ControlModel(YamlModelMixin, BaseModel):
     debug: bool
     restart: bool
-    verbosity: int
-    threshold: float
-    nskip: int
-    nrep: List[int]
+    verbosity: NonNegativeInt
+    threshold: NonNegativeFloat
+    nskip: NonNegativeInt
+    nrep: IntVector
     need_electrostatic: bool
     def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
     def _ge_zero_many(cls, value: IntFloat) -> IntFloat: ...
 
 class EnvironmentModel(YamlModelMixin, BaseModel):
     type: str
-    surface_tension: float
+    surface_tension: NonNegativeFloat
     pressure: float
-    confine: float
-    static_permittivity: float
-    optical_permittivity: float
-    temperature: float
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_one(cls, value: IntFloat) -> IntFloat: ...
+    confine: NonNegativeFloat
+    static_permittivity: FloatGE1
+    optical_permittivity: FloatGE1
+    temperature: NonNegativeFloat
     def _valid_environment_type(cls, value: str) -> str: ...
 
 class IonsModel(YamlModelMixin, BaseModel):
-    atomicspread: List[float]
-    corespread: List[float]
-    solvationrad: List[float]
+    atomicspread: FloatList
+    corespread: FloatList
+    solvationrad: FloatList
     def _ge_zero_many(cls, value: IntFloat) -> IntFloat: ...
 
 class SystemModel(YamlModelMixin, BaseModel):
-    ntyp: int
-    dim: int
-    axis: int
-    pos: List[float]
+    ntyp: NonNegativeInt
+    dim: Dimensions
+    axis: Axis
+    pos: FloatVector
     def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _valid_dimension(cls, value: int) -> int: ...
-    def _valid_axis(cls, value: int) -> int: ...
 
 class ElectrolyteModel(YamlModelMixin, BaseModel):
     linearized: bool
     mode: str
     entropy: str
     deriv_method: str
-    concentration: float
+    concentration: NonNegativeFloat
     formula: Optional[List[int]]
-    cionmax: float
-    rion: float
-    distance: float
-    spread: float
-    rhomax: float
-    rhomin: float
-    tbeta: float
-    alpha: float
-    softness: float
-    def _gt_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _valid_mode(cls, value: IntFloat) -> IntFloat: ...
+    cionmax: NonNegativeFloat
+    rion: NonNegativeFloat
+    distance: NonNegativeFloat
+    spread: PositiveFloat
+    rhomax: NonNegativeFloat
+    rhomin: NonNegativeFloat
+    tbeta: NonNegativeFloat
+    alpha: NonNegativeFloat
+    softness: PositiveFloat
+    def _valid_mode(cls, value: str) -> str: ...
     def _valid_deriv_method(cls, value: str) -> str: ...
     def _valid_entropy(cls, value: str) -> str: ...
 
 class SemiconductorModel(YamlModelMixin, BaseModel):
-    permittivity: float
-    carrier_density: float
-    distance: float
-    spread: float
-    def _gt_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
+    permittivity: FloatGE1
+    carrier_density: NonNegativeFloat
+    distance: NonNegativeFloat
+    spread: PositiveFloat
 
 class SolventModel(YamlModelMixin, BaseModel):
     mode: str
     radius_mode: str
     deriv_method: str
     deriv_core: str
-    distance: float
-    spread: float
-    radius: float
-    alpha: float
-    softness: float
-    stype: int
-    rhomax: float
-    rhomin: float
-    tbeta: float
-    radial_scale: float
-    radial_spread: float
-    filling_threshold: float
-    filling_spread: float
-    def _gt_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_one(cls, value: IntFloat) -> IntFloat: ...
-    def _valid_switching_function_type(cls, value: int) -> int: ...
+    distance: PositiveFloat
+    spread: PositiveFloat
+    radius: NonNegativeFloat
+    alpha: PositiveFloat
+    softness: PositiveFloat
+    stype: Annotated[int, None]
+    rhomax: NonNegativeFloat
+    rhomin: NonNegativeFloat
+    tbeta: NonNegativeFloat
+    radial_scale: FloatGE1
+    radial_spread: PositiveFloat
+    filling_threshold: PositiveFloat
+    filling_spread: PositiveFloat
     def _valid_mode(cls, value: str) -> str: ...
     def _valid_deriv_method(cls, value: str) -> str: ...
     def _valid_radius_mode(cls, value: str) -> str: ...
@@ -138,27 +128,24 @@ class SolventModel(YamlModelMixin, BaseModel):
 
 class ElectrostaticsModel(YamlModelMixin, BaseModel):
     problem: str
-    tol: float
+    tol: PositiveFloat
     solver: str
     auxiliary: str
     step_type: str
-    step: float
-    maxstep: int
+    step: PositiveFloat
+    maxstep: IntGT1
     mix_type: str
-    ndiis: int
-    mix: float
+    ndiis: PositiveInt
+    mix: PositiveFloat
     preconditioner: str
     screening_type: str
-    screening: float
+    screening: NonNegativeFloat
     core: str
     inner_solver: str
     inner_core: str
-    inner_tol: float
-    inner_maxstep: int
-    inner_mix: float
-    def _gt_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _ge_zero(cls, value: IntFloat) -> IntFloat: ...
-    def _gt_one(cls, value: IntFloat) -> IntFloat: ...
+    inner_tol: PositiveFloat
+    inner_maxstep: IntGT1
+    inner_mix: PositiveFloat
     def _valid_problem(cls, value: str) -> str: ...
     def _valid_solver(cls, value: str) -> str: ...
     def _valid_auxiliary_scheme(cls, value: str) -> str: ...
@@ -172,12 +159,10 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
 class PBCModel(YamlModelMixin, BaseModel):
     correction: str
     core: str
-    dim: int
-    axis: int
+    dim: Dimensions
+    axis: Axis
     def _valid_correction(cls, value: str) -> str: ...
     def _valid_core(cls, value: str) -> str: ...
-    def _valid_dimension(cls, value: int) -> int: ...
-    def _valid_axis(cls, value: int) -> int: ...
 
 class InputModel(YamlModelMixin, BaseModel):
     control: Optional[ControlModel]
