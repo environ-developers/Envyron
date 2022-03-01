@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 import ruamel.yaml as yaml
 
 from .base import InputModel
@@ -13,7 +13,7 @@ class Input:
 
     def __init__(self, natoms: int, filename: Optional[str] = None) -> None:
 
-        self.param_dict = {
+        self.param_dict: Dict[str, Dict[str, Any]] = {
             'control': {},
             'environment': {},
             'ions': {},
