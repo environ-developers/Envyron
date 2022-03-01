@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from typing_extensions import Annotated
 
 from pydantic import (
@@ -14,7 +14,7 @@ from pydantic import (
 )
 from pydantic_yaml import YamlModelMixin
 
-# type aliases/variable
+# numerical type aliases
 IntFloat = Union[int, float]
 IntGT1 = Annotated[int, conint(gt=1)]
 IntVector = Annotated[List[int], conlist(int, min_items=1, max_items=3)]
@@ -24,11 +24,122 @@ FloatVector = Annotated[List[float], conlist(float, min_items=1, max_items=3)]
 Dimensions = Annotated[int, conint(ge=0, le=3)]
 Axis = Annotated[int, conint(ge=1, le=3)]
 
+# literal type aliases
+Environment = Literal[ \
+    'input',
+    'vacuum',
+    'water',
+    'water-cation',
+    'water-anion',
+    ]
 
-def _valid_option(value: str, valid: Tuple[str, ...]) -> str:
-    """Check that value is a valid option."""
-    assert any(value == v for v in valid), f"value is not one of {valid}"
-    return value
+SolventMode = Literal[ \
+    'electronic',
+    'ionic',
+    'full',
+    'system',
+    ]
+
+DerivativeMethod = Literal[ \
+    'default',
+    'fft',
+    'chain',
+    'highmen',
+    'lowmem',
+    ]
+
+EntropyScheme = Literal[ \
+    'ions',
+    'full',
+    ]
+
+
+RadiusMode = Literal[ \
+    'pauling',
+    'bondi',
+    'uff',
+    'muff',
+    ]
+
+DerivativeCore = Literal[ \
+    'fft',
+    ]
+
+
+ElectrostaticProblem = Literal[ \
+    'none',
+    'poisson',
+    'generalized',
+    'pb',
+    'modpb',
+    'linpb',
+    'linmodpb'
+    ]
+
+ElectrostaticSolver = Literal[ \
+    'none',
+    'cg',
+    'sd',
+    'fixed-point',
+    'newton',
+    'nested',
+    'direct',
+    ]
+
+AuxiliaryScheme = Literal[ \
+    'none',
+    'full',
+    'ioncc',
+    ]
+
+StepType = Literal[ \
+    'optimal',
+    'input',
+    'random',
+    ]
+
+MixType = Literal[ \
+    'linear',
+    'anderson',
+    'diis',
+    'broyden',
+    ]
+
+Preconditioner = Literal[ \
+    'sqrt',
+    'left',
+    ]
+
+ScreeningType = Literal[ \
+    'none',
+    'input',
+    'linear',
+    'optimal',
+    ]
+
+ElectrostaticCore = Literal[ \
+    'fft',
+    ]
+
+ElectrostaticInnerSolver = Literal[ \
+    'none',
+    'cg',
+    'sd',
+    'fixed-point',
+    'newton',
+    'direct',
+    ]
+
+PBCCorrection = Literal[ \
+    'none',
+    'parabolic',
+    'gcs',
+    'ms',
+    ]
+
+PBCCore = Literal[ \
+    '1da',
+    ]
 
 
 class BaseModel(PydanticBaseModel):
@@ -76,16 +187,7 @@ class CardContainer(YamlModelMixin, BaseModel):
     """
     Container for card functions.
     """
-    units = 'bohr'
-
-    @validator('units')
-    def valid_units(cls, value: str) -> str:
-        """Check value against acceptable units."""
-        valid = (
-            'bohr',
-            'angstrom',
-        )
-        return _valid_option(value, valid)
+    units: Literal['bohr', 'angstrom'] = 'bohr'
 
 
 class ExternalsContainer(CardContainer):
@@ -135,25 +237,13 @@ class EnvironmentModel(YamlModelMixin, BaseModel):
     """
     Model for environment parameters.
     """
-    type = 'input'
+    type: Environment = 'input'
     surface_tension: NonNegativeFloat = 0.0
     pressure = 0.0
     confine: NonNegativeFloat = 0.0
     static_permittivity: FloatGE1 = 1.0
     optical_permittivity: FloatGE1 = 1.0
     temperature: NonNegativeFloat = 300.0
-
-    @validator('type')
-    def _valid_environment_type(cls, value: str) -> str:
-        """Check value against acceptable environment types."""
-        valid = (
-            'input',
-            'vacuum',
-            'water',
-            'water-cation',
-            'water-anion',
-        )
-        return _valid_option(value, valid)
 
 
 class IonsModel(YamlModelMixin, BaseModel):
@@ -198,9 +288,9 @@ class ElectrolyteModel(YamlModelMixin, BaseModel):
     Model for electrolyte parameters.
     """
     linearized = False
-    mode = 'electronic'
-    entropy = 'full'
-    deriv_method = 'default'
+    mode: SolventMode = 'electronic'
+    entropy: EntropyScheme = 'full'
+    deriv_method: DerivativeMethod = 'default'
     concentration: NonNegativeFloat = 0.0
     formula: Optional[List[int]] = None
     cionmax: NonNegativeFloat = 0.0
@@ -212,38 +302,6 @@ class ElectrolyteModel(YamlModelMixin, BaseModel):
     tbeta: NonNegativeFloat = 4.8
     alpha: NonNegativeFloat = 1.0
     softness: PositiveFloat = 0.5
-
-    @validator('mode')
-    def _valid_mode(cls, value: str) -> str:
-        """Check value against acceptable solvent/electrolyte modes."""
-        valid = (
-            'electronic',
-            'ionic',
-            'full',
-            'system',
-        )
-        return _valid_option(value, valid)
-
-    @validator('deriv_method')
-    def _valid_deriv_method(cls, value: str) -> str:
-        """Check value against acceptable derivative methods."""
-        valid = (
-            'default',
-            'fft',
-            'chain',
-            'highmen',
-            'lowmem',
-        )
-        return _valid_option(value, valid)
-
-    @validator('entropy')
-    def _valid_entropy(cls, value: str) -> str:
-        """Check value against acceptable electrolyte entropy schemes."""
-        valid = (
-            'ions',
-            'full',
-        )
-        return _valid_option(value, valid)
 
 
 class SemiconductorModel(YamlModelMixin, BaseModel):
@@ -260,10 +318,10 @@ class SolventModel(YamlModelMixin, BaseModel):
     """
     Model for solvent parameters.
     """
-    mode = 'electronic'
-    radius_mode = 'uff'
-    deriv_method = 'default'
-    deriv_core = 'fft'
+    mode: SolventMode = 'electronic'
+    radius_mode: RadiusMode = 'uff'
+    deriv_method: DerivativeMethod = 'default'
+    deriv_core: DerivativeCore = 'fft'
     distance: PositiveFloat = 1.0
     spread: PositiveFloat = 0.5
     radius: NonNegativeFloat = 0.0
@@ -278,198 +336,40 @@ class SolventModel(YamlModelMixin, BaseModel):
     filling_threshold: PositiveFloat = 0.825
     filling_spread: PositiveFloat = 0.02
 
-    @validator('mode')
-    def _valid_mode(cls, value: str) -> str:
-        """Check value against acceptable solvent/electrolyte modes."""
-        valid = (
-            'electronic',
-            'ionic',
-            'full',
-            'system',
-        )
-        return _valid_option(value, valid)
-
-    @validator('deriv_method')
-    def _valid_deriv_method(cls, value: str) -> str:
-        """Check value against acceptable derivative methods."""
-        valid = (
-            'default',
-            'fft',
-            'chain',
-            'highmen',
-            'lowmem',
-        )
-        return _valid_option(value, valid)
-
-    @validator('radius_mode')
-    def _valid_radius_mode(cls, value: str) -> str:
-        """Check value against acceptable radius modes."""
-        valid = (
-            'pauling',
-            'bondi',
-            'uff',
-            'muff',
-        )
-        return _valid_option(value, valid)
-
-    @validator('deriv_core')
-    def _valid_derivatives_core(cls, value: str) -> str:
-        """Check value against acceptable derivatives cores."""
-        valid = ('fft', )
-        return _valid_option(value, valid)
-
 
 class ElectrostaticsModel(YamlModelMixin, BaseModel):
     """
     Model for numerical parameters.
     """
-    problem = 'none'
+    problem: ElectrostaticProblem = 'none'
     tol: PositiveFloat = 1e-5
-    solver = 'none'
-    auxiliary = 'none'
-    step_type = 'optimal'
+    solver: ElectrostaticSolver = 'none'
+    auxiliary: AuxiliaryScheme = 'none'
+    step_type: StepType = 'optimal'
     step: PositiveFloat = 0.3
     maxstep: IntGT1 = 200
-    mix_type = 'linear'
+    mix_type: MixType = 'linear'
     ndiis: PositiveInt = 1
     mix: PositiveFloat = 0.5
-    preconditioner = 'sqrt'
-    screening_type = 'none'
+    preconditioner: Preconditioner = 'sqrt'
+    screening_type: ScreeningType = 'none'
     screening: NonNegativeFloat = 0.0
-    core = 'fft'
-    inner_solver = 'none'
-    inner_core = 'fft'
+    core: ElectrostaticCore = 'fft'
+    inner_solver: ElectrostaticInnerSolver = 'none'
+    inner_core: ElectrostaticCore = 'fft'
     inner_tol: PositiveFloat = 1e-10
     inner_maxstep: IntGT1 = 200
     inner_mix: PositiveFloat = 0.5
-
-    @validator('problem')
-    def _valid_problem(cls, value: str) -> str:
-        """Check value against acceptable electrostatic problems."""
-        valid = (
-            'none',
-            'poisson',
-            'generalized',
-            'pb',
-            'modpb',
-            'linpb',
-            'linmodpb',
-        )
-        return _valid_option(value, valid)
-
-    @validator('solver')
-    def _valid_solver(cls, value: str) -> str:
-        """Check value against acceptable electrostatic solvers."""
-        valid = (
-            'none',
-            'cg',
-            'sd',
-            'fixed-point',
-            'newton',
-            'nested',
-            'direct',
-        )
-        return _valid_option(value, valid)
-
-    @validator('auxiliary')
-    def _valid_auxiliary_scheme(cls, value: str) -> str:
-        """Check value against acceptable auxiliary schemes."""
-        valid = (
-            'none',
-            'full',
-            'ioncc',
-        )
-        return _valid_option(value, valid)
-
-    @validator('step_type')
-    def _valid_step_type(cls, value: str) -> str:
-        """Check value against acceptable step types."""
-        valid = (
-            'optimal',
-            'input',
-            'random',
-        )
-        return _valid_option(value, valid)
-
-    @validator('mix_type')
-    def _valid_mix_type(cls, value: str) -> str:
-        """Check value against acceptable mix types."""
-        valid = (
-            'linear',
-            'anderson',
-            'diis',
-            'broyden',
-        )
-        return _valid_option(value, valid)
-
-    @validator('preconditioner')
-    def _valid_preconditioner(cls, value: str) -> str:
-        """Check value against acceptable preconditioners."""
-        valid = (
-            'sqrt',
-            'left',
-        )
-        return _valid_option(value, valid)
-
-    @validator('screening_type')
-    def _valid_screening_type(cls, value: str) -> str:
-        """Check value against acceptable screening types."""
-        valid = (
-            'none',
-            'input',
-            'linear',
-            'optimal',
-        )
-        return _valid_option(value, valid)
-
-    @validator(
-        'core',
-        'inner_core',
-    )
-    def _valid_core(cls, value: str) -> str:
-        """Check value against acceptable electrostatic cores."""
-        valid = ('fft', )
-        return _valid_option(value, valid)
-
-    @validator('inner_solver')
-    def _valid_inner_solver(cls, value: str) -> str:
-        """Check value against acceptable electrostatic inner solvers."""
-        valid = (
-            'none',
-            'cg',
-            'sd',
-            'fixed-point',
-            'newton',
-            'direct',
-        )
-        return _valid_option(value, valid)
 
 
 class PBCModel(YamlModelMixin, BaseModel):
     """
     Model for PBC parameters.
     """
-    correction = 'none'
-    core = '1da'
+    correction: PBCCorrection = 'none'
+    core: PBCCore = '1da'
     dim: Dimensions = 0
     axis: Axis = 3
-
-    @validator('correction')
-    def _valid_correction(cls, value: str) -> str:
-        """Check value against acceptable pbc corrections."""
-        valid = (
-            'none',
-            'parabolic',
-            'gcs',
-            'ms',
-        )
-        return _valid_option(value, valid)
-
-    @validator('core')
-    def _valid_core(cls, value: str) -> str:
-        """Check value against acceptable pbc correction cores."""
-        valid = ('1da', )
-        return _valid_option(value, valid)
 
 
 class InputModel(YamlModelMixin, BaseModel):
