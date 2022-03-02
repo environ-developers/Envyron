@@ -412,6 +412,10 @@ class SolventModel(YamlModelMixin, BaseModel):
     radial_spread: PositiveFloat = 0.5
     filling_threshold: PositiveFloat = 0.825
     filling_spread: PositiveFloat = 0.02
+    field_factor: NonNegativeFloat = 0.08
+    field_asymmetry: Annotated[float, confloat(ge=-1, le=1)] = -0.32
+    field_min: NonNegativeFloat = 2.0
+    field_max: NonNegativeFloat = 6.0
 
 
 class ElectrostaticsModel(YamlModelMixin, BaseModel):
