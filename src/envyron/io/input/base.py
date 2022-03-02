@@ -653,14 +653,13 @@ class InputModel(YamlModelMixin, BaseModel):
         if self.solvent.mode in {'electronic', 'full', 'system'}:
             if 'mem' in self.solvent.deriv_method:
                 raise ValueError(
-                    "Only 'fft' or 'chain' are allowed with electronic interfaces"
-                )
+                    "only 'fft' or 'chain' allowed with electronic interfaces")
 
         # ionic interface
         elif self.solvent.mode == 'ionic':
             if self.solvent.deriv_method == 'chain':
                 raise ValueError(
-                    "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
+                    "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                 )
 
     def _validate_electrostatics(self) -> None:
@@ -684,7 +683,7 @@ class InputModel(YamlModelMixin, BaseModel):
 
             if self.electrolyte.distance == 0.0:
                 raise ValueError(
-                    "electrolyte distance must be greater than zero for gcs correction"
+                    "electrolyte distance must be greater than zero for GCS correction"
                 )
 
         if self.pbc.correction == 'gcs' or \
@@ -694,14 +693,14 @@ class InputModel(YamlModelMixin, BaseModel):
             if self.electrolyte.mode in {'electronic', 'full', 'system'}:
                 if 'mem' in self.electrolyte.deriv_method:
                     raise ValueError(
-                        "Only 'fft' or 'chain' are allowed with electronic interfaces"
+                        "only 'fft' or 'chain' allowed with electronic interfaces"
                     )
 
             # ionic interface
             elif self.electrolyte.mode == 'ionic':
                 if self.electrolyte.deriv_method == 'chain':
                     raise ValueError(
-                        "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
+                        "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                     )
 
         # problem/solver validation
@@ -711,8 +710,7 @@ class InputModel(YamlModelMixin, BaseModel):
             if self.electrostatics.solver == 'direct' or \
                 self.electrostatics.inner_solver == 'direct':
                 raise ValueError(
-                    "Cannot use a direct solver for the Generalized Poisson eq."
-                )
+                    "cannot use direct solver for the Generalized Poisson eq.")
 
         elif "pb" in self.electrostatics.problem:
 
@@ -722,12 +720,12 @@ class InputModel(YamlModelMixin, BaseModel):
                 if self.electrostatics.solver not in solvers or \
                     self.electrostatics.inner_solver not in solvers:
                     raise ValueError(
-                        "Only gradient-based solver for the linearized Poisson-Boltzmann eq."
+                        "only gradient-based solvers allowed for the linearized Poisson-Boltzmann eq."
                     )
 
                 if self.pbc.correction != 'parabolic':
                     raise ValueError(
-                        "Linearized-PB problem requires parabolic pbc correction"
+                        "linearized-PB problem requires parabolic PBC correction"
                     )
 
             else:
@@ -736,11 +734,11 @@ class InputModel(YamlModelMixin, BaseModel):
                 if self.electrostatics.solver in solvers or \
                     self.electrostatics.inner_solver in solvers:
                     raise ValueError(
-                        "No direct or gradient-based solver for the full Poisson-Boltzmann eq."
+                        "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
                     )
 
         problems = {'pb, modpb, generalized'}
 
         if self.electrostatics.inner_solver != 'none' and \
             self.electrostatics.problem not in problems:
-            raise ValueError("Only pb or modpb problems allow inner solver")
+            raise ValueError("only pb or modpb problems allow inner solver")
