@@ -50,6 +50,7 @@ def main():
     parser.add_argument(
         '-n',
         metavar='natoms',
+        dest='natoms',
         help='Number of atoms',
         type=int,
         default=1,
@@ -58,14 +59,25 @@ def main():
     parser.add_argument(
         '-f',
         metavar='filename',
+        dest='filename',
         help='Input file name',
         type=str,
         default=None,
     )
 
-    natoms, filename = vars(parser.parse_args()).values()
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Turn on debugging output',
+    )
 
-    my_input = Input(natoms, filename=filename).params
+    args = vars(parser.parse_args())
+
+    if not args['debug']:
+        import sys
+        sys.tracebacklimit = 0
+
+    my_input = Input(args['natoms'], args['filename']).params
 
     for section in my_input:
         name, fields = section
