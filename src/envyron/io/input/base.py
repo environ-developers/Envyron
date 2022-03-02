@@ -1,4 +1,12 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Union,
+)
+
 from typing_extensions import Annotated
 
 from pydantic import (
@@ -8,19 +16,25 @@ from pydantic import (
     PositiveInt,
     confloat,
     conint,
-    conlist,
     validator,
     BaseModel as PydanticBaseModel,
 )
 from pydantic_yaml import YamlModelMixin
 
+from pydantic.validators import (
+    int_validator,
+    float_validator,
+)
+
+from pydantic.errors import (
+    NumberNotGeError,
+    NumberNotGtError,
+)
+
 # numerical type aliases
 IntFloat = Union[int, float]
 IntGT1 = Annotated[int, conint(gt=1)]
-IntVector = Annotated[List[int], conlist(int, min_items=1, max_items=3)]
 FloatGE1 = Annotated[float, confloat(ge=1)]
-FloatList = Annotated[List[float], conlist(float, min_items=1)]
-FloatVector = Annotated[List[float], conlist(float, min_items=1, max_items=3)]
 Dimensions = Annotated[int, conint(ge=0, le=3)]
 Axis = Annotated[int, conint(ge=1, le=3)]
 
@@ -142,6 +156,109 @@ PBCCore = Literal[ \
     ]
 
 
+def int_list(value: List[Any]) -> List[int]:
+    """Convert items to integers."""
+    return [int_validator(v) for v in value]
+
+
+def float_list(value: List[Any]) -> List[float]:
+    """Convert items to floats."""
+    return [float_validator(v) for v in value]
+
+
+def list_ge_zero(value: List[IntFloat]) -> List[IntFloat]:
+    """Check that all array values are greater than or equal to zero."""
+    for v in value:
+        if v < 0: raise NumberNotGeError(limit_value=0)
+    return value
+
+
+def list_gt_zero(value: List[IntFloat]) -> List[IntFloat]:
+    """Check that all array values are greater than zero."""
+    for v in value:
+        if v <= 0: raise NumberNotGtError(limit_value=0)
+    return value
+
+
+def ne_zero(value: IntFloat) -> IntFloat:
+    """Check that value is not zero."""
+    if value == 0: raise ValueError("ensure this value is not zero")
+    return value
+
+
+class NonZeroFloat(float):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield float_validator
+        yield ne_zero
+
+
+class NonNegativeFloatList(list):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield float_list
+        yield list_ge_zero
+
+
+class PositiveFloatList(list):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield float_list
+        yield list_gt_zero
+
+
+class Vector(list):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.vectorize
+
+    @classmethod
+    def vectorize(cls, value: List[Any]) -> List[Any]:
+        """Scale vector input to 3D."""
+        if len(value) == 1: value = value * 3
+        assert len(value) == 3, "array size should be 3"
+        return value
+
+
+class FloatVector(Vector):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.vectorize
+        yield float_list
+
+
+class NonNegativeIntVector(Vector):
+    """
+    docstring
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.vectorize
+        yield int_list
+        yield list_ge_zero
+
+
 class BaseModel(PydanticBaseModel):
     """
     Class for global configuration of validation mechanics.
@@ -155,7 +272,7 @@ class CardModel(YamlModelMixin, BaseModel):
     """
     Model for card input.
     """
-    pos: List[float] = [0.0, 0.0, 0.0]
+    pos: FloatVector = [0.0, 0.0, 0.0]
     spread: NonNegativeFloat = 0.5
     dim: Dimensions = 0
     axis: Axis = 3
@@ -165,13 +282,7 @@ class ExternalModel(CardModel):
     """
     Model for a single external function.
     """
-    charge: float
-
-    @validator('charge')
-    def ne_zero(cls, value: IntFloat) -> IntFloat:
-        """Check that value is not zero."""
-        assert value != 0, "must be non-zero"
-        return value
+    charge: NonZeroFloat
 
 
 class RegionModel(CardModel):
@@ -213,24 +324,8 @@ class ControlModel(YamlModelMixin, BaseModel):
     verbosity: NonNegativeInt = 0
     threshold: NonNegativeFloat = 0.1
     nskip: NonNegativeInt = 1
-    nrep: IntVector = [0, 0, 0]
+    nrep: NonNegativeIntVector = [0, 0, 0]
     need_electrostatic = False
-
-    @validator('nrep')
-    def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]:
-        """Scale vector input to 3D."""
-        if len(value) == 1: value = value * 3
-        assert len(value) == 3, "array size should be 3"
-        return value
-
-    @validator(
-        'nrep',
-        each_item=True,
-    )
-    def _ge_zero_many(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
 
 
 class EnvironmentModel(YamlModelMixin, BaseModel):
@@ -250,20 +345,9 @@ class IonsModel(YamlModelMixin, BaseModel):
     """
     Model for ions parameters.
     """
-    atomicspread: FloatList = [0.5]
-    corespread: FloatList = [0.5]
-    solvationrad: FloatList = [0.0]
-
-    @validator(
-        'atomicspread',
-        'corespread',
-        'solvationrad',
-        each_item=True,
-    )
-    def _ge_zero_many(cls, value: IntFloat) -> IntFloat:
-        """Check that value is greater than or equal to zero."""
-        assert value >= 0, "must be greater than or equal to zero"
-        return value
+    atomicspread: PositiveFloatList = [0.5]
+    corespread: NonNegativeFloatList = [0.5]
+    solvationrad: PositiveFloatList = [0.0]
 
 
 class SystemModel(YamlModelMixin, BaseModel):
@@ -274,13 +358,6 @@ class SystemModel(YamlModelMixin, BaseModel):
     dim: Dimensions = 0
     axis: Axis = 3
     pos: FloatVector = [0.0, 0.0, 0.0]
-
-    @validator('pos')
-    def _vectorize(cls, value: List[IntFloat]) -> List[IntFloat]:
-        """Scale vector input to 3D."""
-        if len(value) == 1: value = value * 3
-        assert len(value) == 3, "array size should be 3"
-        return value
 
 
 class ElectrolyteModel(YamlModelMixin, BaseModel):
