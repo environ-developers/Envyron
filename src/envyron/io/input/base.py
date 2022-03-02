@@ -19,7 +19,6 @@ from pydantic import (
     validator,
     BaseModel as PydanticBaseModel,
 )
-from pydantic_yaml import YamlModelMixin
 
 from pydantic.validators import (
     int_validator,
@@ -268,7 +267,7 @@ class BaseModel(PydanticBaseModel):
         validate_assignment = True
 
 
-class CardModel(YamlModelMixin, BaseModel):
+class CardModel(BaseModel):
     """
     Model for card input.
     """
@@ -294,7 +293,7 @@ class RegionModel(CardModel):
     width: NonNegativeFloat = 0.0
 
 
-class CardContainer(YamlModelMixin, BaseModel):
+class CardContainer(BaseModel):
     """
     Container for card functions.
     """
@@ -315,7 +314,7 @@ class RegionsContainer(CardContainer):
     functions: List[List[RegionModel]] = []
 
 
-class ControlModel(YamlModelMixin, BaseModel):
+class ControlModel(BaseModel):
     """
     Model for control parameters.
     """
@@ -328,7 +327,7 @@ class ControlModel(YamlModelMixin, BaseModel):
     need_electrostatic = False
 
 
-class EnvironmentModel(YamlModelMixin, BaseModel):
+class EnvironmentModel(BaseModel):
     """
     Model for environment parameters.
     """
@@ -341,7 +340,7 @@ class EnvironmentModel(YamlModelMixin, BaseModel):
     temperature: NonNegativeFloat = 300.0
 
 
-class IonsModel(YamlModelMixin, BaseModel):
+class IonsModel(BaseModel):
     """
     Model for ions parameters.
     """
@@ -350,7 +349,7 @@ class IonsModel(YamlModelMixin, BaseModel):
     solvationrad: PositiveFloatList = [0.0]
 
 
-class SystemModel(YamlModelMixin, BaseModel):
+class SystemModel(BaseModel):
     """
     Model for system parameters.
     """
@@ -360,7 +359,7 @@ class SystemModel(YamlModelMixin, BaseModel):
     pos: FloatVector = [0.0, 0.0, 0.0]
 
 
-class ElectrolyteModel(YamlModelMixin, BaseModel):
+class ElectrolyteModel(BaseModel):
     """
     Model for electrolyte parameters.
     """
@@ -381,7 +380,7 @@ class ElectrolyteModel(YamlModelMixin, BaseModel):
     softness: PositiveFloat = 0.5
 
 
-class SemiconductorModel(YamlModelMixin, BaseModel):
+class SemiconductorModel(BaseModel):
     """
     Model for semiconductor parameters.
     """
@@ -391,7 +390,7 @@ class SemiconductorModel(YamlModelMixin, BaseModel):
     spread: PositiveFloat = 0.5
 
 
-class SolventModel(YamlModelMixin, BaseModel):
+class SolventModel(BaseModel):
     """
     Model for solvent parameters.
     """
@@ -418,7 +417,7 @@ class SolventModel(YamlModelMixin, BaseModel):
     field_max: NonNegativeFloat = 6.0
 
 
-class ElectrostaticsModel(YamlModelMixin, BaseModel):
+class ElectrostaticsModel(BaseModel):
     """
     Model for numerical parameters.
     """
@@ -443,7 +442,7 @@ class ElectrostaticsModel(YamlModelMixin, BaseModel):
     inner_mix: PositiveFloat = 0.5
 
 
-class PBCModel(YamlModelMixin, BaseModel):
+class PBCModel(BaseModel):
     """
     Model for PBC parameters.
     """
@@ -453,7 +452,7 @@ class PBCModel(YamlModelMixin, BaseModel):
     axis: Axis = 3
 
 
-class InputModel(YamlModelMixin, BaseModel):
+class InputModel(BaseModel):
     """
     Model for Environ input.
     """
