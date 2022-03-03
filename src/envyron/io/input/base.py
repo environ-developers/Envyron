@@ -295,21 +295,21 @@ class RegionModel(CardModel):
     width: NonNegativeFloat = 0.0
 
 
-class CardContainer(BaseModel):
+class CardContainerModel(BaseModel):
     """
     Container for card functions.
     """
     units: Literal['bohr', 'angstrom'] = 'bohr'
 
 
-class ExternalsContainer(CardContainer):
+class ExternalsContainerModel(CardContainerModel):
     """
     Container for external functions.
     """
     functions: List[List[ExternalModel]] = []
 
 
-class RegionsContainer(CardContainer):
+class RegionsContainerModel(CardContainerModel):
     """
     Container for region functions.
     """
@@ -467,8 +467,8 @@ class InputModel(BaseModel):
     solvent: Optional[SolventModel] = None
     electrostatics: Optional[ElectrostaticsModel] = None
     pbc: Optional[PBCModel] = None
-    externals: Optional[ExternalsContainer] = None
-    regions: Optional[RegionsContainer] = None
+    externals: Optional[ExternalsContainerModel] = None
+    regions: Optional[RegionsContainerModel] = None
 
     def __init__(self, natoms: int, **data: Dict[str, Any]) -> None:
         super().__init__(**data)
