@@ -642,8 +642,18 @@ class InputModel(BaseModel):
 
     def _final_validation(self) -> None:
         """Check for bad input values."""
+        self._validate_boundary()
         self._validate_derivatives_method()
         self._validate_electrostatics()
+
+    def _validate_boundary(self) -> None:
+        """Check for bad solvent input."""
+
+        # solvent distance
+        if self.solvent.mode == 'system' and self.solvent.distance == 0.0:
+            raise ValueError(
+                "solvent distance must be greater than zero for system interfaces"
+            )
 
     def _validate_derivatives_method(self) -> None:
         """Check for bad derivatives method."""
