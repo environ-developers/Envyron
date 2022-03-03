@@ -20,6 +20,8 @@ from pydantic import (
     BaseModel as PydanticBaseModel,
 )
 
+from pydantic.fields import ModelField
+
 from pydantic.validators import (
     int_validator,
     float_validator,
@@ -376,7 +378,7 @@ class ElectrolyteModel(BaseModel):
     rhomax: NonNegativeFloat = 5e-3
     rhomin: NonNegativeFloat = 1e-4
     tbeta: NonNegativeFloat = 4.8
-    alpha: NonNegativeFloat = 1.0
+    alpha: PositiveFloat = 1.0
     softness: PositiveFloat = 0.5
 
 
@@ -398,7 +400,7 @@ class SolventModel(BaseModel):
     radius_mode: RadiusMode = 'uff'
     deriv_method: DerivativeMethod = 'default'
     deriv_core: DerivativeCore = 'fft'
-    distance: PositiveFloat = 1.0
+    distance: NonNegativeFloat = 1.0
     spread: PositiveFloat = 0.5
     radius: NonNegativeFloat = 0.0
     alpha: PositiveFloat = 1.0
