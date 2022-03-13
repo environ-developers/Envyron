@@ -35,8 +35,8 @@ class Input:
         self._adjust_to_natoms()
 
         if filename is not None:
-            self.params._adjust_input()
-            self.params._final_validation()
+            self.params.apply_smart_defaults()
+            self.params.sanity_check()
 
         del self.param_dict
 
@@ -63,6 +63,7 @@ class Input:
 
             if len(array) != self.natoms:
                 raise ValueError("array size not equal to number of atoms")
+
 
 def main():
 

@@ -229,7 +229,7 @@ class InputModel(BaseModel):
     externals: Optional[ExternalsContainerModel] = None
     regions: Optional[RegionsContainerModel] = None
 
-    def _adjust_input(self) -> None:
+    def apply_smart_defaults(self) -> None:
         """Adjust input/default parameters based on user input."""
         self._adjust_environment()
         self._adjust_derivatives_method()
@@ -385,7 +385,7 @@ class InputModel(BaseModel):
             self.electrostatics.auxiliary == 'none':
             self.electrostatics.auxiliary = 'full'
 
-    def _final_validation(self) -> None:
+    def sanity_check(self) -> None:
         """Check for bad input values."""
         self._validate_boundary()
         self._validate_derivatives_method()
