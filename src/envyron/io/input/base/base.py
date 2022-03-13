@@ -1,5 +1,4 @@
 from typing import (
-    Dict,
     List,
     Literal,
     Optional,
@@ -439,6 +438,10 @@ class InputModel(BaseModel):
         # electrolyte rhomax/rhomin validation
         if self.electrolyte.rhomax < self.electrolyte.rhomin:
             raise ValueError("electrolyte rhomax < electrolyte rhomin")
+
+        # simultaneous cionmax/rion setting
+        if self.electrolyte.cionmax > 0 and self.electrolyte.rion > 0:
+            raise ValueError("cannot set cionmax and rion simultaneously")
 
         # pbc dim validation
         if self.pbc.dim == 1:
