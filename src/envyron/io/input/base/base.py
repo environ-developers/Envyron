@@ -201,6 +201,7 @@ class ElectrostaticsModel(BaseModel):
     inner_tol: PositiveFloat = 1e-10
     inner_maxstep: IntGT1 = 200
     inner_mix: PositiveFloat = 0.5
+    inner_problem: ElectrostaticProblem = 'none'
 
 
 class PBCModel(BaseModel):
@@ -346,6 +347,9 @@ class InputModel(BaseModel):
                     if self.electrostatics.solver == 'none':
                         self.electrostatics.solver = 'newton'
 
+                    if self.electrostatics.inner_solver == 'none':
+                        self.electrostatics.inner_solver = 'cg'
+
         if self.pbc.correction == 'gcs' or \
             self.electrolyte.formula is not None:
 
@@ -391,6 +395,16 @@ class InputModel(BaseModel):
         if self.electrostatics.solver == 'fixed-point' and \
             self.electrostatics.auxiliary == 'none':
             self.electrostatics.auxiliary = 'full'
+
+        if self.electrostatics.inner_solver != 'none':
+
+            if self.electrostatics.solver == 'fixed-point':
+
+                if self.electrostatics.auxiliary == 'ioncc':
+                    self.electrostatics.inner_problem = 'generalized'
+
+            elif self.electrostatics.solver == 'newton':
+                self.electrostatics.inner_problem = 'linpb'
 
     def sanity_check(self) -> None:
         """Check for bad input values."""
@@ -477,54 +491,53 @@ class InputModel(BaseModel):
                         "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                     )
 
-        # problem/solver validation
+        # validate problem/solver combinations
+        for problem, solver in zip(
+            (self.electrostatics.problem, self.electrostatics.inner_problem),
+            (self.electrostatics.solver, self.electrostatics.inner_solver),
+        ):
 
-        if self.electrostatics.problem == 'generalized':
+            if problem == 'generalized':
 
-            if self.electrostatics.solver == 'direct' or \
-                self.electrostatics.inner_solver == 'direct':
+                if solver == 'direct':
+                    raise ValueError(
+                        "cannot use direct solver for the Generalized Poisson eq."
+                    )
+
+            elif "pb" in problem:
+
+                if "lin" in problem:
+
+                    if solver not in {
+                            'none',
+                            'cg',
+                            'sd',
+                    }:
+                        raise ValueError(
+                            "only gradient-based solvers allowed for the linearized Poisson-Boltzmann eq."
+                        )
+
+                    if self.pbc.correction != 'parabolic':
+                        raise ValueError(
+                            "linearized-PB problem requires parabolic PBC correction"
+                        )
+
+                else:
+
+                    if solver in {
+                            'direct',
+                            'cg',
+                            'sd',
+                    }:
+                        raise ValueError(
+                            "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
+                        )
+
+            if self.electrostatics.inner_solver != 'none' and \
+                problem not in {
+                    'pb',
+                    'modpb',
+                    'generalized',
+                }:
                 raise ValueError(
-                    "cannot use direct solver for the Generalized Poisson eq.")
-
-        elif "pb" in self.electrostatics.problem:
-
-            if "lin" in self.electrostatics.problem:
-                solvers = {
-                    'none',
-                    'cg',
-                    'sd',
-                }
-
-                if self.electrostatics.solver not in solvers or \
-                    self.electrostatics.inner_solver not in solvers:
-                    raise ValueError(
-                        "only gradient-based solvers allowed for the linearized Poisson-Boltzmann eq."
-                    )
-
-                if self.pbc.correction != 'parabolic':
-                    raise ValueError(
-                        "linearized-PB problem requires parabolic PBC correction"
-                    )
-
-            else:
-                solvers = {
-                    'direct',
-                    'cg',
-                    'sd',
-                }
-
-                if self.electrostatics.solver in solvers or \
-                    self.electrostatics.inner_solver in solvers:
-                    raise ValueError(
-                        "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
-                    )
-
-        problems = {
-            'pb',
-            'modpb',
-            'generalized',
-        }
-
-        if self.electrostatics.inner_solver != 'none' and \
-            self.electrostatics.problem not in problems:
-            raise ValueError("only pb or modpb problems allow inner solver")
+                    "only pb or modpb problems allow inner solver")
