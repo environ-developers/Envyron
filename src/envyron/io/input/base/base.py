@@ -252,7 +252,10 @@ class InputModel(BaseModel):
             self.environment.optical_permittivity = 1.776
 
             # non-ionic interfaces
-            if self.solvent.mode in {'electronic', 'full'}:
+            if self.solvent.mode in {
+                    'electronic',
+                    'full',
+            }:
                 if self.environment.type == 'water':
                     self.environment.surface_tension = 50.0
                     self.environment.pressure = -0.35
@@ -293,7 +296,11 @@ class InputModel(BaseModel):
         if self.solvent.deriv_method == 'default':
 
             # non-ionic interfaces
-            if self.solvent.mode in {'electronic', 'full', 'system'}:
+            if self.solvent.mode in {
+                    'electronic',
+                    'full',
+                    'system',
+            }:
                 self.solvent.deriv_method = 'chain'
 
             # ionic interface
@@ -406,7 +413,11 @@ class InputModel(BaseModel):
         """Check for bad derivatives method."""
 
         # non-ionic interfaces
-        if self.solvent.mode in {'electronic', 'full', 'system'}:
+        if self.solvent.mode in {
+                'electronic',
+                'full',
+                'system',
+        }:
             if 'mem' in self.solvent.deriv_method:
                 raise ValueError(
                     "only 'fft' or 'chain' allowed with electronic interfaces")
@@ -447,7 +458,9 @@ class InputModel(BaseModel):
 
             # non-ionic interfaces
             if self.electrolyte.mode in {
-                    'electronic', 'full', 'system'
+                    'electronic',
+                    'full',
+                    'system',
             }:
                 if 'mem' in self.electrolyte.deriv_method:
                     raise ValueError(
@@ -473,7 +486,11 @@ class InputModel(BaseModel):
         elif "pb" in self.electrostatics.problem:
 
             if "lin" in self.electrostatics.problem:
-                solvers = {'none', 'cg', 'sd'}
+                solvers = {
+                    'none',
+                    'cg',
+                    'sd',
+                }
 
                 if self.electrostatics.solver not in solvers or \
                     self.electrostatics.inner_solver not in solvers:
@@ -487,7 +504,11 @@ class InputModel(BaseModel):
                     )
 
             else:
-                solvers = {'direct', 'cg', 'sd'}
+                solvers = {
+                    'direct',
+                    'cg',
+                    'sd',
+                }
 
                 if self.electrostatics.solver in solvers or \
                     self.electrostatics.inner_solver in solvers:
@@ -495,7 +516,11 @@ class InputModel(BaseModel):
                         "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
                     )
 
-        problems = {'pb, modpb, generalized'}
+        problems = {
+            'pb',
+            'modpb',
+            'generalized',
+        }
 
         if self.electrostatics.inner_solver != 'none' and \
             self.electrostatics.problem not in problems:
