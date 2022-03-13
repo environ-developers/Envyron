@@ -19,6 +19,7 @@ from pydantic import (
 
 from .types import *
 
+
 class BaseModel(PydanticBaseModel):
     """
     Class for global configuration of validation mechanics.
@@ -301,10 +302,10 @@ class InputModel(BaseModel):
 
     def _adjust_electrostatics(self) -> None:
         """Adjust electrostatics according to solvent properties."""
-        self._check_electrolyte_input()
-        self._check_dielectric_input()
+        self._adjust_electrolyte_input()
+        self._adjust_dielectric_input()
 
-    def _check_electrolyte_input(self) -> None:
+    def _adjust_electrolyte_input(self) -> None:
         """Adjust electrostatics according to electrolyte input."""
 
         if self.pbc.correction == 'gcs':
@@ -356,7 +357,7 @@ class InputModel(BaseModel):
                 elif self.electrolyte.mode == 'ionic':
                     self.electrolyte.deriv_method = 'lowmem'
 
-    def _check_dielectric_input(self) -> None:
+    def _adjust_dielectric_input(self) -> None:
         """Adjust electrostatics according to dielectric input."""
 
         if self.environment.static_permittivity > 1.0 or \
@@ -499,4 +500,3 @@ class InputModel(BaseModel):
         if self.electrostatics.inner_solver != 'none' and \
             self.electrostatics.problem not in problems:
             raise ValueError("only pb or modpb problems allow inner solver")
-
