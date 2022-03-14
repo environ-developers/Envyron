@@ -13,6 +13,7 @@ class Input:
 
     def __init__(self, natoms: int, filename: Optional[str] = None) -> None:
 
+        # default parameter dictionary
         self.param_dict: Dict[str, Dict[str, Any]] = {
             'control': {},
             'environment': {},
@@ -26,28 +27,36 @@ class Input:
         }
 
         self.natoms = natoms
+        self.file: Optional[Path] = None
 
-        if filename is not None:
-            self.read(filename)
+        if filename is not None: self.read(filename)
 
-        self.params = InputModel(**self.param_dict)
+    def get_parameters(self, validate: bool = False) -> InputModel:
+        """
+        Return parameters with ionic arrays scaled to number of atoms. 
+        Optionally apply smart defaults and input sanity checks.
+        """
+        params = InputModel(**self.param_dict)
 
-        self.params.adjust_ionic_arrays(self.natoms)
+        params.adjust_ionic_arrays(self.natoms)
 
-        if filename is not None:
-            self.params.apply_smart_defaults()
-            self.params.sanity_check()
+        if self.file is not None or validate:
+            params.apply_smart_defaults()
+            params.sanity_check()
 
         del self.param_dict
 
+        return params
+
     def read(self, filename: str) -> None:
-        """Read and validate input file."""
+        """Read YAML input file and update parameter dictionary."""
 
         # read input file
         self.file = Path(filename).absolute()
         with open(self.file) as f:
             input_dict = yaml.safe_load(f)
 
+        # update parameter dictionary
         self.param_dict.update(input_dict)
 
 
@@ -85,9 +94,10 @@ def main():
         import sys
         sys.tracebacklimit = 0
 
-    my_input = Input(args['natoms'], args['filename']).params
+    my_input = Input(args['natoms'], args['filename'])
+    params = my_input.get_parameters()
 
-    for section in my_input:
+    for section in params:
         name, fields = section
 
         if fields:
