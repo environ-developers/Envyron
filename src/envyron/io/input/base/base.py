@@ -230,6 +230,22 @@ class InputModel(BaseModel):
     externals: Optional[ExternalsContainerModel] = None
     regions: Optional[RegionsContainerModel] = None
 
+    def adjust_ionic_arrays(self, natoms: int) -> None:
+        """Scale ionic arrays to size of number of atoms."""
+
+        if natoms <= 0: raise ValueError("number of atoms must be positive")
+
+        for array in (
+                self.ions.atomicspread,
+                self.ions.corespread,
+                self.ions.solvationrad,
+        ):
+
+            if len(array) == 1 and natoms != 1: array *= natoms
+
+            if len(array) != natoms:
+                raise ValueError("array size not equal to number of atoms")
+
     def apply_smart_defaults(self) -> None:
         """Adjust input/default parameters based on user input."""
         self._adjust_environment()

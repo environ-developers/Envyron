@@ -32,7 +32,7 @@ class Input:
 
         self.params = InputModel(**self.param_dict)
 
-        self._adjust_to_natoms()
+        self.params.adjust_ionic_arrays(self.natoms)
 
         if filename is not None:
             self.params.apply_smart_defaults()
@@ -49,20 +49,6 @@ class Input:
             input_dict = yaml.safe_load(f)
 
         self.param_dict.update(input_dict)
-
-    def _adjust_to_natoms(self) -> None:
-        """Scale ion input arrays to size of number of atoms."""
-
-        for array in (
-                self.params.ions.atomicspread,
-                self.params.ions.corespread,
-                self.params.ions.solvationrad,
-        ):
-
-            if len(array) == 1 and self.natoms != 1: array *= self.natoms
-
-            if len(array) != self.natoms:
-                raise ValueError("array size not equal to number of atoms")
 
 
 def main():
