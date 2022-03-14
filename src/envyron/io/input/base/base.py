@@ -236,6 +236,12 @@ class InputModel(BaseModel):
         self._adjust_derivatives_method()
         self._adjust_electrostatics()
 
+    def sanity_check(self) -> None:
+        """Check for bad input values."""
+        self._validate_solvent()
+        self._validate_electrolyte()
+        self._validate_electrostatics()
+
     def _adjust_environment(self) -> None:
         """Adjust environment properties according to environment type."""
 
@@ -309,10 +315,10 @@ class InputModel(BaseModel):
 
     def _adjust_electrostatics(self) -> None:
         """Adjust electrostatics according to solvent properties."""
-        self._adjust_electrolyte_input()
-        self._adjust_dielectric_input()
+        self._adjust_electrolyte_dependent_electrostatics()
+        self._adjust_dielectric_dependent_electrostatics()
 
-    def _adjust_electrolyte_input(self) -> None:
+    def _adjust_electrolyte_dependent_electrostatics(self) -> None:
         """Adjust electrostatics according to electrolyte input."""
 
         if self.pbc.correction == 'gcs':
@@ -367,7 +373,7 @@ class InputModel(BaseModel):
                 elif self.electrolyte.mode == 'ionic':
                     self.electrolyte.deriv_method = 'lowmem'
 
-    def _adjust_dielectric_input(self) -> None:
+    def _adjust_dielectric_dependent_electrostatics(self) -> None:
         """Adjust electrostatics according to dielectric input."""
 
         if self.environment.static_permittivity > 1.0 or \
@@ -406,24 +412,18 @@ class InputModel(BaseModel):
             elif self.electrostatics.solver == 'newton':
                 self.electrostatics.inner_problem = 'linpb'
 
-    def sanity_check(self) -> None:
-        """Check for bad input values."""
-        self._validate_boundary()
-        self._validate_derivatives_method()
-        self._validate_electrostatics()
-
-    def _validate_boundary(self) -> None:
+    def _validate_solvent(self) -> None:
         """Check for bad solvent input."""
 
         # solvent distance
-        if self.solvent.mode == 'system' and \
-            self.solvent.distance == 0.0:
+        if self.solvent.mode == 'system' and self.solvent.distance == 0.0:
             raise ValueError(
                 "solvent distance must be greater than zero for system interfaces"
             )
 
-    def _validate_derivatives_method(self) -> None:
-        """Check for bad derivatives method."""
+        # rhomax/rhomin validation
+        if self.solvent.rhomax < self.solvent.rhomin:
+            raise ValueError("rhomax < rhomin")
 
         # non-ionic interfaces
         if self.solvent.mode in {
@@ -431,23 +431,21 @@ class InputModel(BaseModel):
                 'full',
                 'system',
         }:
+
             if 'mem' in self.solvent.deriv_method:
                 raise ValueError(
                     "only 'fft' or 'chain' allowed with electronic interfaces")
 
         # ionic interface
         elif self.solvent.mode == 'ionic':
+
             if self.solvent.deriv_method == 'chain':
                 raise ValueError(
                     "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                 )
 
-    def _validate_electrostatics(self) -> None:
-        """Check for bad electrostatics input."""
-
-        # rhomax/rhomin validation
-        if self.solvent.rhomax < self.solvent.rhomin:
-            raise ValueError("rhomax < rhomin")
+    def _validate_electrolyte(self):
+        """Check for bad electrolyte input."""
 
         # electrolyte rhomax/rhomin validation
         if self.electrolyte.rhomax < self.electrolyte.rhomin:
@@ -456,12 +454,6 @@ class InputModel(BaseModel):
         # simultaneous cionmax/rion setting
         if self.electrolyte.cionmax > 0 and self.electrolyte.rion > 0:
             raise ValueError("cannot set cionmax and rion simultaneously")
-
-        # pbc dim validation
-        if self.pbc.dim == 1:
-            raise ValueError("1D periodic boundary correction not implemented")
-
-        # electrolyte validation
 
         if self.pbc.correction == 'gcs':
 
@@ -479,6 +471,7 @@ class InputModel(BaseModel):
                     'full',
                     'system',
             }:
+
                 if 'mem' in self.electrolyte.deriv_method:
                     raise ValueError(
                         "only 'fft' or 'chain' allowed with electronic interfaces"
@@ -486,19 +479,25 @@ class InputModel(BaseModel):
 
             # ionic interface
             elif self.electrolyte.mode == 'ionic':
+
                 if self.electrolyte.deriv_method == 'chain':
                     raise ValueError(
                         "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                     )
 
-        # validate problem/solver combinations
+    def _validate_electrostatics(self) -> None:
+        """Check for bad electrostatics input."""
+
+        # pbc dim validation
+        if self.pbc.dim == 1:
+            raise ValueError("1D periodic boundary correction not implemented")
+
         for problem, solver in zip(
             (self.electrostatics.problem, self.electrostatics.inner_problem),
             (self.electrostatics.solver, self.electrostatics.inner_solver),
         ):
 
             if problem == 'generalized':
-
                 if solver == 'direct':
                     raise ValueError(
                         "cannot use direct solver for the Generalized Poisson eq."
@@ -507,7 +506,6 @@ class InputModel(BaseModel):
             elif "pb" in problem:
 
                 if "lin" in problem:
-
                     if solver not in {
                             'none',
                             'cg',
@@ -533,11 +531,10 @@ class InputModel(BaseModel):
                             "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
                         )
 
-            if self.electrostatics.inner_solver != 'none' and \
-                problem not in {
-                    'pb',
-                    'modpb',
-                    'generalized',
-                }:
-                raise ValueError(
-                    "only pb or modpb problems allow inner solver")
+        if self.electrostatics.inner_solver != 'none' and \
+            problem not in {
+                'pb',
+                'modpb',
+                'generalized',
+            }:
+            raise ValueError("only pb or modpb problems allow inner solver")
