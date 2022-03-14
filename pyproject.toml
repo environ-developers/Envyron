@@ -36,3 +36,5 @@ markers = ["datadir: change directory to data location"]
 
 [tool.mypy]
 mypy_path = "stubs"
+strict_optional = false
+ignore_missing_imports = true

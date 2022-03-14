@@ -1,588 +1,396 @@
-from typing import Any, Dict, List, Union
-from configparser import ConfigParser
+from typing import (
+    Dict,
+    Optional,
+)
+
 from pathlib import Path
-from json import load
+import ruamel.yaml as yaml
 
-from .utils import Entry, ArrayEntry, ExternalCard, RegionCard
+from .base import *
 
 
-class Input:
-    """Container for Environ input."""
+class Input(BaseModel):
+    """
+    Model for Environ input.
+    """
+    control: Optional[ControlModel] = None
+    environment: Optional[EnvironmentModel] = None
+    ions: Optional[IonsModel] = None
+    system: Optional[SystemModel] = None
+    electrolyte: Optional[ElectrolyteModel] = None
+    semiconductor: Optional[SemiconductorModel] = None
+    solvent: Optional[SolventModel] = None
+    electrostatics: Optional[ElectrostaticsModel] = None
+    pbc: Optional[PBCModel] = None
+    externals: Optional[ExternalsContainerModel] = None
+    regions: Optional[RegionsContainerModel] = None
 
-    def __init__(self, natoms: int = 0) -> None:
-        self.natoms = natoms
+    def __init__(
+        self,
+        natoms: int,
+        filename: Optional[str] = None,
+        **params: Dict[str, Any],
+    ) -> None:
 
-        self.parser = ConfigParser()  # user-input parser
-
-        self.entries: Dict[str, Union[Entry, ArrayEntry]] = {}
-
-        self.externals: List[List[ExternalCard]] = []
-        self.regions: List[List[RegionCard]] = []
-
-        self.params: Dict[str, Dict[str, dict]] = {}
-        self.defaults: Dict[str, Dict[str, dict]] = {}
-
-        self._read_defaults()
-
-    def read(self, filename: str = 'environ.ini') -> None:
-        """Overwrite defaults with user input."""
-        if not Path(filename).exists():
-            raise FileNotFoundError(f"Missing {filename} in working directory")
-
-        self.file = Path(filename).absolute()
-        self.parser.read(self.file)
-
-        self._process_user_input()
-
-    def to_dict(self) -> Dict[str, Any]:
-        """"""
-        param_dict = {opt.name: opt.value for opt in self.entries.values()}
-
-        if self.externals: param_dict['externals'] = self.externals
-        if self.regions: param_dict['regions'] = self.regions
-
-        return param_dict
-
-    def _read_defaults(self) -> None:
-        """Read and process default values."""
-        here = Path(__file__).parent  # io directory
-
-        # read input parameter attributes
-        with open(here / 'params.json') as f:
-            self.params = load(f)
-
-        # read input parameter default values
-        with open(here / 'defaults.json') as f:
-            self.defaults = load(f)
-
-        self._build_entry_dictionary()
-
-    def _build_entry_dictionary(self) -> None:
-        """Generate dictionary of entry objects from param/default data."""
-
-        for section in self.params:
-
-            # skip template sections
-            if section in {'Externals', 'Regions'}: continue
-
-            # instantiate entries
-            for param in self.params[section]:
-
-                attrs = self.params[section][param]
-
-                # check for array input
-                entry = ArrayEntry(section, param, **attrs) \
-                    if 'size' in attrs else Entry(section, param, **attrs)
-
-                # set default value (validated internally)
-                entry.value = self.defaults[section][param]
-
-                self.entries[param] = entry
-
-    def _process_user_input(self) -> None:
-        """Convert user input to expected data types."""
-        self._check_simultaneous_cionmax_rion_setting()
-        self._process_input_sections()
-        self._adjust_input()
-        self._validate_input()
-
-    def _process_input_sections(self) -> None:
-        """Process input sections in user input file."""
-
-        for section in self.parser.sections():
-
-            if section not in self.params:
-                raise ValueError(f"Unexpected {section} section")
-
-            if section == 'Externals':
-                self._process_externals()
-            elif section == 'Regions':
-                self._process_regions()
-            else:
-                self._process_input_options(section)
-
-    def _process_input_options(self, section: str) -> None:
-        """Process input options for given section."""
-
-        for opt, val in self.parser.items(section):
-
-            # verify that option belongs to this section
-            if opt not in self.params[section]:
-                raise ValueError(
-                    f"Unexpected {opt} option for {section} section")
-
-            # get entry object
-            param = self.entries[opt]
-
-            if isinstance(param, ArrayEntry):
-                self._allocate_array_sizes(param, val)
-
-            param.value = val
-
-    def _process_externals(self) -> None:
-        """Process Externals input section."""
-
-        section = 'Externals'
-
-        # set up template for external object
-        defaults: dict = self.params[section]
-
-        template: Dict[str, Entry] = {
-            'units': Entry(section, 'units', **defaults['units']),
-            'group': Entry(section, 'group', **defaults['group']),
-            'charge': Entry(section, 'charge', **defaults['charge']),
-            'pos': ArrayEntry(section, 'position', **defaults['position']),
-            'spread': Entry(section, 'spread', **defaults['spread']),
-            'dim': Entry(section, 'dim', **defaults['dim']),
-            'axis': Entry(section, 'axis', **defaults['axis']),
+        # default parameter dictionary
+        param_dict: Dict[str, Dict[str, Any]] = {
+            'control': {},
+            'environment': {},
+            'ions': {},
+            'system': {},
+            'electrolyte': {},
+            'semiconductor': {},
+            'solvent': {},
+            'electrostatics': {},
+            'pbc': {},
         }
 
-        # set units for externals
-        template['units'].value = self.parser.get(section, 'units')
-        ExternalCard.set_units(template['units'].value)
+        input_dict = {}
 
-        group = -1
+        if params:
+            input_dict = params
+        elif filename is not None:
+            input_dict = self.read(filename)
 
-        # iterate over external functions
-        for function in self.parser.get(section, 'functions').split('\n'):
+        param_dict.update(input_dict)
 
-            # get values
-            g, c, x, y, z, s, d, a = function.split()
+        super().__init__(**param_dict)
 
-            # convert, validate, and set values
-            template['group'].value = g
-            template['charge'].value = c
-            template['pos'].value = " ".join((x, y, z))
-            template['spread'].value = s
-            template['dim'].value = d
-            template['axis'].value = a
+        self.adjust_ionic_arrays(natoms)
 
-            # add new externals group if necessary
-            if template['group'].value != group + 1:
-                self.externals.append([])
-                group += 1
+        if input_dict:
+            self.apply_smart_defaults()
+            self.sanity_check()
 
-            # set external values
-            keys = (
-                'charge',
-                'pos',
-                'spread',
-                'dim',
-                'axis',
-            )
-            attrs = {k: template[k].value for k in keys}
-            external = ExternalCard(**attrs)
+    def read(self, filename: str) -> Dict[str, Any]:
+        """Return a parameter dictionary read from a YAML input file."""
+        try:
+            with open(Path(filename).absolute()) as f:
+                return yaml.safe_load(f)
+        except Exception:
+            raise
 
-            # add external to list
-            self.externals[group].append(external)
+    def adjust_ionic_arrays(self, natoms: int) -> None:
+        """Scale ionic arrays to size of number of atoms."""
 
-    def _process_regions(self) -> None:
-        """Process Regions input section."""
+        if natoms <= 0: raise ValueError("number of atoms must be positive")
 
-        section = 'Regions'
+        for array in (
+                self.ions.atomicspread,
+                self.ions.corespread,
+                self.ions.solvationrad,
+        ):
 
-        # set up template for region object
-        defaults: dict = self.params[section]
+            if len(array) == 1 and natoms != 1: array *= natoms
 
-        template: Dict[str, Entry] = {
-            'units': Entry(section, 'units', **defaults['units']),
-            'group': Entry(section, 'group', **defaults['group']),
-            'static': Entry(section, 'static', **defaults['static']),
-            'optical': Entry(section, 'optical', **defaults['optical']),
-            'pos': ArrayEntry(section, 'position', **defaults['position']),
-            'width': Entry(section, 'width', **defaults['width']),
-            'spread': Entry(section, 'spread', **defaults['spread']),
-            'dim': Entry(section, 'dim', **defaults['dim']),
-            'axis': Entry(section, 'axis', **defaults['axis']),
-        }
+            if len(array) != natoms:
+                raise ValueError("array size not equal to number of atoms")
 
-        # set units for regions
-        template['units'].value = self.parser.get(section, 'units')
-        RegionCard.set_units(template['units'].value)
-
-        group = -1
-
-        # iterate over region functions
-        for function in self.parser.get(section, 'functions').split('\n'):
-
-            # get values
-            g, eps, opt, x, y, z, w, s, d, a = function.split()
-
-            # convert and validate values
-            template['group'].value = g
-            template['static'].value = eps
-            template['optical'].value = opt
-            template['pos'].value = " ".join((x, y, z))
-            template['width'].value = w
-            template['spread'].value = s
-            template['dim'].value = d
-            template['axis'].value = a
-
-            # add new regions group if necessary
-            if template['group'].value != group + 1:
-                self.regions.append([])
-                group += 1
-
-            # set region values
-            keys = (
-                'static',
-                'optical',
-                'pos',
-                'width',
-                'spread',
-                'dim',
-                'axis',
-            )
-            attrs = {k: template[k].value for k in keys}
-            region = RegionCard(**attrs)
-
-            # add region to list
-            self.regions[group].append(region)
-
-    def _allocate_array_sizes(self, param: ArrayEntry, value: str) -> None:
-        """Assign array sizes for allocatable arrays."""
-
-        if param.size == 0:
-
-            # assign allocation size for ion values
-            if param.name in {'atomicspread', 'corespread', 'solvationrad'}:
-                param.size = self.natoms
-
-            # assign allocation size for electrolyte values
-            elif param.name == 'electrolyte_formula':
-                parts = value.split()
-                n = len(parts)
-
-                # check for sufficient charges
-                if n < 4: raise ValueError("Multiplicity/charge sets < 2")
-
-                # check for complete formula
-                if n % 2 != 0: raise ValueError("Missing multiplicity/charge")
-
-                # check for charge neutrality
-                m = [int(i) for i in parts[::2]]  # multiplicities
-                z = [int(i) for i in parts[1::2]]  # charges
-                s = sum(i * j for i, j in zip(m, z))
-
-                if s != 0: raise ValueError("Electrolyte is not neutral")
-
-                param.size = n
-
-            # missing pre-defined size in defaults
-            else:
-                raise ValueError(f"Unexpected allocatable array: {param.name}")
-
-    def _adjust_input(self) -> None:
+    def apply_smart_defaults(self) -> None:
         """Adjust input/default parameters based on user input."""
         self._adjust_environment()
         self._adjust_derivatives_method()
         self._adjust_electrostatics()
 
+    def sanity_check(self) -> None:
+        """Check for bad input values."""
+        self._validate_solvent()
+        self._validate_electrolyte()
+        self._validate_electrostatics()
+
     def _adjust_environment(self) -> None:
         """Adjust environment properties according to environment type."""
-        environment_type = self._get_value('env_type')
 
         # set up vacuum environment
-        if environment_type == 'vacuum':
-            self.entries['static_permittivity'].value = 1.0
-            self.entries['optical_permittivity'].value = 1.0
-            self.entries['surface_tension'].value = 0.0
-            self.entries['pressure'].value = 0.0
+        if self.environment.type == 'vacuum':
+            self.environment.static_permittivity = 1.0
+            self.environment.optical_permittivity = 1.0
+            self.environment.surface_tension = 0.0
+            self.environment.pressure = 0.0
 
         # set up water environment
-        elif 'water' in environment_type:
-            self.entries['static_permittivity'].value = 78.3
-            self.entries['optical_permittivity'].value = 1.776
-
-            solvent_mode = self._get_value('solvent_mode')
+        elif 'water' in self.environment.type:
+            self.environment.static_permittivity = 78.3
+            self.environment.optical_permittivity = 1.776
 
             # non-ionic interfaces
-            if solvent_mode in {'electronic', 'full'}:
-                if environment_type == 'water':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
+            if self.solvent.mode in {
+                    'electronic',
+                    'full',
+            }:
+                if self.environment.type == 'water':
+                    self.environment.surface_tension = 50.0
+                    self.environment.pressure = -0.35
+                    self.solvent.rhomax = 5e-3
+                    self.solvent.rhomin = 1e-4
 
-                elif environment_type == 'water-cation':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
+                elif self.environment.type == 'water-cation':
+                    self.environment.surface_tension = 50.0
+                    self.environment.pressure = -0.35
+                    self.solvent.rhomax = 5e-3
+                    self.solvent.rhomin = 1e-4
 
-                elif environment_type == 'water-anion':
-                    self.entries['surface_tension'].value = 50.0
-                    self.entries['pressure'].value = -0.35
-                    self.entries['rhomax'].value = 5e-3
-                    self.entries['rhomin'].value = 1e-4
+                elif self.environment.type == 'water-anion':
+                    self.environment.surface_tension = 50.0
+                    self.environment.pressure = -0.35
+                    self.solvent.rhomax = 5e-3
+                    self.solvent.rhomin = 1e-4
 
             # ionic interface
-            if solvent_mode == 'ionic':
-                self.entries['surface_tension'].value = 50.0
-                self.entries['pressure'].value = -0.35
-                self.entries['softness'].value = 0.5
-                self.entries['radius_mode'].value = 'uff'
+            if self.solvent.mode == 'ionic':
+                self.environment.surface_tension = 50.0
+                self.environment.pressure = -0.35
+                self.solvent.softness = 0.5
+                self.solvent.radius_mode = 'uff'
 
-                if environment_type == 'water':
-                    self.entries['alpha'].value = 1.12
+                if self.environment.type == 'water':
+                    self.solvent.alpha = 1.12
 
-                elif environment_type == 'water-cation':
-                    self.entries['alpha'].value = 1.1
+                elif self.environment.type == 'water-cation':
+                    self.solvent.alpha = 1.1
 
-                elif environment_type == 'water-anion':
-                    self.entries['alpha'].value = 0.98
+                elif self.environment.type == 'water-anion':
+                    self.solvent.alpha = 0.98
 
     def _adjust_derivatives_method(self) -> None:
         """Adjust derivatives method according to solvent mode."""
-        mode = self._get_value('solvent_mode')
-        method = self._get_value('deriv_method')
 
-        if method == 'default':
+        if self.solvent.deriv_method == 'default':
 
             # non-ionic interfaces
-            if mode in {'electronic', 'full', 'system'}:
-                self.entries['deriv_method'].value = 'chain'
+            if self.solvent.mode in {
+                    'electronic',
+                    'full',
+                    'system',
+            }:
+                self.solvent.deriv_method = 'chain'
 
             # ionic interface
-            elif mode == 'ionic':
-                self.entries['deriv_method'].value = 'lowmem'
+            elif self.solvent.mode == 'ionic':
+                self.solvent.deriv_method = 'lowmem'
 
     def _adjust_electrostatics(self) -> None:
         """Adjust electrostatics according to solvent properties."""
-        correction = self._get_value('pbc_correction')
-        self._check_electrolyte_input(correction)
-        self._check_dielectric_input(correction)
+        self._adjust_electrolyte_dependent_electrostatics()
+        self._adjust_dielectric_dependent_electrostatics()
 
-    def _check_simultaneous_cionmax_rion_setting(self) -> None:
-        """Raise error if both cionmax and rion are given in input."""
-
-        cionmax = self.parser.get('Environ', 'cionmax', fallback=None)
-        rion = self.parser.get('Environ', 'rion', fallback=None)
-
-        if cionmax is not None and rion is not None:
-            raise ValueError("Cannot set both cionmax and rion")
-
-    def _check_electrolyte_input(self, correction: str) -> None:
+    def _adjust_electrolyte_dependent_electrostatics(self) -> None:
         """Adjust electrostatics according to electrolyte input."""
-        mode = self._get_value('electrolyte_mode')
-        formula = self._get_entry('electrolyte_formula')
 
-        size = formula.size if isinstance(formula, ArrayEntry) else 0
+        if self.pbc.correction == 'gcs':
 
-        if correction == 'gcs':
-            if mode != 'system':
-                self.entries['electrolyte_mode'].value = 'system'
+            if self.electrolyte.mode != 'system':
+                self.electrolyte.mode = 'system'
 
-            if size != 0:
-                rion = self._get_value('rion')
-                cionmax = self._get_value('cionmax')
-                linearized = self._get_value('electrolyte_linearized')
-                solver = self._get_value('solver')
+            if self.electrolyte.formula is not None:
 
-                if linearized:  # Linearized Poisson-Boltzmann problem
-                    if cionmax > 0.0 or rion > 0.0:
-                        self.entries['problem'].value = 'linmodpb'
-                    elif self.entries['problem'].value == 'none':
-                        self.entries['problem'].value = 'linpb'
+                # Linearized Poisson-Boltzmann problem
+                if self.electrolyte.linearized:
 
-                    if solver == 'none':
-                        self.entries['solver'].value = 'cg'
+                    if self.electrolyte.cionmax > 0.0 or \
+                        self.electrolyte.rion > 0.0:
+                        self.electrostatics.problem = 'linmodpb'
+
+                    elif self.electrostatics.problem == 'none':
+                        self.electrostatics.problem = 'linpb'
+
+                    if self.electrostatics.solver == 'none':
+                        self.electrostatics.solver = 'cg'
 
                 else:  # Poisson-Boltzmann problem
-                    if cionmax > 0.0 or rion > 0.0:
-                        self.entries['problem'].value = 'modpb'
-                    elif self.entries['problem'].value == 'none':
-                        self.entries['problem'].value = 'pb'
 
-                    if solver == 'none':
-                        self.entries['solver'].value = 'newton'
+                    if self.electrolyte.cionmax > 0.0 or \
+                        self.electrolyte.rion > 0.0:
+                        self.electrostatics.problem = 'modpb'
 
-        if correction == 'gcs' or size != 0:
-            method = self._get_value('electrolyte_deriv_method')
+                    elif self.electrostatics.problem == 'none':
+                        self.electrostatics.problem = 'pb'
 
-            if method == 'default':
+                    if self.electrostatics.solver == 'none':
+                        self.electrostatics.solver = 'newton'
+
+                    if self.electrostatics.inner_solver == 'none':
+                        self.electrostatics.inner_solver = 'cg'
+
+        if self.pbc.correction == 'gcs' or \
+            self.electrolyte.formula is not None:
+
+            if self.electrolyte.deriv_method == 'default':
 
                 # non-ionic interfaces
-                if mode in {'electronic', 'full', 'system'}:
-                    self.entries['electrolyte_deriv_method'].value = 'chain'
+                if self.electrolyte.mode in {
+                        'electronic',
+                        'full',
+                        'system',
+                }:
+                    self.electrolyte.deriv_method = 'chain'
 
                 # ionic interface
-                elif mode == 'ionic':
-                    self.entries['electrolyte_deriv_method'].value = 'lowmem'
+                elif self.electrolyte.mode == 'ionic':
+                    self.electrolyte.deriv_method = 'lowmem'
 
-    def _check_dielectric_input(self, correction: str) -> None:
+    def _adjust_dielectric_dependent_electrostatics(self) -> None:
         """Adjust electrostatics according to dielectric input."""
-        static_permittivity = self._get_value('static_permittivity')
-        num_of_regions = self._get_value('dielectric_regions')
-        problem = self._get_value('problem')
-        solver = self._get_value('solver')
-        auxiliary = self._get_value('auxiliary')
 
-        if static_permittivity > 1.0 or num_of_regions > 0:
-            if problem == 'none': self.entries['problem'].value = 'generalized'
+        if self.environment.static_permittivity > 1.0 or \
+            self.regions is not None:
 
-            if correction != 'gcs':
-                if solver == 'none': self.entries['solver'].value = 'cg'
-            elif solver != 'fixed-point':
-                self.entries['solver'].value = 'fixed-point'
+            if self.electrostatics.problem == 'none':
+                self.electrostatics.problem = 'generalized'
+
+            if self.pbc.correction != 'gcs':
+
+                if self.electrostatics.solver == 'none':
+                    self.electrostatics.solver = 'cg'
+
+            elif self.electrostatics.solver != 'fixed-point':
+                self.electrostatics.solver = 'fixed-point'
 
         else:
-            if problem == 'none': self.entries['problem'].value = 'poisson'
-            if solver == 'none': self.entries['solver'].value = 'direct'
 
-        if self._get_value('solver') == 'fixed-point' and auxiliary == 'none':
-            self.entries['auxiliary'].value = 'full'
+            if self.electrostatics.problem == 'none':
+                self.electrostatics.problem = 'poisson'
 
-    def _validate_input(self) -> None:
-        """Check for bad input values."""
-        self._validate_derivatives_method()
-        self._validate_electrostatics()
+            if self.electrostatics.solver == 'none':
+                self.electrostatics.solver = 'direct'
 
-    def _validate_derivatives_method(self) -> None:
-        """Check for bad derivatives method."""
+        if self.electrostatics.solver == 'fixed-point' and \
+            self.electrostatics.auxiliary == 'none':
+            self.electrostatics.auxiliary = 'full'
 
-        # derivatives method validation
-        mode = self._get_value('solvent_mode')
-        method = self._get_value('deriv_method')
+        if self.electrostatics.inner_solver != 'none':
+
+            if self.electrostatics.solver == 'fixed-point':
+
+                if self.electrostatics.auxiliary == 'ioncc':
+                    self.electrostatics.inner_problem = 'generalized'
+
+            elif self.electrostatics.solver == 'newton':
+                self.electrostatics.inner_problem = 'linpb'
+
+    def _validate_solvent(self) -> None:
+        """Check for bad solvent input."""
+
+        # solvent distance
+        if self.solvent.mode == 'system' and self.solvent.distance == 0.0:
+            raise ValueError(
+                "solvent distance must be greater than zero for system interfaces"
+            )
+
+        # rhomax/rhomin validation
+        if self.solvent.rhomax < self.solvent.rhomin:
+            raise ValueError("rhomax < rhomin")
 
         # non-ionic interfaces
-        if mode in {'electronic', 'full', 'system'}:
-            if 'mem' in method:
+        if self.solvent.mode in {
+                'electronic',
+                'full',
+                'system',
+        }:
+
+            if 'mem' in self.solvent.deriv_method:
                 raise ValueError(
-                    "Only 'fft' or 'chain' are allowed with electronic interfaces"
-                )
+                    "only 'fft' or 'chain' allowed with electronic interfaces")
 
         # ionic interface
-        elif mode == 'ionic':
-            if method == 'chain':
+        elif self.solvent.mode == 'ionic':
+
+            if self.solvent.deriv_method == 'chain':
                 raise ValueError(
-                    "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
+                    "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
                 )
+
+    def _validate_electrolyte(self):
+        """Check for bad electrolyte input."""
+
+        # electrolyte rhomax/rhomin validation
+        if self.electrolyte.rhomax < self.electrolyte.rhomin:
+            raise ValueError("electrolyte rhomax < electrolyte rhomin")
+
+        # simultaneous cionmax/rion setting
+        if self.electrolyte.cionmax > 0 and self.electrolyte.rion > 0:
+            raise ValueError("cannot set cionmax and rion simultaneously")
+
+        if self.pbc.correction == 'gcs':
+
+            if self.electrolyte.distance == 0.0:
+                raise ValueError(
+                    "electrolyte distance must be greater than zero for GCS correction"
+                )
+
+        if self.pbc.correction == 'gcs' or \
+            self.electrolyte.formula is not None:
+
+            # non-ionic interfaces
+            if self.electrolyte.mode in {
+                    'electronic',
+                    'full',
+                    'system',
+            }:
+
+                if 'mem' in self.electrolyte.deriv_method:
+                    raise ValueError(
+                        "only 'fft' or 'chain' allowed with electronic interfaces"
+                    )
+
+            # ionic interface
+            elif self.electrolyte.mode == 'ionic':
+
+                if self.electrolyte.deriv_method == 'chain':
+                    raise ValueError(
+                        "only 'highmem', 'lowmem', and 'fft' allowed with ionic interfaces"
+                    )
 
     def _validate_electrostatics(self) -> None:
         """Check for bad electrostatics input."""
 
-        # rhomax/rhomin validation
-        rhomax = self._get_value('rhomax')
-        rhomin = self._get_value('rhomin')
-
-        if rhomax < rhomin: raise ValueError("rhomax < rhomin")
-
-        # electrolyte rhomax/rhomin validation
-        rhomax = self._get_value('electrolyte_rhomax')
-        rhomin = self._get_value('electrolyte_rhomin')
-
-        if rhomax < rhomin:
-            raise ValueError("electrolyte_rhomax < electrolyte_rhomin")
-
-        # pbc_dim validation
-        pbc_dim = self._get_value('pbc_dim')
-
-        if pbc_dim == 1:
+        # pbc dim validation
+        if self.pbc.dim == 1:
             raise ValueError("1D periodic boundary correction not implemented")
 
-        # electrolyte validation
-        correction = self._get_value('pbc_correction')
-        formula = self._get_entry('electrolyte_formula')
+        for problem, solver in zip(
+            (self.electrostatics.problem, self.electrostatics.inner_problem),
+            (self.electrostatics.solver, self.electrostatics.inner_solver),
+        ):
 
-        size = formula.size if isinstance(formula, ArrayEntry) else 0
-
-        if correction == 'gcs':
-            distance = self.entries['electrolyte_distance']
-
-            if distance == 0.0:
-                raise ValueError(
-                    "electrolyte_distance must be greater than zero for gcs correction"
-                )
-
-        if correction == 'gcs' or size != 0:
-            mode = self._get_value('electrolyte_mode')
-            method = self._get_value('electrolyte_deriv_method')
-
-            # non-ionic interfaces
-            if mode in {'electronic', 'full', 'system'}:
-                if 'mem' in method:
+            if problem == 'generalized':
+                if solver == 'direct':
                     raise ValueError(
-                        "Only 'fft' or 'chain' are allowed with electronic interfaces"
+                        "cannot use direct solver for the Generalized Poisson eq."
                     )
 
-            # ionic interface
-            elif mode == 'ionic':
-                if method == 'chain':
-                    raise ValueError(
-                        "Only 'highmem', 'lowmem', and 'fft' are allowed with ionic interfaces"
-                    )
+            elif "pb" in problem:
 
-        # problem/solver validation
-        problem = self._get_value('problem')
-        solver = self._get_value('solver')
-        inner_solver = self._get_value('inner_solver')
+                if "lin" in problem:
+                    if solver not in {
+                            'none',
+                            'cg',
+                            'sd',
+                    }:
+                        raise ValueError(
+                            "only gradient-based solvers allowed for the linearized Poisson-Boltzmann eq."
+                        )
 
-        if problem == 'generalized':
+                    if self.pbc.correction != 'parabolic':
+                        raise ValueError(
+                            "linearized-PB problem requires parabolic PBC correction"
+                        )
 
-            if solver == 'direct' or inner_solver == 'direct':
-                raise ValueError(
-                    "Cannot use a direct solver for the Generalized Poisson eq."
-                )
+                else:
 
-        elif "pb" in problem:
+                    if solver in {
+                            'direct',
+                            'cg',
+                            'sd',
+                    }:
+                        raise ValueError(
+                            "no direct or gradient-based solver allowed for the full Poisson-Boltzmann eq."
+                        )
 
-            if "lin" in problem:
-                solvers = {'none', 'cg', 'sd'}
-
-                if solver not in solvers or inner_solver not in solvers:
-                    raise ValueError(
-                        "Only gradient-based solver for the linearized Poisson-Boltzmann eq."
-                    )
-
-                if correction != 'parabolic':
-                    raise ValueError(
-                        "Linearized-PB problem requires parabolic pbc correction"
-                    )
-
-            else:
-                solvers = {'direct', 'cg', 'sd'}
-
-                if solver in solvers or inner_solver in solvers:
-                    raise ValueError(
-                        "No direct or gradient-based solver for the full Poisson-Boltzmann eq."
-                    )
-
-        problems = {'pb, modpb, generalized'}
-
-        if inner_solver != 'none' and problem not in problems:
-            raise ValueError("Only pb or modpb problems allow inner solver")
-
-    def _get_entry(self, option: str) -> Union[Entry, ArrayEntry]:
-        """Return entry object if exists."""
-        entry = self.entries.get(option)
-        if entry is None: raise ValueError(f"Missing {option} entry")
-        return entry
-
-    def _get_value(self, option: str) -> Any:
-        """Return entry value if exists."""
-        entry = self.entries.get(option)
-        if entry is None: raise ValueError(f"Missing {option} entry")
-        return entry.value
-
-
-def main():
-
-    my_input = Input(natoms=5)
-
-    my_input.read(filename='test.ini')
-
-    params = my_input.to_dict()
-    del my_input
-
-    for k, v in params.items():
-
-        if k in {'externals', 'regions'}:
-            print(f"\n{k.upper()}")
-            for i, l in enumerate(v):
-                print(f"\nGROUP {i + 1}")
-                for d in l:
-                    print(d)
-
-        else:
-            print(f"{k} = {v}")
+        if self.electrostatics.inner_solver != 'none' and \
+            problem not in {
+                'pb',
+                'modpb',
+                'generalized',
+            }:
+            raise ValueError("only pb or modpb problems allow inner solver")

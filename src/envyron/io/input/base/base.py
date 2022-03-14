@@ -1,0 +1,214 @@
+from typing import (
+    List,
+    Literal,
+    Optional,
+)
+
+from typing_extensions import Annotated
+
+from pydantic import (
+    NonNegativeFloat,
+    NonNegativeInt,
+    PositiveFloat,
+    PositiveInt,
+    confloat,
+    conint,
+    BaseModel as PydanticBaseModel,
+)
+
+from .types import *
+
+
+class BaseModel(PydanticBaseModel):
+    """
+    Class for global configuration of validation mechanics.
+    """
+
+    class Config:
+        validate_assignment = True
+
+
+class CardModel(BaseModel):
+    """
+    Model for card input.
+    """
+    pos: FloatVector = [0.0, 0.0, 0.0]
+    spread: NonNegativeFloat = 0.5
+    dim: Dimensions = 0
+    axis: Axis = 3
+
+
+class ExternalModel(CardModel):
+    """
+    Model for a single external function.
+    """
+    charge: NonZeroFloat
+
+
+class RegionModel(CardModel):
+    """
+    Model for a single region function.
+    """
+    static: FloatGE1 = 1.0
+    optical: FloatGE1 = 1.0
+    width: NonNegativeFloat = 0.0
+
+
+class CardContainerModel(BaseModel):
+    """
+    Container for card functions.
+    """
+    units: Literal['bohr', 'angstrom'] = 'bohr'
+
+
+class ExternalsContainerModel(CardContainerModel):
+    """
+    Container for external functions.
+    """
+    functions: List[List[ExternalModel]] = []
+
+
+class RegionsContainerModel(CardContainerModel):
+    """
+    Container for region functions.
+    """
+    functions: List[List[RegionModel]] = []
+
+
+class ControlModel(BaseModel):
+    """
+    Model for control parameters.
+    """
+    debug = False
+    restart = False
+    verbosity: NonNegativeInt = 0
+    threshold: NonNegativeFloat = 0.1
+    nskip: NonNegativeInt = 1
+    nrep: NonNegativeIntVector = [0, 0, 0]
+    need_electrostatic = False
+
+
+class EnvironmentModel(BaseModel):
+    """
+    Model for environment parameters.
+    """
+    type: Environment = 'input'
+    surface_tension: NonNegativeFloat = 0.0
+    pressure = 0.0
+    confine: NonNegativeFloat = 0.0
+    static_permittivity: FloatGE1 = 1.0
+    optical_permittivity: FloatGE1 = 1.0
+    temperature: NonNegativeFloat = 300.0
+
+
+class IonsModel(BaseModel):
+    """
+    Model for ions parameters.
+    """
+    atomicspread: PositiveFloatList = [0.5]
+    corespread: NonNegativeFloatList = [0.5]
+    solvationrad: PositiveFloatList = [0.0]
+
+
+class SystemModel(BaseModel):
+    """
+    Model for system parameters.
+    """
+    ntyp: NonNegativeInt = 0
+    dim: Dimensions = 0
+    axis: Axis = 3
+    pos: FloatVector = [0.0, 0.0, 0.0]
+
+
+class ElectrolyteModel(BaseModel):
+    """
+    Model for electrolyte parameters.
+    """
+    linearized = False
+    mode: SolventMode = 'electronic'
+    entropy: EntropyScheme = 'full'
+    deriv_method: DerivativeMethod = 'default'
+    concentration: NonNegativeFloat = 0.0
+    formula: Optional[List[int]] = None
+    cionmax: NonNegativeFloat = 0.0
+    rion: NonNegativeFloat = 0.0
+    distance: NonNegativeFloat = 0.0
+    spread: PositiveFloat = 0.5
+    rhomax: NonNegativeFloat = 5e-3
+    rhomin: NonNegativeFloat = 1e-4
+    tbeta: NonNegativeFloat = 4.8
+    alpha: PositiveFloat = 1.0
+    softness: PositiveFloat = 0.5
+
+
+class SemiconductorModel(BaseModel):
+    """
+    Model for semiconductor parameters.
+    """
+    permittivity: FloatGE1 = 1.0
+    carrier_density: NonNegativeFloat = 0.0
+    distance: NonNegativeFloat = 0.0
+    spread: PositiveFloat = 0.5
+
+
+class SolventModel(BaseModel):
+    """
+    Model for solvent parameters.
+    """
+    mode: SolventMode = 'electronic'
+    radius_mode: RadiusMode = 'uff'
+    deriv_method: DerivativeMethod = 'default'
+    deriv_core: DerivativeCore = 'fft'
+    distance: NonNegativeFloat = 1.0
+    spread: PositiveFloat = 0.5
+    radius: NonNegativeFloat = 0.0
+    alpha: PositiveFloat = 1.0
+    softness: PositiveFloat = 0.5
+    stype: Annotated[int, conint(ge=0, le=2)] = 2
+    rhomax: NonNegativeFloat = 5e-3
+    rhomin: NonNegativeFloat = 1e-4
+    tbeta: NonNegativeFloat = 4.8
+    radial_scale: FloatGE1 = 2.0
+    radial_spread: PositiveFloat = 0.5
+    filling_threshold: PositiveFloat = 0.825
+    filling_spread: PositiveFloat = 0.02
+    field_factor: NonNegativeFloat = 0.08
+    field_asymmetry: Annotated[float, confloat(ge=-1, le=1)] = -0.32
+    field_min: NonNegativeFloat = 2.0
+    field_max: NonNegativeFloat = 6.0
+
+
+class ElectrostaticsModel(BaseModel):
+    """
+    Model for numerical parameters.
+    """
+    problem: ElectrostaticProblem = 'none'
+    tol: PositiveFloat = 1e-5
+    solver: ElectrostaticSolver = 'none'
+    auxiliary: AuxiliaryScheme = 'none'
+    step_type: StepType = 'optimal'
+    step: PositiveFloat = 0.3
+    maxstep: IntGT1 = 200
+    mix_type: MixType = 'linear'
+    ndiis: PositiveInt = 1
+    mix: PositiveFloat = 0.5
+    preconditioner: Preconditioner = 'sqrt'
+    screening_type: ScreeningType = 'none'
+    screening: NonNegativeFloat = 0.0
+    core: ElectrostaticCore = 'fft'
+    inner_solver: ElectrostaticInnerSolver = 'none'
+    inner_core: ElectrostaticCore = 'fft'
+    inner_tol: PositiveFloat = 1e-10
+    inner_maxstep: IntGT1 = 200
+    inner_mix: PositiveFloat = 0.5
+    inner_problem: ElectrostaticProblem = 'none'
+
+
+class PBCModel(BaseModel):
+    """
+    Model for PBC parameters.
+    """
+    correction: PBCCorrection = 'none'
+    core: PBCCore = '1da'
+    dim: Dimensions = 0
+    axis: Axis = 3
