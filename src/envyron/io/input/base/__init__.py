@@ -1,1 +1,1 @@
-from .base import InputModel
+from .base import *
