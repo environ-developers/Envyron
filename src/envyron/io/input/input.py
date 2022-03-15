@@ -4,7 +4,7 @@ from typing import (
 )
 
 from pathlib import Path
-import ruamel.yaml as yaml
+from yaml import load, SafeLoader
 
 from .base import *
 
@@ -66,7 +66,7 @@ class Input(BaseModel):
         """Return a parameter dictionary read from a YAML input file."""
         try:
             with open(Path(filename).absolute()) as f:
-                return yaml.safe_load(f)
+                return load(f, SafeLoader)
         except Exception:
             raise
 
