@@ -1,4 +1,5 @@
 from typing import (
+    Any,
     Dict,
     Optional,
 )
@@ -6,7 +7,20 @@ from typing import (
 from pathlib import Path
 from yaml import load, SafeLoader
 
-from .base import *
+from .base import (
+    BaseModel,
+    ControlModel,
+    ElectrolyteModel,
+    ElectrostaticsModel,
+    EnvironmentModel,
+    ExternalsContainerModel,
+    IonsModel,
+    PBCModel,
+    RegionsContainerModel,
+    SemiconductorModel,
+    SolventModel,
+    SystemModel,
+)
 
 
 class Input(BaseModel):
