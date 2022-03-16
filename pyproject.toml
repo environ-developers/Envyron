@@ -19,11 +19,25 @@ keywords = [
 ]
 classifiers = ["Operating System :: OS Independent", "Private :: Do Not Upload"]
 dynamic = ["version", "description"]
+dependencies = ["PyYAML ~= 6.0", "pydantic ~= 1.9"]
+
+[project.optional-dependencies]
+tester = ["pytest ~= 7.0"]
+linter = ["flake8 ~= 4.0"]
+formatter = ["yapf ~= 0.32"]
+doc = ["sphinx"]
 
 [project.urls]
 Source = "https://github.com/environ-developers/envyron"
 Documentation = "https://environ.readthedocs.io/en/latest/"
 
-[project.optional-dependencies]
-test = ["pytest >=2.7.3"]
-doc = ["sphinx"]
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-rN -v --tb=short"
+testpaths = "tests"
+markers = ["datadir: change directory to data location"]
+
+[tool.mypy]
+mypy_path = "stubs"
+strict_optional = false
+ignore_missing_imports = true

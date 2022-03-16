@@ -3,6 +3,13 @@
 __pycache__
 venv
 
+# test files
+*test*.ini
+*test*.yml
+*test*.yaml
+*test*.json
+*test*.ipynb
+
 # build files
 build
 dist
