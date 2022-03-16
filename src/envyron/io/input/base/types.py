@@ -29,49 +29,49 @@ FloatGE1 = Annotated[float, confloat(ge=1)]
 Dimensions = Annotated[int, conint(ge=0, le=3)]
 Axis = Annotated[int, conint(ge=1, le=3)]
 
+# yapf: disable
+
 # literal type aliases
-Environment = Literal[ \
+Environment = Literal[
     'input',
     'vacuum',
     'water',
     'water-cation',
     'water-anion',
-    ]
+]
 
-SolventMode = Literal[ \
+SolventMode = Literal[
     'electronic',
     'ionic',
     'full',
     'system',
-    ]
+]
 
-DerivativeMethod = Literal[ \
+DerivativeMethod = Literal[
     'default',
     'fft',
     'chain',
     'highmen',
     'lowmem',
-    ]
+]
 
-EntropyScheme = Literal[ \
+EntropyScheme = Literal[
     'ions',
     'full',
-    ]
+]
 
-
-RadiusMode = Literal[ \
+RadiusMode = Literal[
     'pauling',
     'bondi',
     'uff',
     'muff',
-    ]
+]
 
-DerivativeCore = Literal[ \
+DerivativeCore = Literal[
     'fft',
-    ]
+]
 
-
-ElectrostaticProblem = Literal[ \
+ElectrostaticProblem = Literal[
     'none',
     'poisson',
     'generalized',
@@ -79,9 +79,9 @@ ElectrostaticProblem = Literal[ \
     'modpb',
     'linpb',
     'linmodpb'
-    ]
+]
 
-ElectrostaticSolver = Literal[ \
+ElectrostaticSolver = Literal[
     'none',
     'cg',
     'sd',
@@ -89,62 +89,64 @@ ElectrostaticSolver = Literal[ \
     'newton',
     'nested',
     'direct',
-    ]
+]
 
-AuxiliaryScheme = Literal[ \
+AuxiliaryScheme = Literal[
     'none',
     'full',
     'ioncc',
-    ]
+]
 
-StepType = Literal[ \
+StepType = Literal[
     'optimal',
     'input',
     'random',
-    ]
+]
 
-MixType = Literal[ \
+MixType = Literal[
     'linear',
     'anderson',
     'diis',
     'broyden',
-    ]
+]
 
-Preconditioner = Literal[ \
+Preconditioner = Literal[
     'sqrt',
     'left',
-    ]
+]
 
-ScreeningType = Literal[ \
+ScreeningType = Literal[
     'none',
     'input',
     'linear',
     'optimal',
-    ]
+]
 
-ElectrostaticCore = Literal[ \
+ElectrostaticCore = Literal[
     'fft',
-    ]
+]
 
-ElectrostaticInnerSolver = Literal[ \
+ElectrostaticInnerSolver = Literal[
     'none',
     'cg',
     'sd',
     'fixed-point',
     'newton',
     'direct',
-    ]
+]
 
-PBCCorrection = Literal[ \
+PBCCorrection = Literal[
     'none',
     'parabolic',
     'gcs',
     'ms',
-    ]
+]
 
-PBCCore = Literal[ \
+PBCCore = Literal[
     '1da',
-    ]
+]
+
+# yapf: enable
 
 
 def int_list(value: List[Any]) -> List[int]:
