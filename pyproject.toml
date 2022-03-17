@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "envyron"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = { file = "LICENSE" }
 authors = [{ name = "Edan Bainglass", email = "edan.bainglass@unt.edu" }]
 maintainers = [{ name = "Edan Bainglass", email = "edan.bainglass@unt.edu" }]
