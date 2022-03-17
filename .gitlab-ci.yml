@@ -1,0 +1,53 @@
+image: python:latest
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  FLIT_ROOT_INSTALL: 1
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+.parallel:
+  image: $IMAGE
+  parallel:
+    matrix:
+      - IMAGE: python:3.8
+      - IMAGE: python:3.9
+      - IMAGE: python:3.10
+
+before_script:
+  - pwd # debugging
+  - python3 --version # debugging
+  - python3 -m venv venv
+  - source venv/bin/activate
+
+stages:
+  - build
+  - static
+  - test
+
+build-job:
+  extends: .parallel
+  stage: build
+  script:
+    - python3 -m pip install --upgrade pip
+    - pip --version # debugging
+    - pip install flit
+    - flit install
+    - flit --version # debugging
+
+lint-job:
+  extends: .parallel
+  stage: static
+  script:
+    - flake8 --version # debugging
+    - flake8 --ignore "E123,E125,E133,E501,E701,F401" src/envyron
+
+test-job:
+  extends: .parallel
+  stage: test
+  script:
+    - pytest --version # debugging
+    - pytest
