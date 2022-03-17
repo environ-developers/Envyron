@@ -59,7 +59,7 @@ class CardModel(BaseModel):
     """
     Model for card input.
     """
-    pos: FloatVector = [0.0, 0.0, 0.0]
+    pos: FloatVector = [0.0, 0.0, 0.0]  # type: ignore
     spread: NonNegativeFloat = 0.5
     dim: Dimensions = 0
     axis: Axis = 3
@@ -111,7 +111,7 @@ class ControlModel(BaseModel):
     verbosity: NonNegativeInt = 0
     threshold: NonNegativeFloat = 0.1
     nskip: NonNegativeInt = 1
-    nrep: NonNegativeIntVector = [0, 0, 0]
+    nrep: NonNegativeIntVector = [0, 0, 0]  # type: ignore
     need_electrostatic = False
 
 
@@ -132,9 +132,9 @@ class IonsModel(BaseModel):
     """
     Model for ions parameters.
     """
-    atomicspread: PositiveFloatList = [0.5]
-    corespread: NonNegativeFloatList = [0.5]
-    solvationrad: PositiveFloatList = [0.0]
+    atomicspread: PositiveFloatList = [0.5]  # type: ignore
+    corespread: NonNegativeFloatList = [0.5]  # type: ignore
+    solvationrad: PositiveFloatList = [0.0]  # type: ignore
 
 
 class SystemModel(BaseModel):
@@ -144,7 +144,7 @@ class SystemModel(BaseModel):
     ntyp: NonNegativeInt = 0
     dim: Dimensions = 0
     axis: Axis = 3
-    pos: FloatVector = [0.0, 0.0, 0.0]
+    pos: FloatVector = [0.0, 0.0, 0.0]  # type: ignore
 
 
 class ElectrolyteModel(BaseModel):
