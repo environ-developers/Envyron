@@ -45,6 +45,13 @@ lint-job:
     - flake8 --version # debugging
     - flake8 --ignore "E123,E125,E133,E501,E701,F401" src/envyron
 
+mypy:
+  extends: .parallel
+  stage: static
+  script:
+    - mypy --version # debugging
+    - mypy src/envyron
+
 test-job:
   extends: .parallel
   stage: test

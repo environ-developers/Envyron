@@ -24,6 +24,7 @@ dependencies = ["PyYAML ~= 6.0", "pydantic ~= 1.9"]
 [project.optional-dependencies]
 tester = ["pytest ~= 7.0"]
 linter = ["flake9 ~= 3.0"]
+mypy = ["mypy ~= 0.9", "types-PyYAML ~= 6.0"]
 formatter = ["yapf ~= 0.32"]
 doc = ["sphinx"]
 
