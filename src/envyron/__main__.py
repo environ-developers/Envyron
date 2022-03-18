@@ -1,3 +1,3 @@
-from .cui.main import main
+from .cli.main import main
 
 main()

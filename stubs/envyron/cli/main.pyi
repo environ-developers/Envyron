@@ -1,0 +1,6 @@
+def run_job() -> None:
+    ...
+
+
+def main() -> None:
+    ...

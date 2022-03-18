@@ -1,4 +1,4 @@
-from .input import Input as Input
+from . import Input as Input
 from typing import Any
 
 parser: Any

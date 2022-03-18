@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from .input import Input
+from . import Input
 
 parser = ArgumentParser()
 

@@ -1,1 +1,1 @@
-from .cui.main import main as main
+from .cli.main import main as main
