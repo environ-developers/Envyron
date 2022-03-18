@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "envyron"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = { file = "LICENSE" }
 authors = [{ name = "Edan Bainglass", email = "edan.bainglass@unt.edu" }]
 maintainers = [{ name = "Edan Bainglass", email = "edan.bainglass@unt.edu" }]
@@ -23,7 +23,8 @@ dependencies = ["PyYAML ~= 6.0", "pydantic ~= 1.9"]
 
 [project.optional-dependencies]
 tester = ["pytest ~= 7.0"]
-linter = ["flake8 ~= 4.0"]
+linter = ["flake9 ~= 3.0"]
+mypy = ["mypy ~= 0.9", "types-PyYAML ~= 6.0"]
 formatter = ["yapf ~= 0.32"]
 doc = ["sphinx"]
 
@@ -41,3 +42,7 @@ markers = ["datadir: change directory to data location"]
 mypy_path = "stubs"
 strict_optional = false
 ignore_missing_imports = true
+
+[tool.flake8]
+ignore = "E123,E125,E133,E501,E701,F401"
+hang-closing = true
