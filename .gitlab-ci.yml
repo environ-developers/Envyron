@@ -25,10 +25,9 @@ before_script:
 
 stages:
   - build
-  - static
   - test
 
-build-job:
+build:
   extends: .parallel
   stage: build
   script:
@@ -38,21 +37,21 @@ build-job:
     - flit install
     - flit --version # debugging
 
-lint-job:
+static-lint-test:
   extends: .parallel
-  stage: static
+  stage: test
   script:
     - flake8 --version # debugging
     - flake8 --ignore "E123,E125,E133,E501,E701,F401" src/envyron
 
-mypy:
+static-type-test:
   extends: .parallel
-  stage: static
+  stage: test
   script:
     - mypy --version # debugging
     - mypy src/envyron
 
-test-job:
+dynamic-test:
   extends: .parallel
   stage: test
   script:
