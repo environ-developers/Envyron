@@ -26,7 +26,7 @@ tester = ["pytest ~= 7.0"]
 linter = ["flake9 ~= 3.0"]
 mypy = ["mypy ~= 0.9", "types-PyYAML ~= 6.0"]
 formatter = ["yapf ~= 0.32"]
-doc = ["sphinx"]
+doc = ["sphinx", "sphinx-rtd-theme"]
 
 [project.urls]
 Source = "https://github.com/environ-developers/envyron"
