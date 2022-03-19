@@ -77,7 +77,18 @@ class Input(BaseModel):
             self.sanity_check()
 
     def read(self, filename: str) -> Dict[str, Any]:
-        """Return a parameter dictionary read from a YAML input file."""
+        """Read parameter dictionary from a YAML input file.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the YAML input file
+
+        Returns
+        -------
+        Dict[str, Any]
+            A parameter dictionary
+        """
         try:
             with open(Path(filename).absolute()) as f:
                 return load(f, SafeLoader)
@@ -85,7 +96,18 @@ class Input(BaseModel):
             raise
 
     def adjust_ionic_arrays(self, natoms: int) -> None:
-        """Scale ionic arrays to size of number of atoms."""
+        """Scale ionic arrays to size of number of atoms.
+
+        Parameters
+        ----------
+        natoms : int
+            The number of atoms in the simulation
+
+        Raises
+        ------
+        ValueError
+            If `natoms <= 0`
+        """
 
         if natoms <= 0: raise ValueError("number of atoms must be positive")
 

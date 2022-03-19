@@ -47,18 +47,14 @@ from .types import (
 
 
 class BaseModel(PydanticBaseModel):
-    """
-    Class for global configuration of validation mechanics.
-    """
+    """Global configurations of validation mechanics."""
 
     class Config:
         validate_assignment = True
 
 
 class CardModel(BaseModel):
-    """
-    Model for card input.
-    """
+    """Card input model."""
     pos: FloatVector = [0.0, 0.0, 0.0]  # type: ignore
     spread: NonNegativeFloat = 0.5
     dim: Dimensions = 0
@@ -66,46 +62,34 @@ class CardModel(BaseModel):
 
 
 class ExternalModel(CardModel):
-    """
-    Model for a single external function.
-    """
+    """External function model."""
     charge: NonZeroFloat
 
 
 class RegionModel(CardModel):
-    """
-    Model for a single region function.
-    """
+    """Region function model."""
     static: FloatGE1 = 1.0
     optical: FloatGE1 = 1.0
     width: NonNegativeFloat = 0.0
 
 
 class CardContainerModel(BaseModel):
-    """
-    Container for card functions.
-    """
+    """Container for card functions."""
     units: Literal['bohr', 'angstrom'] = 'bohr'
 
 
 class ExternalsContainerModel(CardContainerModel):
-    """
-    Container for external functions.
-    """
+    """Container for external functions."""
     functions: List[List[ExternalModel]] = []
 
 
 class RegionsContainerModel(CardContainerModel):
-    """
-    Container for region functions.
-    """
+    """Container for region functions."""
     functions: List[List[RegionModel]] = []
 
 
 class ControlModel(BaseModel):
-    """
-    Model for control parameters.
-    """
+    """Control input model."""
     debug = False
     restart = False
     verbosity: NonNegativeInt = 0
@@ -116,9 +100,7 @@ class ControlModel(BaseModel):
 
 
 class EnvironmentModel(BaseModel):
-    """
-    Model for environment parameters.
-    """
+    """Environment input model."""
     type: Environment = 'input'
     surface_tension: NonNegativeFloat = 0.0
     pressure = 0.0
@@ -129,18 +111,14 @@ class EnvironmentModel(BaseModel):
 
 
 class IonsModel(BaseModel):
-    """
-    Model for ions parameters.
-    """
+    """Ions input model."""
     atomicspread: PositiveFloatList = [0.5]  # type: ignore
     corespread: NonNegativeFloatList = [0.5]  # type: ignore
     solvationrad: PositiveFloatList = [0.0]  # type: ignore
 
 
 class SystemModel(BaseModel):
-    """
-    Model for system parameters.
-    """
+    """System input model."""
     ntyp: NonNegativeInt = 0
     dim: Dimensions = 0
     axis: Axis = 3
@@ -148,9 +126,7 @@ class SystemModel(BaseModel):
 
 
 class ElectrolyteModel(BaseModel):
-    """
-    Model for electrolyte parameters.
-    """
+    """Electrolyte input model."""
     linearized = False
     mode: SolventMode = 'electronic'
     entropy: EntropyScheme = 'full'
@@ -169,9 +145,7 @@ class ElectrolyteModel(BaseModel):
 
 
 class SemiconductorModel(BaseModel):
-    """
-    Model for semiconductor parameters.
-    """
+    """Semiconductor input model."""
     permittivity: FloatGE1 = 1.0
     carrier_density: NonNegativeFloat = 0.0
     distance: NonNegativeFloat = 0.0
@@ -179,9 +153,7 @@ class SemiconductorModel(BaseModel):
 
 
 class SolventModel(BaseModel):
-    """
-    Model for solvent parameters.
-    """
+    """Solvent input model."""
     mode: SolventMode = 'electronic'
     radius_mode: RadiusMode = 'uff'
     deriv_method: DerivativeMethod = 'default'
@@ -206,9 +178,7 @@ class SolventModel(BaseModel):
 
 
 class ElectrostaticsModel(BaseModel):
-    """
-    Model for numerical parameters.
-    """
+    """Electrostatics input model."""
     problem: ElectrostaticProblem = 'none'
     tol: PositiveFloat = 1e-5
     solver: ElectrostaticSolver = 'none'
@@ -232,9 +202,7 @@ class ElectrostaticsModel(BaseModel):
 
 
 class PBCModel(BaseModel):
-    """
-    Model for PBC parameters.
-    """
+    """PBC input model."""
     correction: PBCCorrection = 'none'
     core: PBCCore = '1da'
     dim: Dimensions = 0
