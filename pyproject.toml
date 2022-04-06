@@ -19,7 +19,11 @@ keywords = [
 ]
 classifiers = ["Operating System :: OS Independent", "Private :: Do Not Upload"]
 dynamic = ["version", "description"]
-dependencies = ["PyYAML ~= 6.0", "pydantic ~= 1.9"]
+dependencies = [
+    "PyYAML ~= 6.0",
+    "pydantic ~= 1.9",
+    "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git"
+]
 
 [project.optional-dependencies]
 tester = ["pytest ~= 7.0"]
