@@ -1,5 +1,5 @@
 from typing import Tuple
-from numpy import ndarray
+from numpy import ndarray, newaxis
 
 import numpy as np
 from itertools import product
@@ -19,14 +19,14 @@ class EnvironGrid(DirectGrid):
     ) -> None:
         super().__init__(at, nr, units=units)
         self.label = label
-        self.corners = np.array(list(product(range(2), repeat=3))).dot(at)
+        self.corners = -np.array(list(product(range(2), repeat=3))).dot(at)
 
     @property
     def label(self) -> float:
         return self.__label
 
     @label.setter
-    def label(self, label: str) -> str:
+    def label(self, label: str) -> None:
         """docstring"""
         self.__label = label
 
@@ -37,39 +37,29 @@ class EnvironGrid(DirectGrid):
         axis: int = 0,
     ) -> Tuple[ndarray]:
         """docstring"""
-        r = self._get_displacement(self.r.T, origin, dim, axis)
+        r = self._get_displacement(self.r, origin, dim, axis)
         r, r2 = self._apply_minimum_image_convension(r)
         return r, r2
 
     @staticmethod
     def _get_displacement(
-        r1: ndarray,
-        r2: ndarray,
+        r: ndarray,
+        origin: ndarray,
         dim: int = 0,
         axis: int = 0,
     ) -> ndarray:
         """docstring"""
 
-        dr = r1 - r2
+        dr = r - origin[:, newaxis, newaxis, newaxis]
 
-        if dim != 0:
-
-            if dim < 0 or dim > 2:
-                raise ValueError("Dimensions out of bounds")
-
-            # for simple vector displacement
-            if len(dr.shape) == 1:
-                if dim == 1:
-                    dr[axis] = 0.
-                elif dim == 2:
-                    dr[np.arange(3) != axis] = 0.
-
-            # for vectorized matrix displacement
-            else:
-                if dim == 1:
-                    dr[:, :, :, axis] = 0.
-                elif dim == 2:
-                    dr[:, :, :, np.arange(3) != axis] = 0.
+        if dim == 0:
+            pass
+        elif dim == 1:
+            dr[:, :, :, axis] = 0.
+        elif dim == 2:
+            dr[:, :, :, np.arange(3) != axis] = 0.
+        else:
+            raise ValueError("Dimensions out of bounds")
 
         return dr
 
@@ -77,22 +67,22 @@ class EnvironGrid(DirectGrid):
         """docstring"""
 
         # apply minimum image convension
-        s = np.matmul(r, self.get_reciprocal().lattice / 2 / np.pi)
+        reciprocal_lattice = self.get_reciprocal().lattice / 2 / np.pi
+        s = np.einsum('lijk,lm->lijk', r, reciprocal_lattice)
         s -= np.floor(s)
-        r = np.einsum('nm,ijkm', self.lattice, s)
-        
+        r = np.einsum('ml,lijk->lijk', self.lattice, s)
+
         # pre-corner-check results
         rmin = r
-        r2min = np.sum(r * r, 3)
+        r2min = np.einsum('i...,i...', r, r)
 
         # check against corner shifts
-        for corner in self.corners:
-            s = r + corner
-            s2 = np.sum(s * s, 3)
+        for corner in self.corners[1:]:
+            s = r + corner[:, newaxis, newaxis, newaxis]
+            s2 = np.einsum('i...,i...', s, s)
 
             condition = s2 < r2min
-            mask = np.array([condition] * 3).T
-            rmin = np.where(mask, s, rmin)
+            rmin = np.where(condition[newaxis, :, :, :], s, rmin)
             r2min = np.where(condition, s2, r2min)
 
         return rmin, r2min
