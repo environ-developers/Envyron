@@ -41,6 +41,10 @@ class EnvironHessian(DirectField):
         """docstring"""
         self.__laplacian = laplacian
 
+    def standard_view(self) -> 'EnvironHessian':
+        """docstring"""
+        return self.T.reshape(self.grid.nnr, 3, 3)
+
     def update(self) -> None:
         """docstring"""
         reshaped = self.reshape(3, 3, *self.grid.nr)

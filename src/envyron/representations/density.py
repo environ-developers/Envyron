@@ -60,6 +60,10 @@ class EnvironDensity(DirectField):
         """docstring"""
         self.__quadrupole = quadrupole
 
+    def standard_view(self) -> 'EnvironDensity':
+        """docstring"""
+        return self.T.reshape(self.grid.nnr)
+
     def compute_multipoles(self, origin: ndarray) -> None:
         """docstring"""
         r, _ = self.grid.get_min_distance(origin)

@@ -42,6 +42,10 @@ class EnvironGradient(DirectField):
         """docstring"""
         self.__modulus = modulus
 
+    def standard_view(self) -> 'EnvironGradient':
+        """docstring"""
+        return self.T.reshape(self.grid.nnr, 3)
+
     def update(self) -> None:
         """docstring"""
         self.modulus[:] = np.sqrt(np.sum(self**2, 0))
