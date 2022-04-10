@@ -27,7 +27,7 @@ IntFloat = Union[int, float]
 IntGT1 = Annotated[int, conint(gt=1)]
 FloatGE1 = Annotated[float, confloat(ge=1)]
 Dimensions = Annotated[int, conint(ge=0, le=3)]
-Axis = Annotated[int, conint(ge=1, le=3)]
+Axis = Annotated[int, conint(ge=0, le=2)]
 
 # yapf: disable
 
