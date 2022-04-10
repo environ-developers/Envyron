@@ -22,6 +22,7 @@ dynamic = ["version", "description"]
 dependencies = [
     "PyYAML ~= 6.0",
     "pydantic ~= 1.9",
+    "scipy ~= 1.8",
     "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git"
 ]
 
