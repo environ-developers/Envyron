@@ -47,8 +47,11 @@ class EnvironHessian(DirectField):
 
     def update(self) -> None:
         """docstring"""
-        reshaped = self.reshape(3, 3, *self.grid.nr)
-        self.laplacian[:] = reshaped.trace()
+        self.laplacian[:] = self.trace()
+
+    def trace(self) -> ndarray:
+        """docstring"""
+        return self[0] + self[4] + self[8]
 
     def scalar_gradient_product(
         self,
