@@ -64,8 +64,8 @@ class EnvironDensity(DirectField):
         """docstring"""
         r, _ = self.grid.get_min_distance(origin)
         self.charge = self.integral()
-        self.dipole = np.einsum('kji,lijk', self, r) * self.grid.dV
-        self.quadrupole = np.einsum('kji,lijk', self, r**2) * self.grid.dV
+        self.dipole = np.einsum('ijk,lijk', self, r) * self.grid.dV
+        self.quadrupole = np.einsum('ijk,lijk', self, r**2) * self.grid.dV
 
     def euclidean_norm(self) -> float:
         """docstring"""
