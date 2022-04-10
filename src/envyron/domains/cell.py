@@ -59,7 +59,7 @@ class EnvironGrid(DirectGrid):
         elif dim == 2:
             dr[:, :, :, np.arange(3) != axis] = 0.
         else:
-            raise ValueError("Dimensions out of bounds")
+            raise ValueError("dimensions out of range")
 
         return dr
 
@@ -81,8 +81,8 @@ class EnvironGrid(DirectGrid):
             s = r + corner[:, newaxis, newaxis, newaxis]
             s2 = np.einsum('i...,i...', s, s)
 
-            condition = s2 < r2min
-            rmin = np.where(condition[newaxis, :, :, :], s, rmin)
-            r2min = np.where(condition, s2, r2min)
+            mask = s2 < r2min
+            rmin = np.where(mask[newaxis, :, :, :], s, rmin)
+            r2min = np.where(mask, s2, r2min)
 
         return rmin, r2min
