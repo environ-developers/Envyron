@@ -2,7 +2,7 @@ from certifi import where
 import numpy as np
 import scipy.special as sp
 
-from . import EnvironFunction, EXP_TOL, FUNC_TOL
+from . import EnvironFunction, FUNC_TOL
 
 from .. import EnvironDensity, EnvironGradient, EnvironHessian
 
@@ -42,11 +42,8 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
-        exp = np.zeros(self.grid.nr)
-        np.exp(-arg**2, where=mask, out=exp)
-
         data = np.zeros((3, *self.grid.nr))
-        np.multiply(-exp, r, where=mask, out=data)
+        data[:, mask] = -np.exp(-arg[mask]**2) * r[:, mask]
 
         charge = self._charge()
         analytic = self._erfc_volume()
@@ -63,31 +60,21 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
-        exp = np.zeros(self.grid.nr)
-        exp = np.exp(-arg**2, where=mask, out=exp)
-
         data = np.zeros(self.grid.nr)
-
-        factor = np.zeros(self.grid.nr)
-        ones = np.ones(self.grid.nr)
 
         if self.dim == 0:
 
-            np.divide(ones, dist, where=mask, out=factor)
-            np.subtract(factor, arg / self.spread, where=mask, out=factor)
-            np.multiply(-exp, factor * 2, where=mask, out=data)
+            data[mask] = -np.exp(-arg[mask]**2) * \
+                (1 / dist[mask] - arg[mask] / self.spread) * 2
 
         elif self.dim == 1:
 
-            np.divide(ones, dist, where=mask, out=factor)
-            np.subtract(factor, 2. * arg / self.spread, where=mask, out=factor)
-            np.multiply(-exp, factor, where=mask, out=data)
+            data[mask] = -np.exp(-arg[mask]**2) * \
+                (1 / dist[mask] - 2 * arg[mask] / self.spread)
 
         elif self.dim == 2:
 
-            # TODO not `-exp`?
-            factor = arg / self.spread * 2.
-            np.multiply(np.exp(-arg**2), factor, where=mask, out=data)
+            data[mask] = np.exp(-arg[mask]**2) * arg[mask] / self.spread * 2
 
         else:
             raise ValueError("unexpected system dimensions")
@@ -108,10 +95,9 @@ class EnvironERFC(EnvironFunction):
         mask = dist > FUNC_TOL
 
         data = np.zeros(self.grid.nr)
-        -np.exp(-arg**2, where=mask, out=data)
+        data[mask] = -np.exp(-arg[mask]**2)
 
-        integral = np.sum(sp.erfc(arg, where=mask, out=data))
-        integral *= self.grid.volume / self.grid.nnrR * 0.5
+        integral = np.sum(data) * self.grid.volume / self.grid.nnrR * 0.5
 
         charge = self._charge()
         analytic = self._erfc_volume()

@@ -19,7 +19,7 @@ class EnvironGaussian(EnvironFunction):
         mask = r2 <= EXP_TOL
 
         data = np.zeros(self.grid.nr)
-        np.exp(-r2, where=mask, out=data)
+        data[mask] = np.exp(-r2[mask])
 
         scale = self._get_scale_factor()
         data *= scale
@@ -36,11 +36,8 @@ class EnvironGaussian(EnvironFunction):
 
         mask = r2 <= EXP_TOL
 
-        exp = np.zeros(self.grid.nr)
-        np.exp(-r2, where=mask, out=exp)
-
         data = np.zeros((3, *self.grid.nr))
-        np.multiply(-exp, r, where=mask, out=data)
+        data[:, mask] = -np.exp(-r2[mask]) * r[:, mask]
 
         scale = self._get_scale_factor()
         data *= scale * 2 / spread2
