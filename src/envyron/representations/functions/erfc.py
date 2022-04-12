@@ -91,6 +91,7 @@ class EnvironERFC(EnvironFunction):
         arg = (dist - self.width) / self.spread
 
         mask = dist > FUNC_TOL
+        count = np.count_nonzero(mask)
 
         r = r[:, mask]
         dist = dist[mask]
@@ -98,13 +99,10 @@ class EnvironERFC(EnvironFunction):
 
         data = np.zeros((9, *self.grid.nr))
 
-        factor = (1 / dist + 2 * arg / self.spread)
-
-        for j in range(3):
-            for k in range(3):
-                tmp = -r[j] * r[k] * factor
-                if j == k: tmp += dist
-                data[k + 3 * j, mask] = -np.exp(-arg**2) * tmp / dist**2
+        outer = np.reshape(np.einsum('i...,j...->ij...', -r, r), (9, count))
+        outer *= 1 / dist + 2 * arg / self.spread
+        outer += dist * np.identity(3).flatten()[:, None]
+        data[:, mask] = -np.exp(-arg**2) * outer / dist**2
 
         charge = self._charge()
         analytic = self._erfc_volume()
