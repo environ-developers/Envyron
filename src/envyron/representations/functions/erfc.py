@@ -85,6 +85,32 @@ class EnvironERFC(EnvironFunction):
 
         return EnvironDensity(self.grid, data=data, label=self.label)
 
+    def hessian(self) -> EnvironHessian:
+        """docstring"""
+
+        r, r2 = self.grid.get_min_distance(self.pos, self.dim, self.axis)
+        dist = np.sqrt(r2)
+        arg = (dist - self.width) / self.spread
+
+        mask = dist > FUNC_TOL
+
+        data = np.zeros((9, *self.grid.nr))
+
+        factor = (1 / dist[mask] + 2 * arg[mask] / self.spread)
+
+        for j in range(3):
+            for k in range(3):
+                tmp = -r[j, mask] * r[k, mask] * factor
+                if j == k: tmp += dist[mask]
+                i = k + 3 * j
+                data[i, mask] = -np.exp(-arg[mask]**2) * tmp / dist[mask]**2
+
+        charge = self._charge()
+        analytic = self._erfc_volume()
+        data *= charge / analytic / SQRTPI / self.spread
+
+        return EnvironHessian(self.grid, data=data, label=self.label)
+
     def derivative(self) -> EnvironDensity:
         """docstring"""
 
