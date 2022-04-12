@@ -42,8 +42,11 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
+        r = r[:, mask]
+        arg = arg[mask]
+
         data = np.zeros((3, *self.grid.nr))
-        data[:, mask] = -np.exp(-arg[mask]**2) * r[:, mask]
+        data[:, mask] = -np.exp(-arg**2) * r
 
         charge = self._charge()
         analytic = self._erfc_volume()
@@ -60,22 +63,17 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
+        dist = dist[mask]
+        arg = arg[mask]
+
         data = np.zeros(self.grid.nr)
 
         if self.dim == 0:
-
-            data[mask] = -np.exp(-arg[mask]**2) * \
-                (1 / dist[mask] - arg[mask] / self.spread) * 2
-
+            data[mask] = -np.exp(-arg**2) * (1 / dist - arg / self.spread) * 2
         elif self.dim == 1:
-
-            data[mask] = -np.exp(-arg[mask]**2) * \
-                (1 / dist[mask] - 2 * arg[mask] / self.spread)
-
+            data[mask] = -np.exp(-arg**2) * (1 / dist - 2 * arg / self.spread)
         elif self.dim == 2:
-
-            data[mask] = np.exp(-arg[mask]**2) * arg[mask] / self.spread * 2
-
+            data[mask] = np.exp(-arg**2) * arg / self.spread * 2
         else:
             raise ValueError("unexpected system dimensions")
 
@@ -94,16 +92,19 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
+        r = r[:, mask]
+        dist = dist[mask]
+        arg = arg[mask]
+
         data = np.zeros((9, *self.grid.nr))
 
-        factor = (1 / dist[mask] + 2 * arg[mask] / self.spread)
+        factor = (1 / dist + 2 * arg / self.spread)
 
         for j in range(3):
             for k in range(3):
-                tmp = -r[j, mask] * r[k, mask] * factor
-                if j == k: tmp += dist[mask]
-                i = k + 3 * j
-                data[i, mask] = -np.exp(-arg[mask]**2) * tmp / dist[mask]**2
+                tmp = -r[j] * r[k] * factor
+                if j == k: tmp += dist
+                data[k + 3 * j, mask] = -np.exp(-arg**2) * tmp / dist**2
 
         charge = self._charge()
         analytic = self._erfc_volume()
@@ -120,8 +121,10 @@ class EnvironERFC(EnvironFunction):
 
         mask = dist > FUNC_TOL
 
+        arg = arg[mask]
+
         data = np.zeros(self.grid.nr)
-        data[mask] = -np.exp(-arg[mask]**2)
+        data[mask] = -np.exp(-arg**2)
 
         integral = np.sum(data) * self.grid.volume / self.grid.nnrR * 0.5
 
