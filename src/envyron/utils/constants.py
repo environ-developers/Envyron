@@ -35,3 +35,5 @@ EPS8 = 1e-8
 AVOGADRO = 6.02214129e23
 
 MADELUNG = np.array([2.837297479, 2.8883, 2.885])
+
+E2 = 2.0  # Hartree to Rydberg
