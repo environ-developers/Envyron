@@ -23,14 +23,14 @@ class EnvironFunction(ABC):
 
     def __init__(
         self,
+        grid: EnvironGrid,
         kind: int,
         dim: int,
         axis: int,
         width: float,
         spread: float,
         volume: float,
-        pos: ndarray,
-        grid: EnvironGrid,
+        pos: ndarray = np.zeros(3),
         label: str = '',
     ) -> None:
         self.kind = kind

@@ -114,6 +114,7 @@ class EnvironIons:
             iontype = self.iontypes[self.itypes[i]]
 
             ion = EnvironGaussian(
+                grid=grid,
                 kind=1,
                 dim=0,
                 axis=1,
@@ -121,7 +122,6 @@ class EnvironIons:
                 spread=iontype.atomicspread,
                 volume=iontype.zv,
                 pos=self.coords[i],
-                grid=grid,
                 label=iontype.label,
             )
 
@@ -139,6 +139,7 @@ class EnvironIons:
             iontype = self.iontypes[self.itypes[i]]
 
             ion = EnvironGaussian(
+                grid=grid,
                 kind=1,
                 dim=0,
                 axis=1,
@@ -146,7 +147,6 @@ class EnvironIons:
                 spread=iontype.corespread,
                 volume=-iontype.zv,
                 pos=self.coords[i],
-                grid=grid,
                 label=f"{iontype.label}_core",
             )
 
