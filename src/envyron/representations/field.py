@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing_extensions import Self
 from numpy import ndarray
 
 from dftpy.field import DirectField
@@ -32,6 +31,6 @@ class EnvironField(DirectField):
         """docstring"""
         self.__label = label
 
-    def standard_view(self) -> Self:
+    def standard_view(self) -> 'EnvironField':
         """docstring"""
         return self.T.reshape(self.grid.nnr, self.rank)

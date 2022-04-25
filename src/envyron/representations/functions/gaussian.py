@@ -24,7 +24,7 @@ class EnvironGaussian(EnvironFunction):
         density[mask] = np.exp(-r2)
 
         scale = self._get_scale_factor()
-        density *= scale
+        density[:] *= scale
 
         return density
 
@@ -45,7 +45,7 @@ class EnvironGaussian(EnvironFunction):
         gradient[:, mask] = -np.exp(-r2) * r
 
         scale = self._get_scale_factor()
-        gradient *= scale * 2 / spread2
+        gradient[:] *= scale * 2 / spread2
 
         return gradient
 

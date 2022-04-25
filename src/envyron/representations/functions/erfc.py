@@ -1,4 +1,3 @@
-from certifi import where
 import numpy as np
 import scipy.special as sp
 
@@ -30,7 +29,7 @@ class EnvironERFC(EnvironFunction):
         if np.abs((integral - analytic) / analytic > 1e-4):
             print("\nWARNING: wrong integral of erfc function\n")
 
-        density *= charge / analytic * 0.5
+        density[:] *= charge / analytic * 0.5
 
         return density
 
@@ -51,7 +50,7 @@ class EnvironERFC(EnvironFunction):
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        gradient *= charge / analytic / SQRTPI / self.spread
+        gradient[:] *= charge / analytic / SQRTPI / self.spread
 
         return gradient
 
@@ -82,7 +81,7 @@ class EnvironERFC(EnvironFunction):
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        laplacian *= charge / analytic / SQRTPI / self.spread
+        laplacian[:] *= charge / analytic / SQRTPI / self.spread
 
         return laplacian
 
@@ -109,7 +108,7 @@ class EnvironERFC(EnvironFunction):
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        hessian *= charge / analytic / SQRTPI / self.spread
+        hessian[:] *= charge / analytic / SQRTPI / self.spread
 
         return hessian
 
@@ -135,7 +134,7 @@ class EnvironERFC(EnvironFunction):
         if np.abs((integral - analytic) / analytic > 1e-4):
             print("\nWARNING: wrong integral of erfc function\n")
 
-        derivative *= charge / analytic / SQRTPI / self.spread
+        derivative[:] *= charge / analytic / SQRTPI / self.spread
 
         return derivative
 
@@ -149,7 +148,7 @@ class EnvironERFC(EnvironFunction):
         else: raise ValueError("unexpected function type")
         return charge
 
-    def _erfc_volume(self) -> None:
+    def _erfc_volume(self) -> float:
         """docstring"""
 
         spread = self.spread
