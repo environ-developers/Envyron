@@ -1,4 +1,5 @@
 from typing import Optional
+from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
@@ -16,7 +17,7 @@ class EnvironHessian(DirectField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> None:
+    ) -> Self:
         obj = super().__new__(cls, grid, rank=9, data=data)
         obj.label = label
         mod_label = f"{label or 'hessian'}_laplacian"

@@ -1,4 +1,5 @@
 from typing import Optional
+from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
@@ -17,7 +18,7 @@ class EnvironGradient(DirectField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> None:
+    ) -> Self:
         obj = super().__new__(cls, grid, rank=3, data=data)
         obj.label = label
         mod_label = f"{label or 'gradient'}_modulus"
@@ -42,7 +43,7 @@ class EnvironGradient(DirectField):
         """docstring"""
         self.__modulus = modulus
 
-    def standard_view(self) -> 'EnvironGradient':
+    def standard_view(self) -> Self:
         """docstring"""
         return self.T.reshape(self.grid.nnr, 3)
 
@@ -52,7 +53,7 @@ class EnvironGradient(DirectField):
 
     def scalar_gradient_product(
         self,
-        gradient: 'EnvironGradient',
+        gradient: Self,
     ) -> EnvironDensity:
         """docstring"""
         data = np.einsum('l...,l...', self, gradient)

@@ -1,4 +1,5 @@
 from typing import Optional
+from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
@@ -16,7 +17,7 @@ class EnvironDensity(DirectField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> None:
+    ) -> Self:
         obj = super().__new__(cls, grid, data=data)
         obj.label = label
         obj.charge = 0.
@@ -60,7 +61,7 @@ class EnvironDensity(DirectField):
         """docstring"""
         self.__quadrupole = quadrupole
 
-    def standard_view(self) -> 'EnvironDensity':
+    def standard_view(self) -> Self:
         """docstring"""
         return self.T.reshape(self.grid.nnr)
 
@@ -79,6 +80,6 @@ class EnvironDensity(DirectField):
         """docstring"""
         return np.sqrt(self.euclidean_norm() / self.grid.nnrR)
 
-    def scalar_product(self, density: 'EnvironDensity') -> float:
+    def scalar_product(self, density: Self) -> float:
         """docstring"""
         return np.einsum('ijk,ijk', self, density) * self.grid.dV
