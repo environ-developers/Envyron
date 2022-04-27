@@ -19,9 +19,10 @@ class EnvironERFC(EnvironFunction):
         dist = np.sqrt(r2)
         arg = (dist - self.width) / self.spread
 
-        data = sp.erfc(arg)
+        density = EnvironDensity(self.grid, label=self.label)
+        density[:] = sp.erfc(arg)
 
-        integral = np.sum(data) * self.grid.volume / self.grid.nnrR * 0.5
+        integral = np.sum(density) * self.grid.volume / self.grid.nnrR * 0.5
 
         charge = self._charge()
         analytic = self._erfc_volume()
@@ -29,9 +30,9 @@ class EnvironERFC(EnvironFunction):
         if np.abs((integral - analytic) / analytic > 1e-4):
             print("\nWARNING: wrong integral of erfc function\n")
 
-        data *= charge / analytic * 0.5
+        density *= charge / analytic * 0.5
 
-        return EnvironDensity(self.grid, data=data, label=self.label)
+        return density
 
     def gradient(self) -> EnvironGradient:
         """docstring"""
@@ -45,14 +46,14 @@ class EnvironERFC(EnvironFunction):
         r = r[:, mask]
         arg = arg[mask]
 
-        data = np.zeros((3, *self.grid.nr))
-        data[:, mask] = -np.exp(-arg**2) * r
+        gradient = EnvironGradient(self.grid, label=self.label)
+        gradient[:, mask] = -np.exp(-arg**2) * r
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        data *= charge / analytic / SQRTPI / self.spread
+        gradient *= charge / analytic / SQRTPI / self.spread
 
-        return EnvironGradient(self.grid, data=data, label=self.label)
+        return gradient
 
     def laplacian(self) -> EnvironDensity:
         """docstring"""
@@ -66,22 +67,24 @@ class EnvironERFC(EnvironFunction):
         dist = dist[mask]
         arg = arg[mask]
 
-        data = np.zeros(self.grid.nr)
+        laplacian = EnvironDensity(self.grid, label=self.label)
+
+        exp = np.exp(-arg**2)
 
         if self.dim == 0:
-            data[mask] = -np.exp(-arg**2) * (1 / dist - arg / self.spread) * 2
+            laplacian[mask] = -exp * (1 / dist - arg / self.spread) * 2
         elif self.dim == 1:
-            data[mask] = -np.exp(-arg**2) * (1 / dist - 2 * arg / self.spread)
+            laplacian[mask] = -exp * (1 / dist - 2 * arg / self.spread)
         elif self.dim == 2:
-            data[mask] = np.exp(-arg**2) * arg / self.spread * 2
+            laplacian[mask] = exp * arg / self.spread * 2
         else:
             raise ValueError("unexpected system dimensions")
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        data *= charge / analytic / SQRTPI / self.spread
+        laplacian *= charge / analytic / SQRTPI / self.spread
 
-        return EnvironDensity(self.grid, data=data, label=self.label)
+        return laplacian
 
     def hessian(self) -> EnvironHessian:
         """docstring"""
@@ -97,18 +100,18 @@ class EnvironERFC(EnvironFunction):
         dist = dist[mask]
         arg = arg[mask]
 
-        data = np.zeros((9, *self.grid.nr))
+        hessian = EnvironHessian(self.grid, label=self.label)
 
         outer = np.reshape(np.einsum('i...,j...->ij...', -r, r), (9, count))
         outer *= 1 / dist + 2 * arg / self.spread
         outer += dist * np.identity(3).flatten()[:, None]
-        data[:, mask] = -np.exp(-arg**2) * outer / dist**2
+        hessian[:, mask] = -np.exp(-arg**2) * outer / dist**2
 
         charge = self._charge()
         analytic = self._erfc_volume()
-        data *= charge / analytic / SQRTPI / self.spread
+        hessian *= charge / analytic / SQRTPI / self.spread
 
-        return EnvironHessian(self.grid, data=data, label=self.label)
+        return hessian
 
     def derivative(self) -> EnvironDensity:
         """docstring"""
@@ -121,10 +124,10 @@ class EnvironERFC(EnvironFunction):
 
         arg = arg[mask]
 
-        data = np.zeros(self.grid.nr)
-        data[mask] = -np.exp(-arg**2)
+        derivative = EnvironDensity(self.grid, label=self.label)
+        derivative[mask] = -np.exp(-arg**2)
 
-        integral = np.sum(data) * self.grid.volume / self.grid.nnrR * 0.5
+        integral = np.sum(derivative) * self.grid.volume / self.grid.nnrR * 0.5
 
         charge = self._charge()
         analytic = self._erfc_volume()
@@ -132,9 +135,9 @@ class EnvironERFC(EnvironFunction):
         if np.abs((integral - analytic) / analytic > 1e-4):
             print("\nWARNING: wrong integral of erfc function\n")
 
-        data *= charge / analytic / SQRTPI / self.spread
+        derivative *= charge / analytic / SQRTPI / self.spread
 
-        return EnvironDensity(self.grid, data=data, label=self.label)
+        return derivative
 
     def _charge(self) -> float:
         """docstring"""
@@ -161,16 +164,19 @@ class EnvironERFC(EnvironFunction):
         f2 = np.exp(-invt**2) * 0.5 / SQRTPI
 
         if self.dim == 0:
+
             volume = FPI / 3 * width**3 * \
                      ((1. + 1.5 * t**2) * f1 + \
                          (1. + t**2) * t * f2)
 
         elif self.dim == 1:
+
             volume = np.pi * width**2 * \
                 self.grid.lattice[self.axis, self.axis] * \
                      ((1. + 0.5 * t**2) * f1 + t * f2)
 
         elif self.dim == 2:
+
             volume = 2. * width * self.grid.volume / \
                 self.grid.lattice[self.axis, self.axis]
 
