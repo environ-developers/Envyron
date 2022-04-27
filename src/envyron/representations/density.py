@@ -4,12 +4,11 @@ from numpy import ndarray
 
 import numpy as np
 
-from dftpy.field import DirectField
-
+from . import EnvironField
 from ..domains.cell import EnvironGrid
 
 
-class EnvironDensity(DirectField):
+class EnvironDensity(EnvironField):
     """docstring"""
 
     def __new__(
@@ -18,21 +17,11 @@ class EnvironDensity(DirectField):
         data: Optional[ndarray] = None,
         label: str = '',
     ) -> Self:
-        obj = super().__new__(cls, grid, data=data)
-        obj.label = label
+        obj = super().__new__(cls, grid, rank=1, data=data, label=label)
         obj.charge = 0.
         obj.dipole = np.zeros(3)
         obj.quadrupole = np.zeros(3)
         return obj
-
-    @property
-    def label(self) -> str:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
 
     @property
     def charge(self) -> float:
@@ -60,10 +49,6 @@ class EnvironDensity(DirectField):
     def quadrupole(self, quadrupole: ndarray) -> None:
         """docstring"""
         self.__quadrupole = quadrupole
-
-    def standard_view(self) -> Self:
-        """docstring"""
-        return self.T.reshape(self.grid.nnr)
 
     def compute_multipoles(self, origin: ndarray) -> None:
         """docstring"""

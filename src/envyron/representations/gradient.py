@@ -4,13 +4,11 @@ from numpy import ndarray
 
 import numpy as np
 
-from dftpy.field import DirectField
-
+from . import EnvironField, EnvironDensity
 from ..domains.cell import EnvironGrid
-from . import EnvironDensity
 
 
-class EnvironGradient(DirectField):
+class EnvironGradient(EnvironField):
     """docstring"""
 
     def __new__(
@@ -19,20 +17,10 @@ class EnvironGradient(DirectField):
         data: Optional[ndarray] = None,
         label: str = '',
     ) -> Self:
-        obj = super().__new__(cls, grid, rank=3, data=data)
-        obj.label = label
+        obj = super().__new__(cls, grid, rank=3, data=data, label=label)
         mod_label = f"{label or 'gradient'}_modulus"
         obj.modulus = EnvironDensity(grid, label=mod_label)
         return obj
-
-    @property
-    def label(self) -> str:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
 
     @property
     def modulus(self) -> EnvironDensity:
@@ -42,10 +30,6 @@ class EnvironGradient(DirectField):
     def modulus(self, modulus: EnvironDensity) -> None:
         """docstring"""
         self.__modulus = modulus
-
-    def standard_view(self) -> Self:
-        """docstring"""
-        return self.T.reshape(self.grid.nnr, 3)
 
     def update(self) -> None:
         """docstring"""

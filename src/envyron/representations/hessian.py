@@ -4,12 +4,11 @@ from numpy import ndarray
 
 import numpy as np
 
-from dftpy.field import DirectField
-
+from . import EnvironField, EnvironDensity, EnvironGradient
 from ..domains.cell import EnvironGrid
-from . import EnvironDensity, EnvironGradient
 
-class EnvironHessian(DirectField):
+
+class EnvironHessian(EnvironField):
     """docstring"""
 
     def __new__(
@@ -18,20 +17,10 @@ class EnvironHessian(DirectField):
         data: Optional[ndarray] = None,
         label: str = '',
     ) -> Self:
-        obj = super().__new__(cls, grid, rank=9, data=data)
-        obj.label = label
+        obj = super().__new__(cls, grid, rank=9, data=data, label=label)
         mod_label = f"{label or 'hessian'}_laplacian"
         obj.laplacian = EnvironDensity(grid, label=mod_label)
         return obj
-
-    @property
-    def label(self) -> str:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
 
     @property
     def laplacian(self) -> EnvironDensity:
@@ -41,10 +30,6 @@ class EnvironHessian(DirectField):
     def laplacian(self, laplacian: EnvironDensity) -> None:
         """docstring"""
         self.__laplacian = laplacian
-
-    def standard_view(self) -> 'EnvironHessian':
-        """docstring"""
-        return self.T.reshape(self.grid.nnr, 3, 3)
 
     def update(self) -> None:
         """docstring"""
