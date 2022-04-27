@@ -5,8 +5,8 @@ from numpy import ndarray
 
 import numpy as np
 
-from . import EnvironField
 from ..domains.cell import EnvironGrid
+from . import EnvironField
 
 
 class EnvironDensity(EnvironField):

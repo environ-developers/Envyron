@@ -1,10 +1,8 @@
 import numpy as np
 
-from . import EnvironFunction, EXP_TOL
-
-from .. import EnvironDensity, EnvironGradient
-
 from ...utils.constants import SQRTPI
+from .. import EnvironDensity, EnvironGradient
+from . import EnvironFunction, EXP_TOL
 
 
 class EnvironGaussian(EnvironFunction):

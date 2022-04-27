@@ -4,7 +4,6 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from ...domains import EnvironGrid
-
 from .. import EnvironDensity, EnvironGradient, EnvironHessian
 
 KINDS = {

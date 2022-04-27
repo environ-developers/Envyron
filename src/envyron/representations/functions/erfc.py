@@ -1,11 +1,9 @@
 import numpy as np
 import scipy.special as sp
 
-from . import EnvironFunction, FUNC_TOL
-
-from .. import EnvironDensity, EnvironGradient, EnvironHessian
-
 from ...utils.constants import FPI, SQRTPI
+from .. import EnvironDensity, EnvironGradient, EnvironHessian
+from . import EnvironFunction, FUNC_TOL
 
 
 class EnvironERFC(EnvironFunction):
