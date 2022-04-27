@@ -6,7 +6,7 @@ import numpy as np
 from ..utils.constants import TPI, E2
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity
-from ..representations.functions import EnvironGaussian
+from ..representations.functions import FunctionContainer, EnvironGaussian
 from .iontype import EnvironIonType
 
 
@@ -107,7 +107,7 @@ class EnvironIons:
 
         self.density = EnvironDensity(grid, label='smeared_ions')
 
-        self.smeared_ions: List[EnvironGaussian] = []
+        self.smeared_ions = FunctionContainer(grid)
 
         for i in range(self.count):
 
@@ -117,7 +117,7 @@ class EnvironIons:
                 grid=grid,
                 kind=1,
                 dim=0,
-                axis=1,
+                axis=0,
                 width=0.0,
                 spread=iontype.atomicspread,
                 volume=iontype.zv,
@@ -132,7 +132,7 @@ class EnvironIons:
 
         self.core_density = EnvironDensity(grid, label='core_electrons')
 
-        self.core_electrons: List[EnvironGaussian] = []
+        self.core_electrons = FunctionContainer(grid)
 
         for i in range(self.count):
 
@@ -142,7 +142,7 @@ class EnvironIons:
                 grid=grid,
                 kind=1,
                 dim=0,
-                axis=1,
+                axis=0,
                 width=0.0,
                 spread=iontype.corespread,
                 volume=-iontype.zv,
@@ -162,7 +162,7 @@ class EnvironIons:
         if len(coords) != self.count:
             raise ValueError("mismatch in number of atoms")
 
-        self.coords = coords
+        self.coords[:] = coords
 
         if center is not None:
             self.com = center
@@ -183,8 +183,6 @@ class EnvironIons:
             self.quadrupole_pc += iontype.zv * (self.coords[i] - self.com)**2
 
             if self.smeared:
-
-                self.smeared_ions[i].pos = self.coords[i]
 
                 self.quadrupole_correction += \
                     iontype.zv * iontype.atomicspread**2 * 0.5
