@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 from typing_extensions import Self
 from numpy import ndarray
@@ -16,7 +18,7 @@ class EnvironField(DirectField):
         rank: int = 1,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> Self:
+    ) -> EnvironField:
         obj = super().__new__(cls, grid, rank=rank, data=data)
         obj.label = label
         return obj

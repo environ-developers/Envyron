@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 from typing_extensions import Self
 from numpy import ndarray
@@ -16,7 +18,7 @@ class EnvironGradient(EnvironField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> Self:
+    ) -> EnvironGradient:
         obj = super().__new__(cls, grid, rank=3, data=data, label=label)
         mod_label = f"{label or 'gradient'}_modulus"
         obj.modulus = EnvironDensity(grid, label=mod_label)
@@ -37,7 +39,7 @@ class EnvironGradient(EnvironField):
 
     def scalar_gradient_product(
         self,
-        gradient: Self,
+        gradient: EnvironGradient,
     ) -> EnvironDensity:
         """docstring"""
         data = np.einsum('l...,l...', self, gradient)
@@ -45,7 +47,7 @@ class EnvironGradient(EnvironField):
 
     def scalar_density_product(
         self,
-        density: 'EnvironDensity',
+        density: EnvironDensity,
     ) -> ndarray:
         """docstring"""
         return np.einsum('lijk,ijk', self, density) * self.grid.dV

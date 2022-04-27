@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 from typing_extensions import Self
 from numpy import ndarray
@@ -16,7 +18,7 @@ class EnvironDensity(EnvironField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> Self:
+    ) -> EnvironDensity:
         obj = super().__new__(cls, grid, rank=1, data=data, label=label)
         obj.charge = 0.
         obj.dipole = np.zeros(3)
@@ -65,6 +67,6 @@ class EnvironDensity(EnvironField):
         """docstring"""
         return np.sqrt(self.euclidean_norm() / self.grid.nnrR)
 
-    def scalar_product(self, density: Self) -> float:
+    def scalar_product(self, density: EnvironDensity) -> float:
         """docstring"""
         return np.einsum('ijk,ijk', self, density) * self.grid.dV

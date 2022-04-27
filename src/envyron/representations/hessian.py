@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 from typing_extensions import Self
 from numpy import ndarray
@@ -16,7 +18,7 @@ class EnvironHessian(EnvironField):
         grid: EnvironGrid,
         data: Optional[ndarray] = None,
         label: str = '',
-    ) -> Self:
+    ) -> EnvironHessian:
         obj = super().__new__(cls, grid, rank=9, data=data, label=label)
         mod_label = f"{label or 'hessian'}_laplacian"
         obj.laplacian = EnvironDensity(grid, label=mod_label)
