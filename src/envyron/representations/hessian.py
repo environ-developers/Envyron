@@ -19,25 +19,21 @@ class EnvironHessian(EnvironField):
         label: str = '',
     ) -> EnvironHessian:
         obj = super().__new__(cls, grid, rank=9, data=data, label=label)
-        obj._laplacian = None
+        obj._trace = None
         return obj
 
     @property
-    def laplacian(self) -> EnvironDensity:
-        if self._laplacian is None: self._compute_laplacian()
-        return self._laplacian
+    def trace(self) -> EnvironDensity:
+        if self._trace is None: self._compute_trace()
+        return self._trace
 
-    def _compute_laplacian(self) -> None:
+    def _compute_trace(self) -> None:
         """docstring"""
-        self._laplacian = EnvironDensity(
+        self._trace = EnvironDensity(
             self.grid,
-            data=self.trace(),
-            label=f"{self.label or 'hessian'}_laplacian",
+            data=self[0] + self[4] + self[8],
+            label=f"{self.label or ''} laplacian".strip(),
         )
-
-    def trace(self) -> ndarray:
-        """docstring"""
-        return self[0] + self[4] + self[8]
 
     def scalar_gradient_product(
         self,
