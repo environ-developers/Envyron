@@ -19,22 +19,21 @@ class EnvironHessian(EnvironField):
         label: str = '',
     ) -> EnvironHessian:
         obj = super().__new__(cls, grid, rank=9, data=data, label=label)
-        mod_label = f"{label or 'hessian'}_laplacian"
-        obj.laplacian = EnvironDensity(grid, label=mod_label)
+        obj._laplacian = None
         return obj
 
     @property
     def laplacian(self) -> EnvironDensity:
-        return self.__laplacian
+        if self._laplacian is None: self._compute_laplacian()
+        return self._laplacian
 
-    @laplacian.setter
-    def laplacian(self, laplacian: EnvironDensity) -> None:
+    def _compute_laplacian(self) -> None:
         """docstring"""
-        self.__laplacian = laplacian
-
-    def update(self) -> None:
-        """docstring"""
-        self.laplacian[:] = self.trace()
+        self._laplacian = EnvironDensity(
+            self.grid,
+            data=self.trace(),
+            label=f"{self.label or 'hessian'}_laplacian",
+        )
 
     def trace(self) -> ndarray:
         """docstring"""
