@@ -193,7 +193,7 @@ class EnvironIons:
         if self.smeared:
 
             for i in range(self.count):
-                self.density[:] += self.smeared_ions[i].density()
+                self.density[:] += self.smeared_ions[i].density
 
             self.potential_shift = \
                 self.quadrupole_correction * \

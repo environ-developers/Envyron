@@ -13,22 +13,23 @@ class FunctionContainer:
     def __init__(self, grid: EnvironGrid) -> None:
         self.grid = grid
         self.functions: List[EnvironFunction] = []
+        self.count = 0
 
     def __getitem__(
         self,
-        s: Union[int, List[int], slice],
-    ) -> Union[FunctionContainer, EnvironFunction]:
+        slice: Union[int, List[int], slice],
+    ) -> Union[EnvironFunction, FunctionContainer]:
 
-        if isinstance(s, int):
-            return self.functions[s]
+        if isinstance(slice, int):
+            return self.functions[slice]
         else:
             subset = FunctionContainer(self.grid)
 
-            if isinstance(s, list):
-                for i in s:
+            if isinstance(slice, list):
+                for i in slice:
                     subset.functions.append(self.functions[i])
             else:
-                for function in self.functions[s]:
+                for function in self.functions[slice]:
                     subset.functions.append(function)
 
             return subset
@@ -37,19 +38,24 @@ class FunctionContainer:
         return iter(self.functions)
 
     def __len__(self) -> int:
-        return len(self.functions)
+        return self.count
 
     def append(self, function: EnvironFunction) -> None:
         """docstring"""
         self.functions.append(function)
+        self.count += 1
+
+    def reset_derivatives(self) -> None:
+        """docstring"""
+        for function in self:
+            function.reset_derivatives()
 
     def density(self) -> EnvironDensity:
         """docstring"""
         density = EnvironDensity(self.grid)
 
-        function: EnvironFunction
         for function in self:
-            density[:] += function.density()
+            density[:] += function.density
 
         return density
 
@@ -57,9 +63,8 @@ class FunctionContainer:
         """docstring"""
         gradient = EnvironGradient(self.grid)
 
-        function: EnvironFunction
         for function in self:
-            gradient[:] += function.gradient()
+            gradient[:] += function.gradient
 
         return gradient
 
@@ -67,9 +72,8 @@ class FunctionContainer:
         """docstring"""
         laplacian = EnvironDensity(self.grid)
 
-        function: EnvironFunction
         for function in self:
-            laplacian[:] += function.laplacian()
+            laplacian[:] += function.laplacian
 
         return laplacian
 
@@ -77,9 +81,8 @@ class FunctionContainer:
         """docstring"""
         hessian = EnvironHessian(self.grid)
 
-        function: EnvironFunction
         for function in self:
-            hessian[:] += function.hessian()
+            hessian[:] += function.hessian
 
         return hessian
 
@@ -87,8 +90,7 @@ class FunctionContainer:
         """docstring"""
         derivative = EnvironDensity(self.grid)
 
-        function: EnvironFunction
         for function in self:
-            derivative[:] += function.derivative()
+            derivative[:] += function.derivative
 
         return derivative
