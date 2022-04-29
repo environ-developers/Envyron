@@ -21,15 +21,6 @@ class EnvironGrid(DirectGrid):
         self.label = label
         self.corners = -np.array(list(product(range(2), repeat=3))).dot(at)
 
-    @property
-    def label(self) -> str:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
-
     def get_min_distance(
         self,
         origin: ndarray,

@@ -22,15 +22,6 @@ class EnvironField(DirectField):
         obj.label = label
         return obj
 
-    @property
-    def label(self) -> str:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
-
     def standard_view(self) -> 'EnvironField':
         """docstring"""
         return self.T.reshape(self.grid.nnr, self.rank)
