@@ -127,11 +127,11 @@ class EnvironFunction(ABC):
 
     def reset_derivatives(self) -> None:
         """docstring"""
-        self._density = None
-        self._gradient = None
-        self._laplacian = None
-        self._hessian = None
-        self._derivative = None
+        if self._density is not None: self._density[:] = 0.0
+        if self._gradient is not None: self._gradient[:] = 0.0
+        if self._laplacian is not None: self._laplacian[:] = 0.0
+        if self._hessian is not None: self._hessian[:] = 0.0
+        if self._derivative is not None: self._derivative[:] = 0.0
 
     @abstractmethod
     def _compute_density(self) -> None:
