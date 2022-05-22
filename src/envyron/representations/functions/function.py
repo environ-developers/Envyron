@@ -1,10 +1,10 @@
+from typing import Optional
 from numpy import ndarray
 
 import numpy as np
 from abc import ABC, abstractmethod
 
 from ...domains import EnvironGrid
-
 from .. import EnvironDensity, EnvironGradient, EnvironHessian
 
 KINDS = {
@@ -22,16 +22,16 @@ class EnvironFunction(ABC):
     """docstring"""
 
     def __init__(
-        self,
-        kind: int,
-        dim: int,
-        axis: int,
-        width: float,
-        spread: float,
-        volume: float,
-        pos: ndarray,
-        grid: EnvironGrid,
-        label: str = '',
+            self,
+            grid: EnvironGrid,
+            kind: int,
+            dim: int,
+            axis: int,
+            width: float,
+            spread: float,
+            volume: float,
+            pos: ndarray = np.zeros(3),
+            label: str = '',
     ) -> None:
         self.kind = kind
         self.dim = dim
@@ -42,6 +42,12 @@ class EnvironFunction(ABC):
         self.pos = pos
         self.grid = grid
         self.label = label
+
+        self._density: Optional[EnvironDensity] = None
+        self._gradient: Optional[EnvironGradient] = None
+        self._laplacian: Optional[EnvironDensity] = None
+        self._hessian: Optional[EnvironHessian] = None
+        self._derivative: Optional[EnvironDensity] = None
 
     @property
     def kind(self) -> int:
@@ -89,25 +95,63 @@ class EnvironFunction(ABC):
             raise ValueError(f"wrong spread for {self.kind} function")
         self.__spread = spread
 
-    @abstractmethod
+    @property
     def density(self) -> EnvironDensity:
         """docstring"""
+        if self._density is None: self._compute_density()
+        return self._density
 
-    @abstractmethod
+    @property
     def gradient(self) -> EnvironGradient:
         """docstring"""
+        if self._gradient is None: self._compute_gradient()
+        return self._gradient
 
+    @property
     def laplacian(self) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError(
-            f"not implemented for {KINDS[self.kind]} functions")
+        if self._laplacian is None: self._compute_laplacian()
+        return self._laplacian
 
+    @property
     def hessian(self) -> EnvironHessian:
+        """docstring"""
+        if self._hessian is None: self._compute_hessian()
+        return self._hessian
+
+    @property
+    def derivative(self) -> EnvironDensity:
+        """docstring"""
+        if self._derivative is None: self._compute_derivative()
+        return self._derivative
+
+    def reset_derivatives(self) -> None:
+        """docstring"""
+        self._density = None
+        self._gradient = None
+        self._laplacian = None
+        self._hessian = None
+        self._derivative = None
+
+    @abstractmethod
+    def _compute_density(self) -> None:
+        """docstring"""
+
+    @abstractmethod
+    def _compute_gradient(self) -> None:
+        """docstring"""
+
+    def _compute_laplacian(self) -> None:
         """docstring"""
         raise NotImplementedError(
             f"not implemented for {KINDS[self.kind]} functions")
 
-    def derivative(self) -> EnvironDensity:
+    def _compute_hessian(self) -> None:
+        """docstring"""
+        raise NotImplementedError(
+            f"not implemented for {KINDS[self.kind]} functions")
+
+    def _compute_derivative(self) -> None:
         """docstring"""
         raise NotImplementedError(
             f"not implemented for {KINDS[self.kind]} functions")

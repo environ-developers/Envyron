@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
 
-from . import EnvironField, EnvironDensity, EnvironGradient
 from ..domains.cell import EnvironGrid
+from . import EnvironField, EnvironDensity, EnvironGradient
 
 
 class EnvironHessian(EnvironField):
@@ -20,26 +19,21 @@ class EnvironHessian(EnvironField):
         label: str = '',
     ) -> EnvironHessian:
         obj = super().__new__(cls, grid, rank=9, data=data, label=label)
-        mod_label = f"{label or 'hessian'}_laplacian"
-        obj.laplacian = EnvironDensity(grid, label=mod_label)
+        obj._trace = None
         return obj
 
     @property
-    def laplacian(self) -> EnvironDensity:
-        return self.__laplacian
+    def trace(self) -> EnvironDensity:
+        if self._trace is None: self._compute_trace()
+        return self._trace
 
-    @laplacian.setter
-    def laplacian(self, laplacian: EnvironDensity) -> None:
+    def _compute_trace(self) -> None:
         """docstring"""
-        self.__laplacian = laplacian
-
-    def update(self) -> None:
-        """docstring"""
-        self.laplacian[:] = self.trace()
-
-    def trace(self) -> ndarray:
-        """docstring"""
-        return self[0] + self[4] + self[8]
+        self._trace = EnvironDensity(
+            self.grid,
+            data=self[0] + self[4] + self[8],
+            label=f"{self.label or ''} laplacian".strip(),
+        )
 
     def scalar_gradient_product(
         self,

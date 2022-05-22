@@ -1,16 +1,14 @@
 import numpy as np
 
-from . import EnvironFunction, EXP_TOL
-
-from .. import EnvironDensity, EnvironGradient
-
 from ...utils.constants import SQRTPI
+from .. import EnvironDensity, EnvironGradient
+from . import EnvironFunction, EXP_TOL
 
 
 class EnvironGaussian(EnvironFunction):
     """docstring"""
 
-    def density(self) -> EnvironDensity:
+    def _compute_density(self) -> None:
         """docstring"""
 
         _, r2 = self.grid.get_min_distance(self.pos, self.dim, self.axis)
@@ -20,15 +18,13 @@ class EnvironGaussian(EnvironFunction):
 
         r2 = r2[mask]
 
-        density = EnvironDensity(self.grid, label=self.label)
-        density[mask] = np.exp(-r2)
+        self._density = EnvironDensity(self.grid, label=self.label)
+        self._density[mask] = np.exp(-r2)
 
         scale = self._get_scale_factor()
-        density *= scale
+        self._density[:] *= scale
 
-        return density
-
-    def gradient(self) -> EnvironGradient:
+    def _compute_gradient(self) -> None:
         """docstring"""
 
         spread2 = self.spread**2
@@ -41,13 +37,11 @@ class EnvironGaussian(EnvironFunction):
         r = r[:, mask]
         r2 = r2[mask]
 
-        gradient = EnvironGradient(self.grid, label=self.label)
-        gradient[:, mask] = -np.exp(-r2) * r
+        self._gradient = EnvironGradient(self.grid, label=self.label)
+        self._gradient[:, mask] = -np.exp(-r2) * r
 
         scale = self._get_scale_factor()
-        gradient *= scale * 2 / spread2
-
-        return gradient
+        self._gradient[:] *= scale * 2 / spread2
 
     def _get_scale_factor(self) -> float:
         """docstring"""

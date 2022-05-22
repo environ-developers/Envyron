@@ -21,21 +21,12 @@ class EnvironGrid(DirectGrid):
         self.label = label
         self.corners = -np.array(list(product(range(2), repeat=3))).dot(at)
 
-    @property
-    def label(self) -> float:
-        return self.__label
-
-    @label.setter
-    def label(self, label: str) -> None:
-        """docstring"""
-        self.__label = label
-
     def get_min_distance(
         self,
         origin: ndarray,
         dim: int = 0,
         axis: int = 0,
-    ) -> Tuple[ndarray]:
+    ) -> Tuple[ndarray, ndarray]:
         """docstring"""
         r = self._get_displacement(self.r, origin, dim, axis)
         r, r2 = self._apply_minimum_image_convension(r)
@@ -63,7 +54,10 @@ class EnvironGrid(DirectGrid):
 
         return dr
 
-    def _apply_minimum_image_convension(self, r: ndarray) -> Tuple[ndarray]:
+    def _apply_minimum_image_convension(
+        self,
+        r: ndarray,
+    ) -> Tuple[ndarray, ndarray]:
         """docstring"""
 
         # apply minimum image convension

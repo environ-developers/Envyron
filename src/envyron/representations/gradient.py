@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
 
-from . import EnvironField, EnvironDensity
 from ..domains.cell import EnvironGrid
+from . import EnvironField, EnvironDensity
 
 
 class EnvironGradient(EnvironField):
@@ -20,22 +19,21 @@ class EnvironGradient(EnvironField):
         label: str = '',
     ) -> EnvironGradient:
         obj = super().__new__(cls, grid, rank=3, data=data, label=label)
-        mod_label = f"{label or 'gradient'}_modulus"
-        obj.modulus = EnvironDensity(grid, label=mod_label)
+        obj._modulus = None
         return obj
 
     @property
     def modulus(self) -> EnvironDensity:
-        return self.__modulus
+        if self._modulus is None: self._compute_modulus()
+        return self._modulus
 
-    @modulus.setter
-    def modulus(self, modulus: EnvironDensity) -> None:
+    def _compute_modulus(self) -> None:
         """docstring"""
-        self.__modulus = modulus
-
-    def update(self) -> None:
-        """docstring"""
-        self.modulus[:] = np.sqrt(np.sum(self**2, 0))
+        self._modulus = EnvironDensity(
+            self.grid,
+            data=np.sqrt(np.sum(self**2, 0)),
+            label=f"{self.label or 'gradient'}_modulus",
+        )
 
     def scalar_gradient_product(
         self,

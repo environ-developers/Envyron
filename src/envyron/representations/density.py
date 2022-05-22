@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing_extensions import Self
 from numpy import ndarray
 
 import numpy as np
 
-from . import EnvironField
 from ..domains.cell import EnvironGrid
+from . import EnvironField
 
 
 class EnvironDensity(EnvironField):
@@ -20,42 +19,20 @@ class EnvironDensity(EnvironField):
         label: str = '',
     ) -> EnvironDensity:
         obj = super().__new__(cls, grid, rank=1, data=data, label=label)
-        obj.charge = 0.
+        obj._charge = None
         obj.dipole = np.zeros(3)
         obj.quadrupole = np.zeros(3)
         return obj
 
     @property
     def charge(self) -> float:
-        return self.__charge
-
-    @charge.setter
-    def charge(self, charge: float) -> None:
-        """docstring"""
-        self.__charge = charge
-
-    @property
-    def dipole(self) -> ndarray:
-        return self.__dipole
-
-    @dipole.setter
-    def dipole(self, dipole: ndarray) -> None:
-        """docstring"""
-        self.__dipole = dipole
-
-    @property
-    def quadrupole(self) -> ndarray:
-        return self.__quadrupole
-
-    @quadrupole.setter
-    def quadrupole(self, quadrupole: ndarray) -> None:
-        """docstring"""
-        self.__quadrupole = quadrupole
+        if self._charge is None: self._charge: float = self.integral()
+        return self._charge
 
     def compute_multipoles(self, origin: ndarray) -> None:
         """docstring"""
         r, _ = self.grid.get_min_distance(origin)
-        self.charge = self.integral()
+        self._charge = self.integral()
         self.dipole = np.einsum('ijk,lijk', self, r) * self.grid.dV
         self.quadrupole = np.einsum('ijk,lijk', self, r**2) * self.grid.dV
 
