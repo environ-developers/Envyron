@@ -1,5 +1,7 @@
 from typing import Union
 
+from ..utils.constants import BOHR_RADIUS_ANGS
+
 
 class EnvironIonType:
     """
@@ -141,13 +143,17 @@ class EnvironIonType:
         self.atomicspread = 0.5
         self.corespread = 0.5
 
+        index = self.number - 1
+
         if radius_mode == 'pauling':
-            self.solvationrad = self.pauling[self.number]
+            self.solvationrad = self.pauling[index]
         elif radius_mode == 'bondi':
-            self.solvationrad = self.bondi[self.number]
+            self.solvationrad = self.bondi[index]
         elif radius_mode == 'uff':
-            self.solvationrad = self.uff[self.number]
+            self.solvationrad = self.uff[index] * 0.5
         elif radius_mode == 'muff':
-            self.solvationrad = self.muff[self.number]
+            self.solvationrad = self.muff[index] * 0.5
         else:
             raise ValueError(f"{radius_mode} is not a supported radius mode")
+
+        self.solvationrad /= BOHR_RADIUS_ANGS
