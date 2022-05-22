@@ -18,7 +18,7 @@ class EnvironElectrons:
     def update(self, rho: ndarray, nelec: Optional[int] = None) -> None:
         """docstring"""
         self.density[:] = rho
-        self.charge = self.density.integral()
+        self.charge = self.density.charge
         self.count = int(np.rint(self.charge))
 
         if nelec is not None:
