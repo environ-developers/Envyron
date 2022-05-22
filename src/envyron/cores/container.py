@@ -22,7 +22,7 @@ class CoreContainer:
 
         self._electrostatics = None
         self.has_electrostatics = False
-        
+
         self._corrections = None
         self.has_corrections = False
 

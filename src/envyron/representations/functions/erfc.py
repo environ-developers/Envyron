@@ -180,19 +180,18 @@ class EnvironERFC(EnvironFunction):
         if self.dim == 0:
 
             volume = FPI / 3 * width**3 * \
-                     ((1. + 1.5 * t**2) * f1 + \
-                         (1. + t**2) * t * f2)
+                     ((1. + 1.5 * t**2) * f1 + (1. + t**2) * t * f2)
 
         elif self.dim == 1:
 
             volume = np.pi * width**2 * \
-                self.grid.lattice[self.axis, self.axis] * \
+                     self.grid.lattice[self.axis, self.axis] * \
                      ((1. + 0.5 * t**2) * f1 + t * f2)
 
         elif self.dim == 2:
 
             volume = 2. * width * self.grid.volume / \
-                self.grid.lattice[self.axis, self.axis]
+                     self.grid.lattice[self.axis, self.axis]
 
         else:
             raise ValueError("unexpected system dimensions")

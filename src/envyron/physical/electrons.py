@@ -12,7 +12,7 @@ class EnvironElectrons:
 
     def __init__(self, grid: EnvironGrid) -> None:
         self.density = EnvironDensity(grid, label='electrons')
-        
+
         self.updating = False
 
     def update(self, rho: ndarray, nelec: Optional[int] = None) -> None:

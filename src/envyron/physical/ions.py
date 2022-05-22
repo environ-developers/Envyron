@@ -197,7 +197,7 @@ class EnvironIons:
 
             self.potential_shift = \
                 self.quadrupole_correction * \
-                    TPI * E2 / self.density.grid.volume
+                TPI * E2 / self.density.grid.volume
 
             self.quadrupole_gauss = \
                 self.quadrupole_pc + self.quadrupole_correction

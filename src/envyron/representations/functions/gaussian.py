@@ -19,7 +19,7 @@ class EnvironGaussian(EnvironFunction):
         r2 = r2[mask]
 
         self._density = EnvironDensity(self.grid, label=self.label)
-        
+
         density = np.zeros(self._density.shape)
         density[mask] = np.exp(-r2)
 
