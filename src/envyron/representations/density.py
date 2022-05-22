@@ -32,7 +32,6 @@ class EnvironDensity(EnvironField):
     def compute_multipoles(self, origin: ndarray) -> None:
         """docstring"""
         r, _ = self.grid.get_min_distance(origin)
-        self._charge = self.integral()
         self.dipole = np.einsum('ijk,lijk', self, r) * self.grid.dV
         self.quadrupole = np.einsum('ijk,lijk', self, r**2) * self.grid.dV
 
