@@ -124,7 +124,7 @@ class ElectronicBoundary(EnvironBoundary):
         spurious_force = partial.modulus.charge
 
         if spurious_force > 1e-5:
-            print(f"non-negligible forces due to core electrons")
+            print("non-negligible forces due to core electrons")
             print(f"spurious force on species {index} = {spurious_force}")
 
         return partial

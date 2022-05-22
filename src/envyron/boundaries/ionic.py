@@ -3,8 +3,6 @@ from typing import Optional
 
 import numpy as np
 
-from envyron.representations import density
-
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
 from ..representations.functions import FunctionContainer, EnvironERFC
