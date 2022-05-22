@@ -19,10 +19,13 @@ class EnvironGaussian(EnvironFunction):
         r2 = r2[mask]
 
         self._density = EnvironDensity(self.grid, label=self.label)
-        self._density[mask] = np.exp(-r2)
+        
+        density = np.zeros(self._density.shape)
+        density[mask] = np.exp(-r2)
 
         scale = self._get_scale_factor()
-        self._density[:] *= scale
+
+        self._density[mask] += density[mask] * scale
 
     def _compute_gradient(self) -> None:
         """docstring"""
@@ -38,10 +41,13 @@ class EnvironGaussian(EnvironFunction):
         r2 = r2[mask]
 
         self._gradient = EnvironGradient(self.grid, label=self.label)
-        self._gradient[:, mask] = -np.exp(-r2) * r
 
-        scale = self._get_scale_factor()
-        self._gradient[:] *= scale * 2 / spread2
+        gradient = np.zeros(self._gradient.shape)
+        gradient[:, mask] = -np.exp(-r2) * r
+
+        scale = self._get_scale_factor() * 2.0 / spread2
+
+        self._gradient[:, mask] += gradient[:, mask] * scale
 
     def _get_scale_factor(self) -> float:
         """docstring"""
