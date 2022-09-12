@@ -11,7 +11,7 @@ class FFTCore(NumericalCore):
 
     def gradient(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
-        raise NotImplementedError()
+        return EnvironGradient(density.grid, density.gradient(), 'gradient')
 
     def divergence(self, gradient: EnvironGradient) -> EnvironDensity:
         """docstring"""
@@ -19,7 +19,7 @@ class FFTCore(NumericalCore):
 
     def laplacian(self, density: EnvironDensity) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError()
+        return EnvironDensity(density.grid, density.laplacian(), 'laplacian')
 
     def hessian(
         self,
