@@ -1,0 +1,2 @@
+class EnvironCube:
+    """docstring"""

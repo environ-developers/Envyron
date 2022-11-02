@@ -1,0 +1,2 @@
+class EnvironDielectric:
+    """docstring"""
