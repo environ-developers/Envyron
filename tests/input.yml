@@ -1,0 +1,130 @@
+control:
+  debug: False
+  restart: False
+  verbosity: 0
+  threshold: 1e-1
+  nskip: 0
+  nrep: [0]
+  need_electrostatic: False
+
+environment:
+  type: water
+  surface_tension: 0
+  pressure: 0
+  confine: 0
+  static_permittivity: 1
+  optical_permittivity: 1
+  temperature: 300.0
+
+system:
+  ntyp: 0
+  dim: 0
+  axis: 2
+  pos: [0.]
+
+# ions:
+#   atomicspread: [0.8]
+#   corespread: [0.5]
+#   solvationrad: [3.0]
+
+electrolyte:
+  concentration: 0.2
+  formula: [2, 1, 1, -2]
+  linearized: False
+  entropy: full
+  cionmax: 0.0
+  rion: 0.0
+  mode: electronic
+  distance: 0.0
+  spread: 0.5
+  rhomax: 0.005
+  rhomin: 0.0001
+  tbeta: 4.8
+  alpha: 1.0
+  softness: 0.5
+  deriv_method: default
+
+semiconductor:
+  permittivity: 1.0
+  carrier_density: 0.0
+  distance: 0.0
+  spread: 0.5
+
+solvent:
+  mode: electronic
+  distance: 1.0
+  spread: 0.5
+  radius: 0.0
+  radius_mode: uff
+  alpha: 1.0
+  softness: 0.5
+  stype: 2
+  rhomax: 0.005
+  rhomin: 0.0001
+  tbeta: 4.8
+  radial_scale: 2.0
+  radial_spread: 0.5
+  filling_threshold: 0.825
+  filling_spread: 0.02
+  deriv_method: default
+  deriv_core: fft
+
+electrostatics:
+  problem: none
+  tol: 1e-05
+  solver: none
+  auxiliary: none
+  step_type: optimal
+  step: 0.3
+  maxstep: 200
+  inner_solver: none
+  inner_core: fft
+  inner_tol: 1e-10
+  inner_maxstep: 200
+  inner_mix: 0.5
+  mix_type: linear
+  ndiis: 1
+  mix: 0.5
+  preconditioner: sqrt
+  screening_type: none
+  screening: 0.0
+  core: fft
+
+pbc:
+  correction: none
+  core: 1da
+  dim: 0
+  axis: 2
+
+externals:
+  units: bohr
+  functions:
+    - - charge: 1.0
+        pos: [0., 0., 2.]
+      - charge: 1.0
+        pos: [0., 0., 4.]
+      - charge: -2.0
+        pos: [0., 2., 3.]
+    - - charge: -1.0
+        pos: [4., 4., 2.]
+    - - charge: 1.0
+        pos: [8., 0., 2.]
+      - charge: -1.0
+        pos: [8., 0., 4.]
+
+regions:
+  units: bohr
+  functions:
+    - - static: 1e2
+        pos: [0., 0., 2.]
+      - static: 1e2
+        pos: [0., 0., 4.]
+      - static: 1e2
+        pos: [0., 2., 3.]
+    - - static: 2.
+        optical: 10.
+        pos: [4., 4., 2.]
+    - - static: 5.
+        pos: [8., 0., 2.]
+      - static: 5.
+        pos: [8., 0., 4.]
