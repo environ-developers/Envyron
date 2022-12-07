@@ -2,7 +2,7 @@ from numpy import ndarray
 
 import numpy as np
 
-from envyron.cores.core import NumericalCore
+from ..cores import NumericalCore
 
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
