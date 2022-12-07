@@ -9,7 +9,7 @@ from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
 from ..representations.functions import FunctionContainer
 from ..utils.constants import FPI, EPS8
 
-from dftpy.field import ReciprocalField
+from dftpy.field import DirectField, ReciprocalField
 class FFTCore(NumericalCore):
     """docstring"""
 
@@ -55,29 +55,33 @@ class FFTCore(NumericalCore):
             hessian[ipol,:,:,:] = aux_g.ifft(force_real=True)
         return hessian
 
-    def convolution_density(
-        self,
-        density: EnvironDensity,
-        other_density: EnvironDensity,
-    ) -> EnvironDensity:
+    def convolution_density(self, density_a: EnvironDensity, density_b: EnvironDensity) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError()
+        density_a_g = density_a.fft()
+        density_b_g = density_b.fft()
+        convolution_density_g = density_a_g * density_b_g
+        convolution_density_g = ReciprocalField(grid=self.reciprocal_grid, griddata_3d=convolution_density_g)
+        convolution_density = convolution_density_g.iff(force_real=True)
+        return convolution_density
 
-    def convolution_gradient(
-        self,
-        density: EnvironDensity,
-        gradient: EnvironGradient,
-    ) -> EnvironGradient:
+    def convolution_gradient(self, density: EnvironDensity, gradient: EnvironGradient) -> EnvironGradient:
         """docstring"""
-        raise NotImplementedError()
+        density_g = density.fft()
+        gradient_g = gradient.fft()
+        convolution_gradient_g = density_g * gradient_g
+        convolution_gradient_g = ReciprocalField(grid=self.reciprocal_grid, rank=3, griddata_3d=convolution_gradient_g)
+        convolution_gradient = convolution_gradient_g.iff(force_real=True)
+        return convolution_gradient
 
-    def convolution_hessian(
-        self,
-        density: EnvironDensity,
-        hessian: EnvironHessian,
-    ) -> EnvironHessian:
+    def convolution_hessian(self, density: EnvironDensity, hessian: EnvironHessian) -> EnvironHessian:
         """docstring"""
-        raise NotImplementedError()
+        density_g = density.fft()
+        convolution_hessian = EnvironHessian(self.grid, 'convolution_hessian')
+        for ipol in np.arange(9):
+            aux = DirectField(grid=self.grid, griddata_3d=hessian[ipol,:,:,:])
+            aux_g = aux.fft() * density_g
+            convolution_hessian[ipol,:,:,:] = aux_g.ifft(force_real=True)
+        return convolution_hessian
 
     def poisson(self, density: EnvironDensity) -> EnvironDensity:
         """docstring"""
@@ -91,8 +95,8 @@ class FFTCore(NumericalCore):
 
     def grad_poisson(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
-        imag = 0 + 1j
         density_g = density.fft()
+        imag = 0 + 1j
         mask = self.reciprocal_grid.gg < EPS8
         grad_poisson_g = np.zeros(self.reciprocal_grid.g.shape)
         grad_poisson_g[:,mask] = FPI * density_g[mask] * imag * self.reciprocal_grid.g[:,mask] / self.reciprocal_grid.gg[mask]
