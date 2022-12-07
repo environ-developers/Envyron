@@ -7,6 +7,7 @@ from envyron.cores.core import NumericalCore
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
 from ..representations.functions import FunctionContainer
+from ..utils.constants import FPI, EPS8
 
 from dftpy.field import ReciprocalField
 class FFTCore(NumericalCore):
@@ -78,19 +79,28 @@ class FFTCore(NumericalCore):
         """docstring"""
         raise NotImplementedError()
 
-    def poisson(self, rho: EnvironDensity) -> EnvironDensity:
+    def poisson(self, density: EnvironDensity) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError()
+        density_g = density.fft()
+        mask = self.reciprocal_grid.gg < EPS8
+        poisson_g = np.zeros(self.reciprocal_grid.gg.shape)
+        poisson_g[mask] = FPI * density_g[mask] / self.reciprocal_grid.gg[mask]
+        poisson_g = ReciprocalField(grid=self.reciprocal_grid, griddata_3d=poisson_g)
+        poisson = poisson_g.ifft(force_real=True)
+        return poisson
 
-    def grad_poisson(self, rho: EnvironDensity) -> EnvironGradient:
+    def grad_poisson(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
-        raise NotImplementedError()
+        imag = 0 + 1j
+        density_g = density.fft()
+        mask = self.reciprocal_grid.gg < EPS8
+        grad_poisson_g = np.zeros(self.reciprocal_grid.g.shape)
+        grad_poisson_g[:,mask] = FPI * density_g[mask] * imag * self.reciprocal_grid.g[:,mask] / self.reciprocal_grid.gg[mask]
+        grad_poisson_g = ReciprocalField(grid=self.reciprocal_grid, rank=3, griddata_3d=grad_poisson_g)
+        grad_poisson = grad_poisson_g.ifft(force_real=True)
+        return grad_poisson
 
     def force(self, rho: EnvironDensity, ions: FunctionContainer) -> ndarray:
-        """docstring"""
-        raise NotImplementedError()
-
-    def grad_v_h_of_rho_r(self, rho: ndarray) -> ndarray:
         """docstring"""
         raise NotImplementedError()
 
