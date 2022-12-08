@@ -1,0 +1,2 @@
+class EnvironCharges:
+    """docstring"""
