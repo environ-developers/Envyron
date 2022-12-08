@@ -4,6 +4,7 @@ import numpy as np
 
 from .iterative import IterativeSolver
 from ..cores import NumericalCore, CoreContainer
+from ..physical import EnvironDielectric
 from ..representations import EnvironDensity
 from ..utils.constants import FPI
 
@@ -13,17 +14,14 @@ class GradientSolver(IterativeSolver):
 
     def __init__(self,
                  cores: CoreContainer,
+                 dielectric: EnvironDielectric,
                  preconditioner: str = "sqrt",
                  steepest_descent: Optional[bool] = False,
                  tol: Optional[float] = 1.0e-7,
                  max_iter: Optional[int] = 100,
                  verbosity: Optional[int] = 1) -> None:
-        super().__init__(
-            cores=cores,
-            max_iter=max_iter,
-            tol=tol
-        )
-        self.epsilon = None
+        super().__init__(cores=cores, max_iter=max_iter, tol=tol)
+        self.dielectric = dielectric
         self.preconditioner = preconditioner
         self.steepest_descent = steepest_descent
         self.verbosity = verbosity
@@ -35,7 +33,7 @@ class GradientSolver(IterativeSolver):
     ) -> EnvironDensity:
         """docstring"""
         if inv_sqrt_epsilon is None:
-            inv_sqrt_epsilon = np.reciprocal(np.sqrt(self.epsilon))
+            inv_sqrt_epsilon = np.reciprocal(np.sqrt(self.dielectric.epsilon))
         return self.core.poisson(rk * inv_sqrt_epsilon) * inv_sqrt_epsilon
 
     def __preconditioner_left__(
@@ -45,47 +43,30 @@ class GradientSolver(IterativeSolver):
     ) -> EnvironDensity:
         """docstring"""
         if inv_epsilon is None:
-            inv_epsilon = np.reciprocal(self.epsilon)
-        return self.core.poisson(rk * inv_epsilon)
+            inv_epsilon = np.reciprocal(self.dielectric.epsilon)
+        return self.cores.electrostatics.poisson(rk * inv_epsilon)
 
-    def fact_sqrt(
-        self,
-        inv_epsilon: Optional[Union[EnvironDensity, None]] = None
-    ) -> EnvironDensity:
-        """docstring"""
-        if inv_epsilon is None:
-            inv_epsilon = np.reciprocal(self.epsilon)
-        return 0.5 * (self.core.laplacian(self.epsilon) - 0.5 * np.einsum(
-            'ijkl->jkl',
-            self.core.gradient(self.epsilon)**2) * inv_epsilon) / FPI
-
-    def solve(self, epsilon: EnvironDensity,
-              density: EnvironDensity) -> EnvironDensity:
+    def solve(self, density: EnvironDensity) -> EnvironDensity:
         if not self.tol > 0:
             raise ValueError("convergence tolerance must be greater than 0")
         if not self.max_iter > 0:
             raise ValueError("max iterations must be greater than 0")
 
-        self.epsilon = epsilon
-
-        phi: EnvironDensity = EnvironDensity(grid=epsilon.grid)
+        phi: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
 
         r: EnvironDensity = density.copy()
 
         if self.preconditioner == "sqrt":
             inv_sqrt_epsilon: EnvironDensity = np.reciprocal(
-                np.sqrt(self.epsilon))
+                np.sqrt(self.dielectric.epsilon))
         elif self.preconditioner == "left":
-            inv_epsilon: EnvironDensity = np.reciprocal(self.epsilon)
+            inv_epsilon: EnvironDensity = np.reciprocal(
+                self.dielectric.epsilon)
         else:
             raise AttributeError("Invalid preconditioner keyword")
 
-        q_r: EnvironDensity = 0.5 * (
-            self.core.laplacian(self.epsilon) - 0.5 * np.einsum(
-                'ijkl->jkl',
-                self.core.gradient(self.epsilon)**2) / self.epsilon) / FPI
-        Ap: EnvironDensity = EnvironDensity(grid=self.epsilon.grid)
-        p: EnvironDensity = EnvironDensity(grid=self.epsilon.grid)
+        Ap: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
+        p: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
 
         rzold: float = 0.0
         num_iter: int = 0
@@ -108,7 +89,7 @@ class GradientSolver(IterativeSolver):
                 beta = 0.0
 
             p = z + beta * p
-            Ap = z * q_r + r + beta * Ap
+            Ap = z * self.dielectric.factsqrt + r + beta * Ap
             pAp = p.scalarProduct(Ap)
             alpha = rznew / pAp
             phi = phi + alpha * p  # In fortran environ phi is v
