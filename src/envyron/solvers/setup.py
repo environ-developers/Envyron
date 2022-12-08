@@ -28,7 +28,7 @@ class ElectrostaticSolverSetup:
         elif self.problem == 'generalized':
             if not charges.dielectric:
                 raise ValueError("missing dielectric")
-            return self.solver.generelized(charges)
+            return self.solver.generalized(charges)
         elif self.problem in ('linpb', 'linmodpb'):
             if not charges.electrolyte:
                 raise ValueError("missing electrolyte")
