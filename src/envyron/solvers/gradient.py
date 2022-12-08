@@ -3,7 +3,7 @@ from typing import Optional, Union
 import numpy as np
 
 from .iterative import IterativeSolver
-from ..cores import NumericalCore
+from ..cores import NumericalCore, CoreContainer
 from ..representations import EnvironDensity
 from ..utils.constants import FPI
 
@@ -12,18 +12,20 @@ class GradientSolver(IterativeSolver):
     """docstring"""
 
     def __init__(self,
-                 core: NumericalCore,
+                 cores: CoreContainer,
                  preconditioner: str = "sqrt",
                  steepest_descent: Optional[bool] = False,
                  tol: Optional[float] = 1.0e-7,
                  max_iter: Optional[int] = 100,
                  verbosity: Optional[int] = 1) -> None:
-        super().__init__(core)
+        super().__init__(
+            cores=cores,
+            max_iter=max_iter,
+            tol=tol
+        )
         self.epsilon = None
         self.preconditioner = preconditioner
         self.steepest_descent = steepest_descent
-        self.tol = tol
-        self.max_iter = max_iter
         self.verbosity = verbosity
 
     def __preconditioner_sqrt__(
