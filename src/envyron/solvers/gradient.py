@@ -1,10 +1,11 @@
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
 import numpy as np
+from multipledispatch import dispatch
 
 from .iterative import IterativeSolver
 from ..cores import NumericalCore, CoreContainer
-from ..physical import EnvironDielectric
+from ..physical import EnvironDielectric, EnvironElectrolyte, EnvironSemiconductor, EnvironCharges
 from ..representations import EnvironDensity
 from ..utils.constants import FPI
 
@@ -34,7 +35,8 @@ class GradientSolver(IterativeSolver):
         """docstring"""
         if inv_sqrt_epsilon is None:
             inv_sqrt_epsilon = np.reciprocal(np.sqrt(self.dielectric.epsilon))
-        return self.core.poisson(rk * inv_sqrt_epsilon) * inv_sqrt_epsilon
+        return self.cores.electrostatics.poisson(
+            rk * inv_sqrt_epsilon) * inv_sqrt_epsilon
 
     def __preconditioner_left__(
         self,
@@ -45,6 +47,28 @@ class GradientSolver(IterativeSolver):
         if inv_epsilon is None:
             inv_epsilon = np.reciprocal(self.dielectric.epsilon)
         return self.cores.electrostatics.poisson(rk * inv_epsilon)
+
+    @overload
+    @dispatch(EnvironCharges)
+    def generalized(self, charges: EnvironCharges) -> EnvironDensity:
+        """docstring"""
+        raise NotImplementedError()
+
+    @overload
+    @dispatch(
+        EnvironDensity,
+        EnvironDielectric,
+        EnvironElectrolyte,
+        EnvironSemiconductor,
+    )
+    def generalized(
+        self,
+        density: EnvironDensity,
+        dielectric: EnvironDielectric,
+        electrolyte: EnvironElectrolyte = None,
+        semiconductor: EnvironSemiconductor = None,
+    ) -> EnvironDensity:
+        raise NotImplementedError()
 
     def solve(self, density: EnvironDensity) -> EnvironDensity:
         if not self.tol > 0:
