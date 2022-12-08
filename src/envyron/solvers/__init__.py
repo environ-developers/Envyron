@@ -1,4 +1,4 @@
-from .solver import Solver
+from .solver import ElectrostaticSolver
 from .iterative import IterativeSolver
 from .setup import SolverSetup
 from .direct import DirectSolver
