@@ -23,7 +23,8 @@ dependencies = [
     "PyYAML ~= 6.0",
     "pydantic ~= 1.9",
     "scipy ~= 1.8",
-    "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git"
+    "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git",
+    "multipledispatch ~= 0.6.0"
 ]
 
 [project.optional-dependencies]
