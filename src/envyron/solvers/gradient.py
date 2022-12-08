@@ -14,15 +14,13 @@ class GradientSolver(IterativeSolver):
     """docstring"""
 
     def __init__(self,
-                 cores: CoreContainer,
-                 dielectric: EnvironDielectric,
+                 cores: CoreContainer,,
                  preconditioner: str = "sqrt",
                  steepest_descent: Optional[bool] = False,
                  tol: Optional[float] = 1.0e-7,
                  max_iter: Optional[int] = 100,
                  verbosity: Optional[int] = 1) -> None:
         super().__init__(cores=cores, max_iter=max_iter, tol=tol)
-        self.dielectric = dielectric
         self.preconditioner = preconditioner
         self.steepest_descent = steepest_descent
         self.verbosity = verbosity
