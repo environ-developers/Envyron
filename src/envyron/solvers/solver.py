@@ -70,7 +70,7 @@ class ElectrostaticSolver(ABC):
         EnvironElectrolyte,
         EnvironSemiconductor,
     )
-    def generelized(
+    def generalized(
         self,
         density: EnvironDensity,
         dielectric: EnvironDielectric,
@@ -82,7 +82,7 @@ class ElectrostaticSolver(ABC):
 
     @overload
     @dispatch(EnvironCharges)
-    def generelized(self, charges: EnvironCharges) -> EnvironDensity:
+    def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
         raise NotImplementedError()
 
