@@ -61,8 +61,8 @@ class EnvironDielectric:
         """docstring"""
 
         # for the time being we just consider a uniform background (no regions)
-        background = EnvironDensity(grid=self.boundary.grid)
-        background[:, :, :] = self.constant
+        self.background = EnvironDensity(grid=self.boundary.grid)
+        self.background[:, :, :] = self.constant
 
         if isinstance(self.boundary, ElectronicBoundary):
             self.epsilon[:] = np.exp(
