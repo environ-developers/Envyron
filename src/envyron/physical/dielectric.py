@@ -1,4 +1,4 @@
-from ..representations import EnvironDensity
+from ..representations import EnvironDensity, EnvironGradient
 from ..boundaries import EnvironBoundary, ElectronicBoundary
 from ..utils.constants import FPI
 
@@ -21,11 +21,11 @@ class EnvironDielectric:
 
         self.epsilon = EnvironDensity(grid=boundary.grid)
         self.depsilon = EnvironDensity(grid=boundary.grid)
-        self.gradlogepsilon = EnvironDensity(grid=boundary.grid, rank=3)
+        self.gradlogepsilon = EnvironGradient(grid=boundary.grid)
 
         self.need_gradient = need_gradient
         if self.need_gradient:
-            self.gradient = EnvironDensity(grid=boundary.grid, rank=3)
+            self.gradient = EnvironGradient(grid=boundary.grid)
 
         self.need_factsqrt = need_factsqrt
         if self.need_factsqrt:
