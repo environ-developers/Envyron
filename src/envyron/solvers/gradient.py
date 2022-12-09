@@ -1,37 +1,36 @@
-from typing import Optional, Union, overload
+from typing import Optional, overload
 
-import numpy as np
 from multipledispatch import dispatch
 
+import numpy as np
+
 from .iterative import IterativeSolver
-from ..cores import NumericalCore, CoreContainer
-from ..physical import EnvironDielectric, EnvironElectrolyte, EnvironSemiconductor, EnvironCharges
+from ..cores import CoreContainer
 from ..representations import EnvironDensity
-from ..utils.constants import FPI
+from ..physical import (
+    EnvironDielectric,
+    EnvironElectrolyte,
+    EnvironSemiconductor,
+    EnvironCharges,
+)
 
 
 class GradientSolver(IterativeSolver):
     """docstring"""
 
-    def __init__(self,
-                 cores: CoreContainer,
-                 preconditioner: str = "sqrt",
-                 steepest_descent: Optional[bool] = False,
-                 tol: Optional[float] = 1.0e-7,
-                 max_iter: Optional[int] = 100,
-                 verbosity: Optional[int] = 1) -> None:
-        """docstring"""
-        super().__init__(cores=cores, max_iter=max_iter, tol=tol)
+    def __init__(
+        self,
+        cores: CoreContainer,
+        preconditioner: str = "sqrt",
+        conjugate: Optional[bool] = True,
+        tol: Optional[float] = 1.0e-7,
+        maxiter: Optional[int] = 100,
+        verbosity: Optional[int] = 1,
+    ) -> None:
+        super().__init__(cores=cores, maxiter=maxiter, tol=tol)
         self.preconditioner = preconditioner
-        self.steepest_descent = steepest_descent
+        self.conjugate = conjugate
         self.verbosity = verbosity
-
-    @overload
-    @dispatch(EnvironCharges)
-    def generalized(self, charges: EnvironCharges) -> EnvironDensity:
-        """docstring"""
-        self.generalized(charges.density, charges.dielectric,
-                         charges.electrolyte, charges.semiconductor)
 
     @overload
     @dispatch(
@@ -48,40 +47,55 @@ class GradientSolver(IterativeSolver):
         semiconductor: EnvironSemiconductor = None,
     ) -> EnvironDensity:
         """docstring"""
-        phi: EnvironDensity = EnvironDensity(grid=dielectric.epsilon.grid)
+        grid = dielectric.epsilon.grid
 
-        r: EnvironDensity = density.copy()
-        inv_sqrt_epsilon: EnvironDensity = np.reciprocal(
-            np.sqrt(self.dielectric.epsilon))
+        phi = EnvironDensity(grid)
 
-        Ap: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
-        p: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
+        inv_sqrt = EnvironDensity(
+            grid,
+            np.reciprocal(np.sqrt(dielectric.epsilon)),
+        )
 
-        rzold: float = 0.0
-        num_iter: int = 0
+        r = EnvironDensity(grid, density)
+        z = EnvironDensity(grid)
+        p = EnvironDensity(grid)
+        Ap = EnvironDensity(grid)
 
-        while num_iter < self.max_iter:
-            z = self.cores.electrostatics.poisson(
-                r * inv_sqrt_epsilon) * inv_sqrt_epsilon
+        rzold = 0.0
+
+        for i in range(self.maxiter):
+            z[:] = self.cores.electrostatics.poisson(r * inv_sqrt) * inv_sqrt
             rznew = z.scalar_product(r)
 
-            if abs(rzold) > 1.e-30 and not self.steepest_descent:
+            if abs(rzold) > 1.e-30 and not self.conjugate:
                 beta = rznew / rzold
             else:
                 beta = 0.0
 
-            p = z + beta * p
-            Ap = z * dielectric.factsqrt + r + beta * Ap
-            pAp = p.scalarProduct(Ap)
-            alpha = rznew / pAp
-            phi = phi + alpha * p  # In fortran environ phi is v
-            r = r - alpha * Ap
-            delta_en = r.euclidean_norm()
-            delta_qm = r.quadratic_mean()
-
-            num_iter += 1
-
-            if delta_en <= self.tol:
-                break
             rzold = rznew
+
+            p[:] = z + beta * p
+            Ap[:] = z * dielectric.factsqrt + r + beta * Ap
+
+            pAp = p.scalar_product(Ap)
+
+            alpha = rznew / pAp
+            phi += alpha * p
+            r -= alpha * Ap
+
+            delta_en = r.euclidean_norm()
+
+            if delta_en <= self.tol: break
+
         return phi
+
+    @overload
+    @dispatch(EnvironCharges)
+    def generalized(self, charges: EnvironCharges) -> EnvironDensity:
+        """docstring"""
+        self.generalized(
+            charges.density,
+            charges.dielectric,
+            charges.electrolyte,
+            charges.semiconductor,
+        )
