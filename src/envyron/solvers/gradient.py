@@ -29,15 +29,9 @@ class GradientSolver(IterativeSolver):
     @dispatch(EnvironCharges)
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        if self.preconditioner is "none":
-            self.generalized_none(charges.density, charges.dielectric,
-                                  charges.electrolyte, charges.semiconductor)
-        elif self.preconditioner == "sqrt":
-            self.generalized_sqrt(charges.density, charges.dielectric,
-                                  charges.electrolyte, charges.semiconductor)
-        elif self.preconditioner == "left":
-            self.generalized_left(charges.density, charges.dielectric,
-                                  charges.electrolyte, charges.semiconductor)
+        if self.preconditioner == "sqrt":
+            self.generalized(charges.density, charges.dielectric,
+                             charges.electrolyte, charges.semiconductor)
 
     @overload
     @dispatch(
@@ -53,33 +47,43 @@ class GradientSolver(IterativeSolver):
         electrolyte: EnvironElectrolyte = None,
         semiconductor: EnvironSemiconductor = None,
     ) -> EnvironDensity:
-        if self.preconditioner is "none":
-            self.generalized_none(density, dielectric, electrolyte,
-                                  semiconductor)
-        elif self.preconditioner == "sqrt":
-            self.generalized_sqrt(density, dielectric, electrolyte,
-                                  semiconductor)
-        elif self.preconditioner == "left":
-            self.generalized_left(density, dielectric, electrolyte,
-                                  semiconductor)
+        phi: EnvironDensity = EnvironDensity(grid=dielectric.epsilon.grid)
 
-    def generalized_none(self, density: EnvironDensity,
-                         dielectric: EnvironDielectric,
-                         electrolyte: EnvironElectrolyte,
-                         semiconductor: EnvironSemiconductor):
-        raise NotImplementedError
+        r: EnvironDensity = density.copy()
+        inv_sqrt_epsilon: EnvironDensity = np.reciprocal(
+            np.sqrt(self.dielectric.epsilon))
 
-    def generalized_sqrt(self, density: EnvironDensity,
-                         dielectric: EnvironDielectric,
-                         electrolyte: EnvironElectrolyte,
-                         semiconductor: EnvironSemiconductor):
-        raise NotImplementedError
+        Ap: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
+        p: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
 
-    def generalized_left(self, density: EnvironDensity,
-                         dielectric: EnvironDielectric,
-                         electrolyte: EnvironElectrolyte,
-                         semiconductor: EnvironSemiconductor):
-        raise NotImplementedError
+        rzold: float = 0.0
+        num_iter: int = 0
+
+        while num_iter < self.max_iter:
+            z = self.cores.electrostatics.poisson(
+                r * inv_sqrt_epsilon) * inv_sqrt_epsilon
+            rznew = z.scalar_product(r)
+
+            if abs(rzold) > 1.e-30 and not self.steepest_descent:
+                beta = rznew / rzold
+            else:
+                beta = 0.0
+
+            p = z + beta * p
+            Ap = z * dielectric.factsqrt + r + beta * Ap
+            pAp = p.scalarProduct(Ap)
+            alpha = rznew / pAp
+            phi = phi + alpha * p  # In fortran environ phi is v
+            r = r - alpha * Ap
+            delta_en = r.euclidean_norm()
+            delta_qm = r.quadratic_mean()
+
+            num_iter += 1
+
+            if delta_en <= self.tol:
+                break
+            rzold = rznew
+        return phi
 
     def solve(self, density: EnvironDensity) -> EnvironDensity:
         if not self.tol > 0:
