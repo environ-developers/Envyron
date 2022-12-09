@@ -20,6 +20,7 @@ class GradientSolver(IterativeSolver):
                  tol: Optional[float] = 1.0e-7,
                  max_iter: Optional[int] = 100,
                  verbosity: Optional[int] = 1) -> None:
+        """docstring"""
         super().__init__(cores=cores, max_iter=max_iter, tol=tol)
         self.preconditioner = preconditioner
         self.steepest_descent = steepest_descent
@@ -47,6 +48,7 @@ class GradientSolver(IterativeSolver):
         electrolyte: EnvironElectrolyte = None,
         semiconductor: EnvironSemiconductor = None,
     ) -> EnvironDensity:
+        """docstring"""
         phi: EnvironDensity = EnvironDensity(grid=dielectric.epsilon.grid)
 
         r: EnvironDensity = density.copy()
