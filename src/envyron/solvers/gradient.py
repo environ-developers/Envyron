@@ -85,66 +85,7 @@ class GradientSolver(IterativeSolver):
             rzold = rznew
         return phi
 
-    def solve(self, density: EnvironDensity) -> EnvironDensity:
-        if not self.tol > 0:
-            raise ValueError("convergence tolerance must be greater than 0")
-        if not self.max_iter > 0:
-            raise ValueError("max iterations must be greater than 0")
-
-        phi: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
-
-        r: EnvironDensity = density.copy()
-
-        if self.preconditioner == "sqrt":
-            inv_sqrt_epsilon: EnvironDensity = np.reciprocal(
-                np.sqrt(self.dielectric.epsilon))
-        elif self.preconditioner == "left":
-            inv_epsilon: EnvironDensity = np.reciprocal(
-                self.dielectric.epsilon)
-        else:
-            raise AttributeError("Invalid preconditioner keyword")
-
-        Ap: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
-        p: EnvironDensity = EnvironDensity(grid=self.dielectric.epsilon.grid)
-
-        rzold: float = 0.0
-        num_iter: int = 0
-
-        while num_iter < self.max_iter:
-            if self.preconditioner == "none":
-                z: EnvironDensity = r
-            elif self.preconditioner == "sqrt":
-                z: EnvironDensity = self.__preconditioner_sqrt__(
-                    r, inv_sqrt_epsilon)
-            elif self.preconditioner == "left":
-                z: EnvironDensity = self.__preconditioner_left__(
-                    r, inv_epsilon)
-
-            rznew = z.scalar_product(r)
-
-            if abs(rzold) > 1.e-30 and not self.steepest_descent:
-                beta = rznew / rzold
-            else:
-                beta = 0.0
-
-            p = z + beta * p
-            Ap = z * self.dielectric.factsqrt + r + beta * Ap
-            pAp = p.scalarProduct(Ap)
-            alpha = rznew / pAp
-            phi = phi + alpha * p  # In fortran environ phi is v
-            r = r - alpha * Ap
-            delta_en = r.euclidean_norm()
-            delta_qm = r.quadratic_mean()
-
-            num_iter += 1
-
-            if delta_en <= self.tol:
-                break
-            rzold = rznew
-
-        return phi
-
-    def _preconditioner_sqrt(
+    Gdef _preconditioner_sqrt(
         self,
         rk: EnvironDensity,
         inv_sqrt_epsilon: Optional[Union[EnvironDensity, None]] = None
