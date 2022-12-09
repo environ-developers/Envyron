@@ -1,14 +1,12 @@
 from typing import Optional
 from envyron.domains.cell import EnvironGrid
 from envyron.representations.density import EnvironDensity
-from envyron.physical import (
-    EnvironElectrons,
-    EnvironIons,
-    EnvironExternals,
-    EnvironDielectric,
-    EnvironElectrolyte,
-    EnvironSemiconductor,
-)
+from .electrons import EnvironElectrons
+from .ions import EnvironIons
+from .externals import EnvironExternals
+from .dielectric import EnvironDielectric
+from .electrolyte import EnvironElectrolyte
+from .semiconductor import EnvironSemiconductor
 
 
 class EnvironCharges:
