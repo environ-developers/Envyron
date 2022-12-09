@@ -4,6 +4,7 @@ from multipledispatch import dispatch
 
 import numpy as np
 
+from .direct import DirectSolver
 from .iterative import IterativeSolver
 from ..cores import CoreContainer
 from ..representations import EnvironDensity
@@ -21,13 +22,15 @@ class GradientSolver(IterativeSolver):
     def __init__(
         self,
         cores: CoreContainer,
+        direct: DirectSolver,
         preconditioner: str = "sqrt",
         conjugate: Optional[bool] = True,
-        tol: Optional[float] = 1.0e-7,
         maxiter: Optional[int] = 100,
+        tol: Optional[float] = 1.0e-7,
+        auxiliary: Optional[str] = '',
         verbosity: Optional[int] = 1,
     ) -> None:
-        super().__init__(cores=cores, maxiter=maxiter, tol=tol)
+        super().__init__(cores, direct, maxiter, tol, auxiliary)
         self.preconditioner = preconditioner
         self.conjugate = conjugate
         self.verbosity = verbosity
@@ -64,7 +67,7 @@ class GradientSolver(IterativeSolver):
         rzold = 0.0
 
         for i in range(self.maxiter):
-            z[:] = self.cores.electrostatics.poisson(r * inv_sqrt) * inv_sqrt
+            z[:] = self.direct.poisson(r * inv_sqrt) * inv_sqrt
             rznew = z.scalar_product(r)
 
             if abs(rzold) > 1.e-30 and not self.conjugate:
