@@ -14,7 +14,7 @@ class GradientSolver(IterativeSolver):
     """docstring"""
 
     def __init__(self,
-                 cores: CoreContainer,,
+                 cores: CoreContainer,
                  preconditioner: str = "sqrt",
                  steepest_descent: Optional[bool] = False,
                  tol: Optional[float] = 1.0e-7,
@@ -29,7 +29,15 @@ class GradientSolver(IterativeSolver):
     @dispatch(EnvironCharges)
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError()
+        if self.preconditioner is "none":
+            self.generalized_none(charges.density, charges.dielectric,
+                                  charges.electrolyte, charges.semiconductor)
+        elif self.preconditioner == "sqrt":
+            self.generalized_sqrt(charges.density, charges.dielectric,
+                                  charges.electrolyte, charges.semiconductor)
+        elif self.preconditioner == "left":
+            self.generalized_left(charges.density, charges.dielectric,
+                                  charges.electrolyte, charges.semiconductor)
 
     @overload
     @dispatch(
@@ -45,7 +53,33 @@ class GradientSolver(IterativeSolver):
         electrolyte: EnvironElectrolyte = None,
         semiconductor: EnvironSemiconductor = None,
     ) -> EnvironDensity:
-        raise NotImplementedError()
+        if self.preconditioner is "none":
+            self.generalized_none(density, dielectric, electrolyte,
+                                  semiconductor)
+        elif self.preconditioner == "sqrt":
+            self.generalized_sqrt(density, dielectric, electrolyte,
+                                  semiconductor)
+        elif self.preconditioner == "left":
+            self.generalized_left(density, dielectric, electrolyte,
+                                  semiconductor)
+
+    def generalized_none(self, density: EnvironDensity,
+                         dielectric: EnvironDielectric,
+                         electrolyte: EnvironElectrolyte,
+                         semiconductor: EnvironSemiconductor):
+        raise NotImplementedError
+
+    def generalized_sqrt(self, density: EnvironDensity,
+                         dielectric: EnvironDielectric,
+                         electrolyte: EnvironElectrolyte,
+                         semiconductor: EnvironSemiconductor):
+        raise NotImplementedError
+
+    def generalized_left(self, density: EnvironDensity,
+                         dielectric: EnvironDielectric,
+                         electrolyte: EnvironElectrolyte,
+                         semiconductor: EnvironSemiconductor):
+        raise NotImplementedError
 
     def solve(self, density: EnvironDensity) -> EnvironDensity:
         if not self.tol > 0:
