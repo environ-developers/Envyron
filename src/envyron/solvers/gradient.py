@@ -30,9 +30,8 @@ class GradientSolver(IterativeSolver):
     @dispatch(EnvironCharges)
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        if self.preconditioner == "sqrt":
-            self.generalized(charges.density, charges.dielectric,
-                             charges.electrolyte, charges.semiconductor)
+        self.generalized(charges.density, charges.dielectric,
+                         charges.electrolyte, charges.semiconductor)
 
     @overload
     @dispatch(
