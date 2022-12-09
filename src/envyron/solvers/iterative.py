@@ -1,6 +1,7 @@
 from abc import ABC
 
-from ..solvers import ElectrostaticSolver, DirectSolver
+from .solver import ElectrostaticSolver
+from .direct import DirectSolver
 from ..cores import CoreContainer
 
 

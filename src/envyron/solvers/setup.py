@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..solvers import ElectrostaticSolver
+from .solver import ElectrostaticSolver
 from ..representations import EnvironDensity
 from ..physical import EnvironCharges
 
