@@ -85,7 +85,7 @@ class GradientSolver(IterativeSolver):
             rzold = rznew
         return phi
 
-    Gdef _preconditioner_sqrt(
+    def _preconditioner_sqrt(
         self,
         rk: EnvironDensity,
         inv_sqrt_epsilon: Optional[Union[EnvironDensity, None]] = None
