@@ -19,24 +19,27 @@ class EnvironDielectric:
         self.boundary = boundary
         self.constant = constant
 
-        self.epsilon = EnvironDensity(grid=boundary.grid)
-        self.depsilon = EnvironDensity(grid=boundary.grid)
-        self.gradlogepsilon = EnvironGradient(grid=boundary.grid)
+        grid = boundary.grid
+
+        self.background = EnvironDensity(grid)
+        self.epsilon = EnvironDensity(grid)
+        self.depsilon = EnvironDensity(grid)
+        self.gradlogepsilon = EnvironGradient(grid)
 
         self.need_gradient = need_gradient
         if self.need_gradient:
-            self.gradient = EnvironGradient(grid=boundary.grid)
+            self.gradient = EnvironGradient(grid)
 
         self.need_factsqrt = need_factsqrt
         if self.need_factsqrt:
-            self.factsqrt = EnvironDensity(grid=boundary.grid)
+            self.factsqrt = EnvironDensity(grid)
 
         self.need_auxiliary = need_auxiliary
         if self.need_auxiliary:
-            self.iterative = EnvironDensity(grid=boundary.grid)
+            self.iterative = EnvironDensity(grid)
 
         # polarization density and its multipoles
-        self.density = EnvironDensity(grid=boundary.grid)
+        self.density = EnvironDensity(grid)
         self.charge = 0.
         self.dipole = np.zeros(3)
         self.quadrupole = np.zeros(3)
@@ -61,8 +64,7 @@ class EnvironDielectric:
         """docstring"""
 
         # for the time being we just consider a uniform background (no regions)
-        self.background = EnvironDensity(grid=self.boundary.grid)
-        self.background[:, :, :] = self.constant
+        self.background[:] = self.constant
 
         if isinstance(self.boundary, ElectronicBoundary):
             self.epsilon[:] = np.exp(
