@@ -84,13 +84,3 @@ class GradientSolver(IterativeSolver):
                 break
             rzold = rznew
         return phi
-
-    def _preconditioner_left(
-        self,
-        rk: EnvironDensity,
-        inv_epsilon: Optional[Union[EnvironDensity, None]] = None
-    ) -> EnvironDensity:
-        """docstring"""
-        if inv_epsilon is None:
-            inv_epsilon = np.reciprocal(self.dielectric.epsilon)
-        return self.cores.electrostatics.poisson(rk * inv_epsilon)
