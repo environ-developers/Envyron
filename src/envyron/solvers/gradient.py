@@ -131,5 +131,9 @@ class GradientSolver(IterativeSolver):
         screening: EnvironDensity = None,
     ) -> EnvironDensity:
         """docstring"""
-        return self.linearized_pb(charges.density, charges.electrolyte,
-                                  charges.dielectric, screening)
+        return self.linearized_pb(
+            charges.density,
+            charges.electrolyte,
+            charges.dielectric,
+            screening,
+        )
