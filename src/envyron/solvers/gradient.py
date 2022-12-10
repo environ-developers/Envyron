@@ -96,7 +96,7 @@ class GradientSolver(IterativeSolver):
     @dispatch(EnvironCharges)
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        self.generalized(
+        return self.generalized(
             charges.density,
             charges.dielectric,
             charges.electrolyte,
@@ -131,4 +131,5 @@ class GradientSolver(IterativeSolver):
         screening: EnvironDensity = None,
     ) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError
+        return self.linearized_pb(charges.density, charges.electrolyte,
+                                  charges.dielectric, screening)
