@@ -1,9 +1,8 @@
 import numpy as np
 
-from envyron.representations.functions.function import EnvironFunction
-
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity
+from ..representations.functions import EnvironFunction
 from ..physical import EnvironSystem
 
 

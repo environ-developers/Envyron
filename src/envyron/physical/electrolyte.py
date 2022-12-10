@@ -1,10 +1,9 @@
 from typing import List
 
-from envyron.boundaries import EnvironBoundary
-
+from ..utils.constants import FPI, KB_RY, BOHR_RADIUS, AMU
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity
-from ..utils.constants import FPI, KB_RY, BOHR_RADIUS, AMU
+from ..boundaries import EnvironBoundary
 
 
 class EnvironIonccType:
@@ -18,16 +17,16 @@ class EnvironIonccType:
         cbulk: float,
         charge: int,
         grid: EnvironGrid,
-    ):
-        """docstring"""
-
+    ) -> None:
         self.index = index
         self.charge = charge
         self.cbulk = cbulk
-        self.concentration = EnvironDensity(grid=grid,
-                                            label=f'c_electrolyte_{index}')
-        self.cfactor = EnvironDensity(grid=grid,
-                                      label=f'cfactor_electrolyte_{index}')
+
+        self.concentration = \
+            EnvironDensity(grid, label=f'c_electrolyte_{index}')
+
+        self.cfactor = \
+            EnvironDensity(grid, label=f'cfactor_electrolyte_{index}')
 
 
 class EnvironElectrolyteBase:
@@ -47,8 +46,7 @@ class EnvironElectrolyteBase:
         grid: EnvironGrid,
         cionmax=0.,
         rion=0.,
-    ):
-
+    ) -> None:
         self.temperature = temperature
         self.permittivity = permittivity
 
@@ -62,6 +60,7 @@ class EnvironElectrolyteBase:
         self.ioncctype = []
         sumcz2 = 0.
         maxcbulk = cbulk
+
         for i in range(self.ntyp):
             ci = formula[2 * i] * cbulk
             zi = formula[2 * i + 1]
@@ -138,14 +137,13 @@ class EnvironElectrolyte:
 
         self.boundary = boundary
 
-        self.density = EnvironDensity(grid=grid, label='electrolyte')
+        self.density = EnvironDensity(grid, label='electrolyte')
         self.charge = 0.
 
-        self.gamma = EnvironDensity(grid=grid, label='gamma')
-        self.dgamma = EnvironDensity(grid=grid, label='dgamma')
+        self.gamma = EnvironDensity(grid, label='gamma')
+        self.dgamma = EnvironDensity(grid, label='dgamma')
 
-        if linearized:
-            self.de_dboundary_second_order = EnvironDensity(grid=grid)
+        if linearized: self.de_dboundary_second_order = EnvironDensity(grid)
 
         self.energy_second_order = 0.
         self.updating = False
