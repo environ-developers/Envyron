@@ -162,7 +162,7 @@ class EnvironBoundary(ABC):
             for field in (density, laplacian):
                 if field is None: raise ValueError(f"missing {field}")
 
-            hessian[:] = self.cores.derivatives.hessian(density, gradient)
+            hessian[:] = self.cores.derivatives.hessian(density)
             laplacian[:] = hessian.trace
 
         dsurface = EnvironDensity(gradient.grid)
