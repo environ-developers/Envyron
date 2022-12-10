@@ -180,12 +180,13 @@ class ElectronicBoundary(EnvironBoundary):
         if np.any(mask): self.switch[mask] = 1.0
 
         mask = (self.rhomin < self.density) & (self.density < self.rhomax)
-        if not np.all(mask): return
+        if not np.any(mask): return
 
         arg = np.log(self.rhomax / np.abs(self.density[mask])) * \
               TPI / self.factor
 
-        self.switch[mask] = 1.0 - (arg - np.sin(arg)) / TPI
+        self.switch[mask] = (arg - np.sin(arg)) / TPI
+        self.switch[:] = 1.0 - self.switch
 
         self.dswitch[mask] = -(np.cos(arg) - 1.0) / \
                                np.abs(self.density[mask]) / self.factor
