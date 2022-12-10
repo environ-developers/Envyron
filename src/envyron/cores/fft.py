@@ -70,13 +70,13 @@ class FFTCore(NumericalCore):
         density_g = density.fft()
 
         hessian_g: np.ndarray = -np.einsum(
-            'i,j',
+            'i...,j...->ji...',
             self.reciprocal_grid.g,
             self.reciprocal_grid.g,
         ) * density_g
 
         hessian_g = hessian_g.reshape(9, *self.grid.nr)
-        hessian = EnvironHessian(self.grid, 'hessian')
+        hessian = EnvironHessian(self.grid, label='hessian')
 
         for ipol in np.arange(9):
             aux_g = ReciprocalField(
