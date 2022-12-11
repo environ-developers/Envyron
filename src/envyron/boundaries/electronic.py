@@ -4,10 +4,9 @@ import numpy as np
 
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
-from ..representations.functions import EnvironGaussian
 from ..physical import EnvironElectrons, EnvironIons
 from ..cores import CoreContainer
-from .boundary import EnvironBoundary
+from . import EnvironBoundary
 
 from ..utils.constants import TPI
 
