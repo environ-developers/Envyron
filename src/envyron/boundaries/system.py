@@ -1,13 +1,9 @@
-from typing import Optional
-
-import numpy as np
-
 from ..domains import EnvironGrid
-from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
+from ..representations import EnvironGradient, EnvironHessian
 from ..representations.functions import EnvironERFC
 from ..physical import EnvironSystem
 from ..cores import CoreContainer
-from .boundary import EnvironBoundary
+from . import EnvironBoundary
 
 
 class SystemBoundary(EnvironBoundary):

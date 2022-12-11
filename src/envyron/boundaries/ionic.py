@@ -8,7 +8,7 @@ from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
 from ..representations.functions import FunctionContainer, EnvironERFC
 from ..physical import EnvironElectrons, EnvironIons
 from ..cores import CoreContainer
-from .boundary import EnvironBoundary
+from . import EnvironBoundary
 
 
 class IonicBoundary(EnvironBoundary):
