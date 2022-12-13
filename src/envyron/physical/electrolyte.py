@@ -64,7 +64,7 @@ class EnvironElectrolyteBase:
         for i in range(self.ntyp):
             ci = formula[2 * i] * cbulk
             zi = formula[2 * i + 1]
-            self.ioncctype.append(EnvironIonccType(i, ci, zi), grid)
+            self.ioncctype.append(EnvironIonccType(i, ci, zi, grid))
             sumcz2 += ci * zi**2
             maxcbulk = max(maxcbulk, ci)
 
