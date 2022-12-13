@@ -5,6 +5,8 @@ from numpy import ndarray
 
 import numpy as np
 
+from multimethod import multimethod
+
 from ..domains.cell import EnvironGrid
 from . import EnvironField, EnvironDensity
 
@@ -35,7 +37,8 @@ class EnvironGradient(EnvironField):
             label=f"{self.label or 'gradient'}_modulus",
         )
 
-    def scalar_gradient_product(
+    @multimethod
+    def scalar_product(
         self,
         gradient: EnvironGradient,
     ) -> EnvironDensity:
@@ -43,7 +46,8 @@ class EnvironGradient(EnvironField):
         data = np.einsum('l...,l...', self, gradient)
         return EnvironDensity(self.grid, data=data)
 
-    def scalar_density_product(
+    @multimethod
+    def scalar_product(
         self,
         density: EnvironDensity,
     ) -> ndarray:
