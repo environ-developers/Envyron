@@ -1,75 +1,76 @@
-# Using fixed point iteration to solve the poisson equation
-# Using class and inheritance to implement the fixed point iteration
-import numpy as np
-from ..domains import DirectGrid
-from ..representations import DirectDensity, DirectField, DirectGradient
-from .iterative import IterativeSolver
+from typing import Optional
+
+from ..utils.constants import FPI
+from ..representations import EnvironDensity
+from ..cores import CoreContainer
+from ..physical import (
+    EnvironDielectric,
+    EnvironElectrolyte,
+    EnvironSemiconductor,
+)
+from . import DirectSolver, IterativeSolver
 
 
 class FixedPointSolver(IterativeSolver):
     """
-    Fixed point iteration solver for the Poisson equation
-    Uses the FixedPointSolver class to implement the fixed point iteration
-    We use rho, epsilon, the gradient of log epsilon and the mixing paraetr 
+    Fixed point iteration solver for the Poisson equation.
     """
-    def __init__(self, rho, epsilon, grad_log_epsilon, mixing, max_iter, tol ):
-        self.rho = rho
-        self.epsilon = epsilon
-        self.grad_log_epsilon = grad_log_epsilon
+
+    def __init__(
+        self,
+        cores: CoreContainer,
+        direct: DirectSolver,
+        maxiter: Optional[int] = 100,
+        tol: Optional[float] = 1.0e-10,
+        auxiliary: Optional[str] = 'full',
+        mixing: Optional[float] = 0.6,
+    ) -> None:
+        super().__init__(cores, direct, maxiter, tol, auxiliary)
         self.mixing = mixing
-        self.max_iter = max_iter
-        self.tol = tol 
-        def set_rho(sel, rho):
-            self.rho = rho
-        def setepsilon(self, epsilon):
-            self.epsilon = epsilon
-        def setgrad_log_epsilon(self):
-            self.grad_log_epsilon = grad_log_epsilon
-        def getrho(self):
-            return self.rho
-        def getepsilon(self):
-            return self.epsilon
-        def getgrad_log_epsilon(self):
-            return self.grad_log_epsilon
-        super().__init__(rho, epsilon, grad_log_epsilon, mixing, max_iter, tol)
-    
-    #initialize the iterative solver to zero
-    def pol_iter(self):
-        return DirectField(grid = self.rho.grid, data = np.zeros(self.rho.grid.shape))
-# Compute the fixed polarization charge density
-    def pol_fixed(self):
-        return (1-self.epsilon)*self.rho/ self.espsilon
-    def pol_fixed_charge(self):
-        return self.pol_fixed.integral()
-# Compute the charge of the input density
-    def rho_charge(self):
-        return self.rho.integral()
 
+    def generalized(
+        self,
+        density: EnvironDensity,
+        dielectric: EnvironDielectric,
+        electrolyte: EnvironElectrolyte = None,
+        semiconductor: EnvironSemiconductor = None,
+    ) -> EnvironDensity:
+        """docstring"""
+        grid = density.grid
+        rhoiter = dielectric.iterative
+        rhotot = dielectric.density
+        eps = dielectric.epsilon
+        gradlog = dielectric.gradlogepsilon
 
+        rhozero = EnvironDensity(grid, (1 - eps) * density / eps)
+        residuals = EnvironDensity(grid)
+        gradpoisson = EnvironDensity(grid)
 
-   #Initialize the iterative solver
-    def solveer(self):
-        iteration = 0
-        while iteration < self.max_iter:
-            rho_total = self.rho+self.pol_iter + self.pol_fixed
-            #Compute the electrostatic field from the total charge density
-            def calc_electrostatic_field(self):
-                return self.calc_electrostatic_field(rho_total)
-            pol_new = np.einsum('lijk, lijk->ijk', self.grad_log_epsilon, self.calc_electrostatic_field/(4*np.pi))
-            pol_res = (self.mixing -1)*(self.pol_iter - pol_new)
-            self.pol_iter = self.pol_iter + pol_res
-            self.pol_fixed_charge = self.pol_iter.integral()
-        #Check the convergence of the fixed point iteration
-            def mean_squared_density(self):
-                return self.mean_squared_denisty(pol_res)
-            iteration += 1
-            if self.mean_squared_density < self.tol:
-                return self.pol_iter + self.pol_fixed
-            else:
-                raise ValueError('The fixed point iteration did not converge')
-            
-    
-    
+        for _ in range(self.maxiter):
+            rhotot[:] = density + rhoiter + rhozero
 
+            gradpoisson[:] = self.direct.grad_poisson(
+                rhotot,
+                electrolyte,
+                semiconductor,
+            )
 
-   
+            residuals[:] = gradlog.scalar_product(gradpoisson) / FPI - rhoiter
+            rhoiter[:] += self.mixing * residuals
+
+            if residuals.euclidean_norm() < self.tol: break
+
+        else:
+            raise ValueError('The fixed point iteration did not converge')
+
+        rhotot[:] = density + rhoiter + rhozero
+
+        potential = self.direct.poisson(
+            rhotot,
+            electrolyte,
+            semiconductor,
+        )
+
+        rhotot[:] = rhozero + rhoiter
+
+        return potential

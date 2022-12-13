@@ -1,6 +1,6 @@
-from typing import Optional, overload
+from typing import Optional
 
-from multipledispatch import dispatch
+from multimethod import multimethod
 
 import numpy as np
 
@@ -35,13 +35,7 @@ class GradientSolver(IterativeSolver):
         self.conjugate = conjugate
         self.verbosity = verbosity
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironDielectric,
-        EnvironElectrolyte,
-        EnvironSemiconductor,
-    )
+    @multimethod
     def generalized(
         self,
         density: EnvironDensity,
@@ -92,13 +86,37 @@ class GradientSolver(IterativeSolver):
 
         return phi
 
-    @overload
-    @dispatch(EnvironCharges)
+    @multimethod
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        self.generalized(
+        return self.generalized(
             charges.density,
             charges.dielectric,
             charges.electrolyte,
             charges.semiconductor,
+        )
+
+    @multimethod
+    def linearized_pb(
+        self,
+        density: EnvironDensity,
+        electrolyte: EnvironElectrolyte,
+        dielectric: EnvironDielectric = None,
+        screening: EnvironDensity = None,
+    ) -> EnvironDensity:
+        """docstring"""
+        raise NotImplementedError()
+
+    @multimethod
+    def linearized_pb(
+        self,
+        charges: EnvironCharges,
+        screening: EnvironDensity = None,
+    ) -> EnvironDensity:
+        """docstring"""
+        return self.linearized_pb(
+            charges.density,
+            charges.electrolyte,
+            charges.dielectric,
+            screening,
         )
