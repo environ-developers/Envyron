@@ -1,7 +1,6 @@
-from typing import overload
-
 from abc import ABC
-from multipledispatch import dispatch
+
+from multimethod import multimethod
 
 from ..cores import CoreContainer
 from ..representations import EnvironDensity, EnvironGradient
@@ -21,12 +20,7 @@ class ElectrostaticSolver(ABC):
     def __init__(self, cores: CoreContainer) -> None:
         self.cores = cores
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironElectrolyte,
-        EnvironSemiconductor,
-    )
+    @multimethod
     def poisson(
         self,
         density: EnvironDensity,
@@ -36,18 +30,12 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(EnvironCharges)
+    @multimethod
     def poisson(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironElectrolyte,
-        EnvironSemiconductor,
-    )
+    @multimethod
     def grad_poisson(
         self,
         density: EnvironDensity,
@@ -57,19 +45,12 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(EnvironCharges)
+    @multimethod
     def grad_poisson(self, charges: EnvironCharges) -> EnvironGradient:
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironDielectric,
-        EnvironElectrolyte,
-        EnvironSemiconductor,
-    )
+    @multimethod
     def generalized(
         self,
         density: EnvironDensity,
@@ -80,19 +61,12 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(EnvironCharges)
+    @multimethod
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironElectrolyte,
-        EnvironDielectric,
-        EnvironDensity,
-    )
+    @multimethod
     def linearized_pb(
         self,
         density: EnvironDensity,
@@ -103,11 +77,7 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironCharges,
-        EnvironDensity,
-    )
+    @multimethod
     def linearized_pb(
         self,
         charges: EnvironCharges,
@@ -116,13 +86,7 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironDensity,
-        EnvironElectrolyte,
-        EnvironDielectric,
-        'ElectrostaticSolver',
-    )
+    @multimethod
     def pb_nested(
         self,
         density: EnvironDensity,
@@ -133,11 +97,7 @@ class ElectrostaticSolver(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    @overload
-    @dispatch(
-        EnvironCharges,
-        'ElectrostaticSolver',
-    )
+    @multimethod
     def pb_nested(
         self,
         charges: EnvironCharges,

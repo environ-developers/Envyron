@@ -1,7 +1,6 @@
-from typing import Optional
-from envyron.domains.cell import EnvironGrid
-from envyron.representations.density import EnvironDensity
-from envyron.physical import (
+from ..domains import EnvironGrid
+from ..representations import EnvironDensity
+from . import (
     EnvironElectrons,
     EnvironIons,
     EnvironExternals,
@@ -21,13 +20,13 @@ class EnvironCharges:
 
     def add(
         self,
-        electrons: Optional[EnvironElectrons] = None,
-        ions: Optional[EnvironIons] = None,
-        externals: Optional[EnvironExternals] = None,
-        dielectric: Optional[EnvironDielectric] = None,
-        electrolyte: Optional[EnvironElectrolyte] = None,
-        semiconductor: Optional[EnvironSemiconductor] = None,
-        additional: Optional[EnvironDensity] = None,
+        electrons: EnvironElectrons = None,
+        ions: EnvironIons = None,
+        externals: EnvironExternals = None,
+        dielectric: EnvironDielectric = None,
+        electrolyte: EnvironElectrolyte = None,
+        semiconductor: EnvironSemiconductor = None,
+        additional: EnvironDensity = None,
     ):
         """docstring"""
         if electrons: self.electrons = electrons
