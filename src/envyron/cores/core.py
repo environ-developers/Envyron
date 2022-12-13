@@ -25,11 +25,7 @@ class NumericalCore(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    def hessian(
-        self,
-        density: EnvironDensity,
-        gradient: EnvironGradient,
-    ) -> EnvironGradient:
+    def hessian(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
         raise NotImplementedError()
 
