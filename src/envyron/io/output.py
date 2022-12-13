@@ -2,6 +2,7 @@ class Output:
     """
     Environ output.
     """
+
     def __init__(self,
                  is_ionode: bool = False,
                  ionode: int = 0,
