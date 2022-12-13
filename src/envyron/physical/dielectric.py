@@ -97,7 +97,7 @@ class EnvironDielectric:
                 self.boundary.gradient.modulus**2 + \
                 self.depsilon * self.boundary.laplacian
 
-            self.factsqrt *= 0.5 / FPI
+            self.factsqrt[:] *= 0.5 / FPI
 
     def of_potential(
         self,

@@ -1,5 +1,7 @@
 from typing import Optional
 
+import numpy as np
+
 from ..utils.constants import FPI
 from ..representations import EnvironDensity
 from ..cores import CoreContainer
@@ -42,7 +44,7 @@ class FixedPointSolver(IterativeSolver):
         eps = dielectric.epsilon
         gradlog = dielectric.gradlogepsilon
 
-        rhozero = EnvironDensity(grid, (1 - eps) * density / eps)
+        rhozero = EnvironDensity(grid, np.array((1 - eps) * density / eps))
         residuals = EnvironDensity(grid)
         gradpoisson = EnvironDensity(grid)
 

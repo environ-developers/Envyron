@@ -2,7 +2,7 @@ import numpy as np
 
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity
-from ..representations.functions import EnvironFunction
+from ..representations.functions import EnvironERFC
 from ..physical import EnvironSystem
 
 
@@ -54,7 +54,7 @@ class EnvironSemiconductor:
 
         self.density = EnvironDensity(grid, label='semiconductor')
 
-        self.simple = EnvironFunction(
+        self.simple = EnvironERFC(
             grid,
             3,
             system.dim,
