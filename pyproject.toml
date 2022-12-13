@@ -48,6 +48,7 @@ markers = ["datadir: change directory to data location"]
 mypy_path = "stubs"
 strict_optional = false
 ignore_missing_imports = true
+disable_error_code = "no-redef"
 
 [tool.flake8]
 ignore = "E123,E125,E126,E127,E133,E501,E701,F401,F811"
