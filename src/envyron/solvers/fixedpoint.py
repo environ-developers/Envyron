@@ -1,24 +1,19 @@
-# Using fixed point iteration to solve the poisson equation
-# Using class and inheritance to implement the fixed point iteration
 from typing import Optional
-import numpy as np
 
 from ..utils.constants import FPI
-from ..domains import EnvironGrid
-from ..physical import EnvironDielectric
-from ..physical import EnvironElectrolyte
-from ..physical import EnvironSemiconductor
-from ..representations import EnvironDensity, EnvironGradient
+from ..representations import EnvironDensity
 from ..cores import CoreContainer
-from ..solvers import DirectSolver
-from .iterative import IterativeSolver
+from ..physical import (
+    EnvironDielectric,
+    EnvironElectrolyte,
+    EnvironSemiconductor,
+)
+from . import DirectSolver, IterativeSolver
 
 
 class FixedPointSolver(IterativeSolver):
     """
-    Fixed point iteration solver for the Poisson equation
-    Uses the FixedPointSolver class to implement the fixed point iteration
-    We use rho, epsilon, the gradient of log epsilon and the mixing paraetr
+    Fixed point iteration solver for the Poisson equation.
     """
 
     def __init__(
@@ -41,34 +36,41 @@ class FixedPointSolver(IterativeSolver):
         semiconductor: EnvironSemiconductor = None,
     ) -> EnvironDensity:
         """docstring"""
-        grid = dielectric.epsilon.grid
-        # Initialize the iterative solver
+        grid = density.grid
+        rhoiter = dielectric.iterative
+        rhotot = dielectric.density
+        eps = dielectric.epsilon
+        gradlog = dielectric.gradlogepsilon
 
-        polarization_iter = EnvironDensity(grid)
-        polarization_fixed = (
-            1 - dielectric.epsilon) * density / dielectric.espsilon
-        polarization_new = EnvironDensity(grid)
+        rhozero = EnvironDensity(grid, (1 - eps) * density / eps)
+        residuals = EnvironDensity(grid)
+        gradpoisson = EnvironDensity(grid)
 
-        for iteration in range(self.maxiter):
+        for _ in range(self.maxiter):
+            rhotot[:] = density + rhoiter + rhozero
 
-            density_total = density + polarization_iter + polarization_fixed
+            gradpoisson[:] = self.direct.grad_poisson(
+                rhotot,
+                electrolyte,
+                semiconductor,
+            )
 
-            #Compute the electrostatic field from the total charge density
+            residuals[:] = gradlog.scalar_product(gradpoisson) / FPI - rhoiter
+            rhoiter[:] += self.mixing * residuals
 
-            electrostatic_field = self.direct.grad_poisson(
-                density_total, electrolyte, semiconductor)
+            if residuals.euclidean_norm() < self.tol: break
 
-            polarization_new[:] = np.einsum('lijk, lijk->ijk',
-                                         dielectric.gradlogepsilon,
-                                         electrostatic_field / FPI)
+        else:
+            raise ValueError('The fixed point iteration did not converge')
 
-            residuals: EnvironDensity = (self.mixing - 1) * (polarization_iter - polarization_new)
-            polarization_iter[:] = polarization_iter + residuals
+        rhotot[:] = density + rhoiter + rhozero
 
-            #Check the convergence of the fixed point iteration
+        potential = self.direct.poisson(
+            rhotot,
+            electrolyte,
+            semiconductor,
+        )
 
-            if residuals.euclidean_norm() < self.tol:
-                density_total = density + polarization_iter + polarization_fixed
-                return self.direct.poisson(density_total,electrolyte,semiconductor)
-            else:
-                raise ValueError('The fixed point iteration did not converge')
+        rhotot[:] = rhozero + rhoiter
+
+        return potential
