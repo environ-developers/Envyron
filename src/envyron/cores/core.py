@@ -2,6 +2,8 @@ from numpy import ndarray
 
 from abc import ABC
 
+from multimethod import multimethod
+
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient, EnvironHessian
 from ..representations.functions import FunctionContainer
@@ -29,7 +31,8 @@ class NumericalCore(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    def convolution_density(
+    @multimethod
+    def convolution(
         self,
         density: EnvironDensity,
         other_density: EnvironDensity,
@@ -37,7 +40,8 @@ class NumericalCore(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    def convolution_gradient(
+    @multimethod
+    def convolution(
         self,
         density: EnvironDensity,
         gradient: EnvironGradient,
@@ -45,7 +49,8 @@ class NumericalCore(ABC):
         """docstring"""
         raise NotImplementedError()
 
-    def convolution_hessian(
+    @multimethod
+    def convolution(
         self,
         density: EnvironDensity,
         hessian: EnvironHessian,

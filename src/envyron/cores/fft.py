@@ -2,6 +2,8 @@ from numpy import ndarray
 
 import numpy as np
 
+from multimethod import multimethod
+
 from ..cores import NumericalCore
 
 from ..domains import EnvironGrid
@@ -89,7 +91,8 @@ class FFTCore(NumericalCore):
 
         return hessian
 
-    def convolution_density(
+    @multimethod
+    def convolution(
         self,
         density_a: EnvironDensity,
         density_b: EnvironDensity,
@@ -108,7 +111,8 @@ class FFTCore(NumericalCore):
         convolution_density = convolution_density_g.iff(force_real=True)
         return convolution_density
 
-    def convolution_gradient(
+    @multimethod
+    def convolution(
         self,
         density: EnvironDensity,
         gradient: EnvironGradient,
@@ -128,7 +132,8 @@ class FFTCore(NumericalCore):
         convolution_gradient = convolution_gradient_g.iff(force_real=True)
         return convolution_gradient
 
-    def convolution_hessian(
+    @multimethod
+    def convolution(
         self,
         density: EnvironDensity,
         hessian: EnvironHessian,
