@@ -24,7 +24,7 @@ dependencies = [
     "pydantic ~= 1.9",
     "scipy ~= 1.8",
     "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git",
-    "multipledispatch ~= 0.6.0"
+    "multimethod ~= 1.9"
 ]
 
 [project.optional-dependencies]
@@ -50,5 +50,5 @@ strict_optional = false
 ignore_missing_imports = true
 
 [tool.flake8]
-ignore = "E123,E125,E126,E127,E133,E501,E701,F401"
+ignore = "E123,E125,E126,E127,E133,E501,E701,F401,F811"
 hang-closing = true

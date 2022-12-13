@@ -22,12 +22,13 @@ class FFTCore(NumericalCore):
     def gradient(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
         density_g = density.fft()
-        imag = 0 + 1j
+
+        data = self.reciprocal_grid.g * density_g * 1j
 
         gradient_g = ReciprocalField(
-            grid=self.reciprocal_grid,
+            self.reciprocal_grid,
             rank=3,
-            griddata_3d=self.reciprocal_grid.g * density_g * imag,
+            griddata_3d=data,
         )
 
         gradient = gradient_g.ifft(force_real=True)
@@ -36,17 +37,16 @@ class FFTCore(NumericalCore):
     def divergence(self, gradient: EnvironGradient) -> EnvironDensity:
         """docstring"""
         gradient_g = gradient.fft()
-        imag = 0 + 1j
 
-        divergence_g = np.einsum(
+        data = np.einsum(
             'l...,l...',
             self.reciprocal_grid.g,
             gradient_g,
-        ) * imag
+        ) * 1j
 
         divergence_g = ReciprocalField(
-            grid=self.reciprocal_grid,
-            griddata_3d=divergence_g,
+            self.reciprocal_grid,
+            griddata_3d=data,
         )
 
         divergence = divergence_g.ifft(force_real=True)
@@ -55,11 +55,12 @@ class FFTCore(NumericalCore):
     def laplacian(self, density: EnvironDensity) -> EnvironDensity:
         """docstring"""
         density_g = density.fft()
-        laplacian_g = -self.reciprocal_grid.gg * density_g
+
+        data = -self.reciprocal_grid.gg * density_g
 
         laplacian_g = ReciprocalField(
-            grid=self.reciprocal_grid,
-            griddata_3d=laplacian_g,
+            self.reciprocal_grid,
+            griddata_3d=data,
         )
 
         laplacian = laplacian_g.ifft(force_real=True)
@@ -76,11 +77,12 @@ class FFTCore(NumericalCore):
         ) * density_g
 
         hessian_g = hessian_g.reshape(9, *self.grid.nr)
+
         hessian = EnvironHessian(self.grid, label='hessian')
 
         for ipol in np.arange(9):
             aux_g = ReciprocalField(
-                grid=self.reciprocal_grid,
+                self.reciprocal_grid,
                 griddata_3d=hessian_g[ipol, :, :, :],
             )
             hessian[ipol, :, :, :] = aux_g.ifft(force_real=True)
@@ -95,11 +97,12 @@ class FFTCore(NumericalCore):
         """docstring"""
         density_a_g = density_a.fft()
         density_b_g = density_b.fft()
-        convolution_density_g = density_a_g * density_b_g
+
+        data = density_a_g * density_b_g
 
         convolution_density_g = ReciprocalField(
-            grid=self.reciprocal_grid,
-            griddata_3d=convolution_density_g,
+            self.reciprocal_grid,
+            griddata_3d=data,
         )
 
         convolution_density = convolution_density_g.iff(force_real=True)
@@ -113,12 +116,13 @@ class FFTCore(NumericalCore):
         """docstring"""
         density_g = density.fft()
         gradient_g = gradient.fft()
-        convolution_gradient_g = density_g * gradient_g
+
+        data = density_g * gradient_g
 
         convolution_gradient_g = ReciprocalField(
-            grid=self.reciprocal_grid,
+            self.reciprocal_grid,
             rank=3,
-            griddata_3d=convolution_gradient_g,
+            griddata_3d=data,
         )
 
         convolution_gradient = convolution_gradient_g.iff(force_real=True)
@@ -139,7 +143,7 @@ class FFTCore(NumericalCore):
 
         for ipol in np.arange(9):
             aux = DirectField(
-                grid=self.grid,
+                self.grid,
                 griddata_3d=hessian[ipol, :, :, :],
             )
             aux_g = aux.fft() * density_g
@@ -150,14 +154,15 @@ class FFTCore(NumericalCore):
     def poisson(self, density: EnvironDensity) -> EnvironDensity:
         """docstring"""
         density_g = density.fft()
-        mask = self.reciprocal_grid.gg < EPS8
-        poisson_g = np.zeros(self.reciprocal_grid.gg.shape)
-        poisson_g[mask] = FPI * density_g[mask] / self.reciprocal_grid.gg[mask]
 
-        poisson_g = ReciprocalField(
-            grid=self.reciprocal_grid,
-            griddata_3d=poisson_g,
-        )
+        rec = self.reciprocal_grid
+
+        mask = rec.gg < EPS8
+
+        data = np.zeros(rec.gg.shape)
+        data[mask] = FPI * density_g[mask] / rec.gg[mask]
+
+        poisson_g = ReciprocalField(rec, griddata_3d=data)
 
         poisson = poisson_g.ifft(force_real=True)
         return poisson
@@ -165,17 +170,18 @@ class FFTCore(NumericalCore):
     def grad_poisson(self, density: EnvironDensity) -> EnvironGradient:
         """docstring"""
         density_g = density.fft()
-        imag = 0 + 1j
-        mask = self.reciprocal_grid.gg < EPS8
-        grad_poisson_g = np.zeros(self.reciprocal_grid.g.shape)
 
-        grad_poisson_g[:, mask] = FPI * density_g[mask] * imag * \
-            self.reciprocal_grid.g[:, mask] / self.reciprocal_grid.gg[mask]
+        rec = self.reciprocal_grid
+
+        mask = rec.gg < EPS8
+
+        data = np.zeros(rec.g.shape)
+        data[mask] = FPI * 1j * density_g[mask] * rec.g[:, mask] / rec.gg[mask]
 
         grad_poisson_g = ReciprocalField(
-            grid=self.reciprocal_grid,
+            rec,
             rank=3,
-            griddata_3d=grad_poisson_g,
+            griddata_3d=data,
         )
 
         grad_poisson = grad_poisson_g.ifft(force_real=True)
