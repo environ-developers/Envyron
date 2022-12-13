@@ -24,7 +24,7 @@ dependencies = [
     "pydantic ~= 1.9",
     "scipy ~= 1.8",
     "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git",
-    "multipledispatch ~= 0.6.0"
+    "multimethod ~= 1.9"
 ]
 
 [project.optional-dependencies]
