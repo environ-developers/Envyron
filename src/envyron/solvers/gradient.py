@@ -96,9 +96,44 @@ class GradientSolver(IterativeSolver):
     @dispatch(EnvironCharges)
     def generalized(self, charges: EnvironCharges) -> EnvironDensity:
         """docstring"""
-        self.generalized(
+        return self.generalized(
             charges.density,
             charges.dielectric,
             charges.electrolyte,
             charges.semiconductor,
+        )
+
+    @overload
+    @dispatch(
+        EnvironDensity,
+        EnvironElectrolyte,
+        EnvironDielectric,
+        EnvironDensity,
+    )
+    def linearized_pb(
+        self,
+        density: EnvironDensity,
+        electrolyte: EnvironElectrolyte,
+        dielectric: EnvironDielectric = None,
+        screening: EnvironDensity = None,
+    ) -> EnvironDensity:
+        """docstring"""
+        raise NotImplementedError()
+
+    @overload
+    @dispatch(
+        EnvironCharges,
+        EnvironDensity,
+    )
+    def linearized_pb(
+        self,
+        charges: EnvironCharges,
+        screening: EnvironDensity = None,
+    ) -> EnvironDensity:
+        """docstring"""
+        return self.linearized_pb(
+            charges.density,
+            charges.electrolyte,
+            charges.dielectric,
+            screening,
         )
