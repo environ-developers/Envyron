@@ -132,8 +132,7 @@ class EnvironBoundary(ABC):
     ) -> None:
         """docstring"""
 
-        if self.deriv_level in {1, 2}:
-            self.gradient[:] = self.cores.derivatives.gradient(density)
+        self.gradient[:] = self.cores.derivatives.gradient(density)
 
         if self.deriv_level == 2:
             self.laplacian[:] = self.cores.derivatives.laplacian(density)
@@ -162,7 +161,7 @@ class EnvironBoundary(ABC):
             for field in (density, laplacian):
                 if field is None: raise ValueError(f"missing {field}")
 
-            hessian[:] = self.cores.derivatives.hessian(density, gradient)
+            hessian[:] = self.cores.derivatives.hessian(density)
             laplacian[:] = hessian.trace
 
         dsurface = EnvironDensity(gradient.grid)
