@@ -46,9 +46,9 @@ class EnvironGrid(DirectGrid):
         if dim == 0:
             pass
         elif dim == 1:
-            dr[:, :, :, axis] = 0.
+            dr[axis, :, :, :] = 0.
         elif dim == 2:
-            dr[:, :, :, np.arange(3) != axis] = 0.
+            dr[np.arange(3) != axis, :, :, :] = 0.
         else:
             raise ValueError("dimensions out of range")
 
