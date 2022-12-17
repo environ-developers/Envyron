@@ -16,7 +16,7 @@ from pydantic import (
     BaseModel as PydanticBaseModel,
 )
 
-from .types import (
+from envyron.io.input.types import (
     AuxiliaryScheme,
     Axis,
     DerivativeCore,
@@ -95,6 +95,7 @@ class ControlModel(BaseModel):
     verbosity: NonNegativeInt = 0
     threshold: NonNegativeFloat = 0.1
     nskip: NonNegativeInt = 1
+    ecut: NonNegativeFloat = 0.
     nrep: NonNegativeIntVector = [0, 0, 0]  # type: ignore
     need_electrostatic = False
 
@@ -171,6 +172,7 @@ class SolventModel(BaseModel):
     radial_spread: PositiveFloat = 0.5
     filling_threshold: PositiveFloat = 0.825
     filling_spread: PositiveFloat = 0.02
+    field_aware = False
     field_factor: NonNegativeFloat = 0.08
     field_asymmetry: Annotated[float, confloat(ge=-1, le=1)] = -0.32
     field_min: NonNegativeFloat = 2.0
