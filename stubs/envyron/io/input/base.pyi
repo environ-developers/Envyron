@@ -64,6 +64,7 @@ class RegionModel(CardModel):
 
 class CardContainerModel(BaseModel):
     units: Literal['bohr', 'angstrom']
+    number: NonNegativeInt
 
 
 class ExternalsContainerModel(CardContainerModel):
@@ -151,6 +152,7 @@ class SolventModel(BaseModel):
     radial_spread: PositiveFloat
     filling_threshold: PositiveFloat
     filling_spread: PositiveFloat
+    field_aware: bool
     field_factor: NonNegativeFloat
     field_asymmetry: Annotated[float, None]
     field_min: NonNegativeFloat

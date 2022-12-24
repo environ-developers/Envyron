@@ -76,6 +76,7 @@ class RegionModel(CardModel):
 class CardContainerModel(BaseModel):
     """Container for card functions."""
     units: Literal['bohr', 'angstrom'] = 'bohr'
+    number: NonNegativeInt = 0
 
 
 class ExternalsContainerModel(CardContainerModel):
