@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from numpy import ndarray
 
 from ..domains import EnvironGrid
@@ -17,7 +17,7 @@ class EnvironExternals:
         spreads: List[float],
         charges: List[float],
         grid: EnvironGrid,
-        positions: List[ndarray],
+        positions: Optional[List[ndarray]] = None,
     ) -> None:
         self.number = n
         self.charge = 0.
