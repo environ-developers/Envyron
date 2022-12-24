@@ -1,4 +1,4 @@
-from .types import (
+from envyron.io.input.types import (
     AuxiliaryScheme as AuxiliaryScheme,
     Axis as Axis,
     DerivativeCore as DerivativeCore,

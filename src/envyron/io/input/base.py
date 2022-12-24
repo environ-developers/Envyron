@@ -16,7 +16,7 @@ from pydantic import (
     BaseModel as PydanticBaseModel,
 )
 
-from .types import (
+from envyron.io.input.types import (
     AuxiliaryScheme,
     Axis,
     DerivativeCore,
