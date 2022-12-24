@@ -80,6 +80,7 @@ class ControlModel(BaseModel):
     verbosity: NonNegativeInt
     threshold: NonNegativeFloat
     nskip: NonNegativeInt
+    ecut: NonNegativeFloat
     nrep: NonNegativeIntVector
     need_electrostatic: bool
 

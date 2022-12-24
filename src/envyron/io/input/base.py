@@ -95,6 +95,7 @@ class ControlModel(BaseModel):
     verbosity: NonNegativeInt = 0
     threshold: NonNegativeFloat = 0.1
     nskip: NonNegativeInt = 1
+    ecut: NonNegativeFloat = 0.0
     nrep: NonNegativeIntVector = [0, 0, 0]  # type: ignore
     need_electrostatic = False
 
