@@ -150,6 +150,8 @@ class SemiconductorModel(BaseModel):
     """Semiconductor input model."""
     permittivity: FloatGE1 = 1.0
     carrier_density: NonNegativeFloat = 0.0
+    electrode_charge: NonNegativeFloat = 0.0
+    charge_threshold: NonNegativeFloat = 1e-4
     distance: NonNegativeFloat = 0.0
     spread: PositiveFloat = 0.5
 

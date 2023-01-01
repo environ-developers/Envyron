@@ -130,6 +130,8 @@ class ElectrolyteModel(BaseModel):
 class SemiconductorModel(BaseModel):
     permittivity: FloatGE1
     carrier_density: NonNegativeFloat
+    electrode_charge: NonNegativeFloat
+    charge_threshold: NonNegativeFloat
     distance: NonNegativeFloat
     spread: PositiveFloat
 
