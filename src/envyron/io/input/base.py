@@ -134,7 +134,7 @@ class ElectrolyteModel(BaseModel):
     entropy: EntropyScheme = 'full'
     deriv_method: DerivativeMethod = 'default'
     concentration: NonNegativeFloat = 0.0
-    formula: Optional[List[int]] = None
+    formula: List[int] = [1, 1, 1, -1]
     cionmax: NonNegativeFloat = 0.0
     rion: NonNegativeFloat = 0.0
     distance: NonNegativeFloat = 0.0
