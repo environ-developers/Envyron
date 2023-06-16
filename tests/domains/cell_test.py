@@ -1,28 +1,41 @@
 from pathlib import Path
-from pytest import mark, raises
+from pytest import mark, approx, raises
 
 from envyron.domains.cell import EnvironGrid
 
 import numpy as np
 
-class TestCell:
+class TestMinimalCell:
     """docstring"""
+    def test_cell_attributes(self,minimal_cell):
+        assert minimal_cell.label == ''
+        assert minimal_cell.volume == 1.
+        assert minimal_cell.nnr == 8
+        assert minimal_cell.dV == 1/8
 
-    L = 20.
-    at = np.array([
-        [L, 0., 0.],
-        [0., L, 0.],
-        [0., 0., L],
-    ])
-    nx = 2
-    nr = np.array([nx, nx, nx])
-    grid = EnvironGrid(at, nr, label='system')
+@mark.parametrize('unitary_cell, n', [(2, 2), (3, 3), (50, 50)], indirect=['unitary_cell'])
+class TestUnitCell:
+    """docstring"""
+    def test_unitary_cell_attributes(self,unitary_cell,n):
+        assert unitary_cell.label == ''
+        assert unitary_cell.volume == 1.
+        assert unitary_cell.nnr == n**3
+        assert unitary_cell.dV == approx(1./n**3)
 
-    def test_cell_attributes(self):
-        assert self.grid.label == 'system'
-        assert self.grid.volume == self.L**3
-        assert self.grid.nnr == self.nx**3
+@mark.parametrize('cubic_cell, n, L', [((2, 20), 2, 20), ((3, 20), 3, 20), ((10, 50), 10, 50)], indirect=['cubic_cell'])
+class TestCubicCell:
+    """docstring"""
+    def test_cubic_cell_attributes(self,cubic_cell,n,L):
+        assert cubic_cell.label == ''
+        assert cubic_cell.volume == approx(L**3)
+        assert cubic_cell.nnr == n**3
+        assert cubic_cell.dV == approx(L**3/n**3)
 
+    """ add test to check units errors """
+    """ add test to check ecut and guess function """
+    """ add test to check reciprocal grid """
+
+"""
     def test_cell_corners(self):
         assert (self.grid.corners[0] == np.array([0., 0., 0.])).all()
         assert (self.grid.corners[1] == -self.at[:, 2]).all()
@@ -60,3 +73,4 @@ class TestCell:
         ])
         assert (self.grid.get_min_distance(origin)[1].T.reshape(
             self.grid.nnr) == results_r2).all()
+"""
