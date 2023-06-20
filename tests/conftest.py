@@ -5,6 +5,7 @@ from pytest import fixture, FixtureRequest
 import numpy as np
 from envyron.domains.cell import EnvironGrid
 
+
 @fixture
 def datadir(request: FixtureRequest) -> None:
     """Change over to data directory."""
@@ -38,6 +39,7 @@ def minimal_cell() -> EnvironGrid:
     nr = np.array([2, 2, 2])
     return EnvironGrid(at, nr)
 
+
 @fixture
 def unitary_cell(request: FixtureRequest) -> EnvironGrid:
     """Create a unitary cell"""
@@ -45,10 +47,10 @@ def unitary_cell(request: FixtureRequest) -> EnvironGrid:
     nr = np.array([request.param, request.param, request.param])
     return EnvironGrid(at, nr)
 
+
 @fixture
 def cubic_cell(request: FixtureRequest) -> EnvironGrid:
     """Create a cubic cell"""
-    at = np.eye(3)*request.param[1]
+    at = np.eye(3) * request.param[1]
     nr = np.array([request.param[0], request.param[0], request.param[0]])
     return EnvironGrid(at, nr)
-
