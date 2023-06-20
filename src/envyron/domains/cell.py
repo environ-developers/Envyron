@@ -62,9 +62,9 @@ class EnvironGrid(DirectGrid):
 
         # apply minimum image convension
         reciprocal_lattice = self.get_reciprocal().lattice / 2 / np.pi
-        s = np.einsum('lijk,lm->lijk', r, reciprocal_lattice)
+        s = np.einsum('lijk,ml->mijk', r, reciprocal_lattice)
         s -= np.floor(s)
-        r = np.einsum('ml,lijk->lijk', self.lattice, s)
+        r = np.einsum('lm,lijk->mijk', self.lattice, s)
 
         # pre-corner-check results
         rmin = r
