@@ -54,3 +54,14 @@ def cubic_cell(request: FixtureRequest) -> EnvironGrid:
     at = np.eye(3) * request.param[1]
     nr = np.array([request.param[0], request.param[0], request.param[0]])
     return EnvironGrid(at, nr)
+
+
+@fixture
+def hexagonal_cell(request: FixtureRequest) -> EnvironGrid:
+    """Create an hexagonal cell"""
+    at = np.eye(3) * request.param[1]
+    at[1, 0] = request.param[1] * 0.5
+    at[1, 1] *= np.sqrt(3) * 0.5
+    at[2, 2] *= request.param[2]
+    nr = np.array([request.param[0], request.param[0], int(request.param[0]*request.param[2])])
+    return EnvironGrid(at, nr)
