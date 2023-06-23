@@ -198,7 +198,5 @@ class TestMinDistance():
         obtained_r2 = hexagonal_cell.get_min_distance(
             origin, dim, axis)[1].T.reshape(hexagonal_cell.nnr)
 
-        print(expected_r)
-        print(obtained_r)
         assert np.allclose(expected_r, obtained_r)
         assert np.allclose(expected_r2, obtained_r2)

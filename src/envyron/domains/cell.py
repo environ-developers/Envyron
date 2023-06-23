@@ -47,10 +47,10 @@ class EnvironGrid(DirectGrid):
             n = np.cross(n2, n1)
         else:
             raise ValueError("dimensions out of range")
-    
+
         norm = np.linalg.norm(n)
-        if norm > 1.e-16 :
-            n = n/norm
+        if norm > 1.e-16:
+            n = n / norm
         return n
 
     def _reduce_dimension(
@@ -78,7 +78,7 @@ class EnvironGrid(DirectGrid):
     ) -> Tuple[ndarray, ndarray]:
         """docstring"""
 
-        n = self._get_direction(dim,axis)
+        n = self._get_direction(dim, axis)
 
         # apply minimum image convension
         reciprocal_lattice = self.get_reciprocal().lattice / 2 / np.pi
