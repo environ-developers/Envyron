@@ -72,7 +72,7 @@ def hexagonal_cell(request: FixtureRequest) -> EnvironGrid:
 
 
 @fixture
-def uniform_density(request: FixtureRequest):
+def uniform_density():
     """Create a uniform density on a given cell"""
 
     def _uniform_density(cell: EnvironGrid, u: float):

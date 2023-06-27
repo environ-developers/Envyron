@@ -169,13 +169,13 @@ class TestMinDistance():
                 n = np.array([1, 0, 0])
             elif dim == 2:
                 n = np.array([np.sqrt(3) * 0.5, -0.5, 0])
-                # for this case two of the closest point change
+                # for this case two of the closest points change
                 r[3, :] = [0.65, 0.3330127, 0.]
                 r[7, :] = [0.65, 0.3330127, 0.5]
         elif axis == 1:
             if dim == 1:
                 n = np.array([0.5, np.sqrt(3) * 0.5, 0])
-                # for this case two of the closest point change
+                # for this case two of the closest points change
                 r[3, :] = [0.65, 0.3330127, 0.]
                 r[7, :] = [0.65, 0.3330127, 0.5]
             elif dim == 2:
