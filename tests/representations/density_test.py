@@ -53,3 +53,19 @@ class TestUniformDensity:
         """"""
         density = uniform_density(cubic_cell, N)
         assert np.sum(density.gradient()) == approx(0.)
+
+    @mark.parametrize('hexagonal_cell', [(2, 1, 1), (2, 20, 3), (10, 20, 3)],
+                      indirect=['hexagonal_cell'])
+    def test_hexagonal_charge(self, hexagonal_cell, N, uniform_density):
+        """"""
+        density = uniform_density(hexagonal_cell, N)
+        assert density.N == N * hexagonal_cell.volume
+        assert density.integral() == N * hexagonal_cell.volume
+        assert density.norm() == approx(np.sqrt(N**2 * hexagonal_cell.volume))
+
+    @mark.parametrize('hexagonal_cell', [(2, 1, 1), (2, 20, 3), (10, 20, 3)],
+                      indirect=['hexagonal_cell'])
+    def test_hexagonal_gradient(self, hexagonal_cell, N, uniform_density):
+        """"""
+        density = uniform_density(hexagonal_cell, N)
+        assert np.sum(density.gradient()) == approx(0.)
