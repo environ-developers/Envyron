@@ -339,6 +339,23 @@ class Input(BaseModel):
     def _validate_electrolyte(self):
         """Check for bad electrolyte input."""
 
+        # electrolyte formula validation
+        formula = self.electrolyte.formula
+        n = len(formula)
+
+        # check for sufficient charges
+        if n < 4: raise ValueError("Multiplicity/charge sets < 2")
+
+        # check for complete formula
+        if n % 2 != 0: raise ValueError("Missing multiplicity/charge")
+
+        # check for charge neutrality
+        m = [int(i) for i in formula[::2]]  # multiplicities
+        z = [int(i) for i in formula[1::2]]  # charges
+        s = sum(i * j for i, j in zip(m, z))
+
+        if s != 0: raise ValueError("Electrolyte is not neutral")
+
         # electrolyte rhomax/rhomin validation
         if self.electrolyte.rhomax < self.electrolyte.rhomin:
             raise ValueError("electrolyte rhomax < electrolyte rhomin")

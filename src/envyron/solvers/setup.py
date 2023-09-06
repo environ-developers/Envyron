@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 from .solver import ElectrostaticSolver
@@ -14,7 +16,7 @@ class ElectrostaticSolverSetup:
         self,
         problem: str,
         solver: ElectrostaticSolver,
-        inner: ElectrostaticSolver,
+        inner: Optional['ElectrostaticSolverSetup'] = None,
     ) -> None:
         self.problem = problem
         self.solver = solver

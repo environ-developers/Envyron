@@ -18,7 +18,7 @@ class EnvironIons:
         nions: int,
         ntypes: int,
         itypes: List[int],
-        ion_ids: List[Union[str, int, float]],
+        ion_ids: Union[List[str], List[int], List[float]],
         zv: List[float],
         atomicspread: List[float],
         corespread: List[float],
@@ -72,7 +72,7 @@ class EnvironIons:
 
     def _set_iontypes(
         self,
-        ids: List[Union[str, int, float]],
+        ids: Union[List[str], List[int], List[float]],
         zv: List[float],
         radius_mode: str,
         atomicspread: List[float],
