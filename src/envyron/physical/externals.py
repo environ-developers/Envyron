@@ -19,7 +19,7 @@ class EnvironExternals:
         grid: EnvironGrid,
         positions: Optional[List[ndarray]] = None,
     ) -> None:
-        self.number = n
+        self.count = n
         self.charge = 0.
         self.density = EnvironDensity(grid, label='externals')
 
