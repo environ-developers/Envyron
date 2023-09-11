@@ -47,3 +47,41 @@ def test_environ_density_charge_attribute(environ_grid, sample_data):
     environ_density = EnvironDensity(environ_grid, data=sample_data)
     assert environ_density.charge == environ_density.integral()
 
+
+def test_charge_property_with_integral_mock(environ_grid, sample_data, mocker):
+    environ_density = EnvironDensity(environ_grid)
+
+
+    def mock_itegral():
+        return 1.0 # A mock value for the integral method
+    environ_density.integral = mock_itegral
+
+    assert environ_density.charge == 1.0
+
+def test_compute_multipoles(environ_grid):
+    environ_density = EnvironDensity(environ_grid)
+    origin = np.array([0.0, 0.0, 0.0])
+    environ_density.compute_multipoles(origin)
+
+     #Check the values of dipole and quadrupole attributes
+    
+    assert isinstance(environ_density.dipole, np.ndarray)  
+    assert environ_density.dipole.shape == (3,) 
+    assert np.array_equal(environ_density.dipole, np.zeros(3))  
+
+    # Check quadrupole
+    assert isinstance(environ_density.quadrupole, np.ndarray) 
+    assert environ_density.quadrupole.shape == (3,)
+    assert np.array_equal(environ_density.quadrupole, np.zeros(3))  
+
+def test_euclidean_norm(environ_grid, sample_data):
+    environ_density = EnvironDensity(environ_grid, data=sample_data)
+    assert environ_density.euclidean_norm() == np.einsum('ijk,ijk', environ_density, environ_density)
+
+def test_quadratic_mean(environ_grid, sample_data):
+    environ_density = EnvironDensity(environ_grid, data=sample_data)
+    assert environ_density.quadratic_mean() == np.sqrt(environ_density.euclidean_norm() / environ_density.grid.nnrR)
+
+def test_scalar_product(environ_grid, sample_data):
+    environ_density = EnvironDensity(environ_grid, data=sample_data)
+    assert environ_density.scalar_product(environ_density) == np.einsum('ijk,ijk', environ_density, environ_density) * environ_density.grid.dV
