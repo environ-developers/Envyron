@@ -74,6 +74,7 @@ def test_compute_multipoles(environ_grid):
     assert environ_density.quadrupole.shape == (3,)
     assert np.array_equal(environ_density.quadrupole, np.zeros(3))  
 
+
 def test_euclidean_norm(environ_grid, sample_data):
     environ_density = EnvironDensity(environ_grid, data=sample_data)
     assert environ_density.euclidean_norm() == np.einsum('ijk,ijk', environ_density, environ_density)
@@ -85,3 +86,8 @@ def test_quadratic_mean(environ_grid, sample_data):
 def test_scalar_product(environ_grid, sample_data):
     environ_density = EnvironDensity(environ_grid, data=sample_data)
     assert environ_density.scalar_product(environ_density) == np.einsum('ijk,ijk', environ_density, environ_density) * environ_density.grid.dV
+
+
+if __name__ == "__main__":
+    pytest.main()
+
