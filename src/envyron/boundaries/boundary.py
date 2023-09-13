@@ -190,7 +190,8 @@ class EnvironBoundary(ABC):
     ) -> None:
         """docstring"""
 
-        self.gradient[:] = self.cores.derivatives.gradient(density)
+        if self.deriv_level == 1:
+            self.gradient[:] = self.cores.derivatives.gradient(density)
 
         if self.deriv_level == 2:
             self.laplacian[:] = self.cores.derivatives.laplacian(density)
