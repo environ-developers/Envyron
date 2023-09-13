@@ -11,6 +11,10 @@ from envyron.utils.constants import SQRTPI
 
 class ERFCGradientWarning(Exception):
      pass
+class ERFCGHessianWarning(Exception):
+     pass
+class ERFCDericativeWarning(Exception):
+     pass
 
 
 @pytest.fixture
@@ -144,6 +148,82 @@ def test_compute_laplacian(environ_grid):
     assert environ_erfc.laplacian.grid == environ_grid
 
     assert np.array_equal(environ_erfc.laplacian.data, expected_laplacian.data)
+
+def test_compute_hessian(environ_grid):
+    environ_erfc._compute_hessian()
+
+    _, r2 = environ_grid.get_min_distance(environ_erfc.pos, environ_erfc.dim, environ_erfc.axis)
+    dist = np.sqrt(r2)
+    arg = (dist - environ_erfc.width) / environ_erfc.spread
+    mask =  dist > FUNC_TOL
+    r = r[:, mask]
+    dist  = dist[mask]
+    arg = arg[mask]
+
+    expected_hessian = EnvironGradient(environ_grid, label='test erfc hessian')
+    
+    hessian = np.zeros(expected_hessian.shape)
+
+    shape = np.reshape(np.einsum('i..., j...->ij...', -r, r), (9, shape))
+    outer *= 1 / dist + 2 * arg / environ_erfc.spread
+    outer += dist * np.identity(3).flatten()[:, None]
+
+    expected_hessian_data = -np.exp(-arg**2) * outer / dist**2
+
+    charge = environ_erfc._charge()
+    analytic = environ_erfc._erfc_volume()
+    scale = charge / analytic / SQRTPI / environ_erfc.spread
+    
+    expected_hessian_data[:, mask] += expected_hessian_data[:, mask] * scale
+
+    with pytest.warns(ERFCGHessianWarning):
+        environ_erfc._compute_hessian()
+        
+    assert np.allclose(environ_erfc.hessian.data, expected_hessian_data, atol=1e-8, rtol=1e-8)
+
+    
+
+
+
+def test_compute_derivative(environ_grid):
+    environ_erfc._compute_derivative()
+     
+    _, r2 = environ_grid.get_min_distance(environ_erfc.pos, environ_erfc.dim, environ_erfc.axis)
+    dist = np.sqrt(r2)
+    arg = (dist - environ_erfc.width) / environ_erfc.spread
+    mask =  dist > FUNC_TOL 
+    arg = arg[mask]
+
+    expected_derivative = EnvironDensity(environ_grid, label='test erfc derivative')
+
+    derivative = np.zeros(expected_derivative.shape)
+
+    derivative[mask] = -np.exp(-arg**2)
+
+    integral = np.sum(environ_erfc._derivative) * \
+               environ_erfc.grid.volume / environ_erfc.grid.nnrR * 0.5
+
+    charge = environ_erfc._charge()
+    analytic = environ_erfc._erfc_volume()
+
+    if np.abs((integral - analytic) / analytic > 1e-4):
+        raise ERFCDericativeWarning("integral and analytic values are not close")
+    
+    scale = charge / analytic / SQRTPI / environ_erfc.spread
+
+    derivative[mask] += derivative[mask] * scale
+
+    with pytest.warns(ERFCDericativeWarning):
+        environ_erfc._compute_derivative()
+
+    assert isinstance(environ_erfc.derivative, EnvironDensity)
+    assert environ_erfc.derivative.grid == environ_grid
+    assert np.array_equal(environ_erfc.derivative.data, expected_derivative.data)
+    
+
+
+
+
 
 
 
