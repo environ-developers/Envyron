@@ -84,7 +84,7 @@ class Main:
         if self.setup.lconfine or self.setup.lelectrostatic:
             self.charges.update()
         # Update Cores
-        if self.setup.l1da :
+        if self.setup.l1da:
             self.setup.analytic1d.update_origin(self.system.com)
         # Update properties that depend on rigid (ionic) boundaries
         if self.setup.lrigidcavity:

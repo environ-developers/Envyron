@@ -83,7 +83,7 @@ class Setup:
         self.confine = environment.confine
         self.lconfine = self.confine != 0
 
-        self.lexternals = (self.input.externals != None) and \
+        self.lexternals = (self.input.externals is not None) and \
             (len(self.input.externals.functions) > 0)
 
         self.lelectrolyte = \
@@ -95,15 +95,15 @@ class Setup:
         self.optical_permittivity = environment.optical_permittivity
         self.loptical = environment.optical_permittivity > 1
 
-        self.lregions = (self.input.regions != None) and \
-            (len(self.input.regions.functions) > 0 )
+        self.lregions = (self.input.regions is not None) and \
+            (len(self.input.regions.functions) > 0)
 
-        if self.lregions :
+        if self.lregions:
             stat = opt = None
-            for group in functions:
+            for group in self.input.regions.functions:
                 for function in group:
-                    stat = function.static > 1
-                    opt = function.optical > 1
+                    stat = stat or function.static > 1
+                    opt = opt or function.optical > 1
             self.lstatic = self.lstatic or stat
             self.loptical = self.loptical or opt
 
@@ -123,13 +123,12 @@ class Setup:
                                or field_aware)  # and (not no_electrostatics)
 
         self.lsoftsolvent = (self.lsolvent
-                             and (solvent_mode == 'electronic'
-                                  or solvent_mode == 'full' or field_aware))
+                             and (solvent_mode in ('electronic', 'full')
+                                  or field_aware))
 
-        self.lsoftelectrolyte = (self.lelectrolyte
-                                 and (electrolyte_mode == 'electronic'
-                                      or electrolyte_mode == 'full'
-                                      or field_aware))
+        self.lsoftelectrolyte = (self.lelectrolyte and
+                                 (electrolyte_mode in ('electronic', 'full')
+                                  or field_aware))
 
         self.lsoftcavity = self.lsoftsolvent or self.lsoftelectrolyte
 
@@ -154,7 +153,7 @@ class Setup:
     def _set_numerical_flags(self) -> None:
         """docstring"""
         self.lfft = self.lelectrostatic or \
-            ( self.lboundary and self.input.solvent.deriv_core == 'fft')
+            (self.lboundary and self.input.solvent.deriv_core == 'fft')
 
         self.l1da = self.lperiodic and self.input.pbc.core == '1da'
 

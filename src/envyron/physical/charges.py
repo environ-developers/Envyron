@@ -72,9 +72,9 @@ class EnvironCharges:
         total_charge_density = EnvironDensity(self.density.grid)
         total_charge_density[:] = self.density[:]
 
-        if self.electrolyte :
+        if self.electrolyte:
             self.electrolyte.base.of_potential(potential)
             total_charge_density[:] += self.electrolyte.density[:]
 
-        if self.dielectric :
+        if self.dielectric:
             self.dielectric.of_potential(total_charge_density, potential)

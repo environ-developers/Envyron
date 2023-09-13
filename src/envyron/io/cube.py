@@ -110,7 +110,7 @@ class EnvironCube:
         numbers = tmp[:, 0].astype(int)
         charges = tmp[:, 1]
         positions = tmp[:, 2:]
-        if self.units == 'Bohr' :
+        if self.units == 'Bohr':
             positions = positions * Bohr
         self.atoms = Atoms(numbers=numbers,
                            positions=positions,

@@ -63,5 +63,5 @@ def hexagonal_cell(request: FixtureRequest) -> EnvironGrid:
     at[1, 0] = request.param[1] * 0.5
     at[1, 1] *= np.sqrt(3) * 0.5
     at[2, 2] *= request.param[2]
-    nr = np.array([request.param[0], request.param[0], int(request.param[0]*request.param[2])])
+    nr = np.array([request.param[0], request.param[0], int(request.param[0] * request.param[2])])
     return EnvironGrid(at, nr)
