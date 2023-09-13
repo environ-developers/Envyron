@@ -141,6 +141,7 @@ class Analytic1DCore(NumericalCore):
             else:
                 raise ValueError(
                     "Wrong choice of axis for analytic one dimensional core")
+            ftmp[:, i] = ftmp[:, i] * fact * ions.smeared_ions[i].volume
 
         force = force + ftmp
 
