@@ -182,7 +182,7 @@ class Setup:
         # Derivative core
         if self.lboundary:
             if self.input.solvent.deriv_core == 'fft':
-                self.environment_core.derivatives(self.fft)
+                self.environment_core.derivatives = self.fft
             else:
                 raise ValueError('Unexpected derivative core')
         # Electrostatic cores
@@ -191,13 +191,13 @@ class Setup:
                                                 use_internal_pbc_corr,
                                                 electrostatics_core=self.fft)
             if self.input.electrostatics.core == 'fft':
-                self.environment_core.electrostatics(self.fft)
+                self.environment_core.electrostatics = self.fft
             else:
                 raise ValueError('Unexpected electrostatic core')
         # Correction cores
         if self.lperiodic:
             if self.input.pbc.core == '1da':
-                self.environment_core.corrections(self.analytic1d)
+                self.environment_core.corrections = self.analytic1d
 
     def _set_electrostatics(self):
         """docstring"""
