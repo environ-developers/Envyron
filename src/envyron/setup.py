@@ -51,20 +51,22 @@ class Setup:
 
         self.lperiodic = correction != 'none'
 
+        self.lelectrolyte = False
         self.lsemiconductor = False
         self.laddcharges = False
         self.ltddfpt = False
         self.lmsgcs = False
 
-        if correction == 'gcs':
-            self.lelectrolyte = True
-        elif correction == 'ms':
-            self.lsemiconductor = True
-        elif correction == 'ms-gcs':
-            self.lsemiconductor = True
-            self.lmsgcs = True
-        else:
-            raise ValueError(f"Unexpected correction type: {correction}")
+        if self.lperiodic:
+            if correction == 'gcs':
+                self.lelectrolyte = True
+            elif correction == 'ms':
+                self.lsemiconductor = True
+            elif correction == 'ms-gcs':
+                self.lsemiconductor = True
+                self.lmsgcs = True
+            else:
+                raise ValueError(f"Unexpected correction type: {correction}")
 
     def _set_environment_flags(self) -> None:
         """docstring"""
@@ -81,10 +83,11 @@ class Setup:
         self.confine = environment.confine
         self.lconfine = self.confine != 0
 
-        self.lexternals = len(self.input.externals.functions) > 0
+        self.lexternals = (self.input.externals != None) and \
+            (len(self.input.externals.functions) > 0)
 
         self.lelectrolyte = \
-            bool(self.lelectrolyte or self.input.electrolyte.formula)
+            bool(self.lelectrolyte or self.input.electrolyte.concentration > 0.)
 
         self.static_permittivity = environment.static_permittivity
         self.lstatic = environment.static_permittivity > 1
@@ -92,16 +95,15 @@ class Setup:
         self.optical_permittivity = environment.optical_permittivity
         self.loptical = environment.optical_permittivity > 1
 
-        functions = self.input.regions.functions
+        self.lregions = (self.input.regions != None) and \
+            (len(self.input.regions.functions) > 0 )
 
-        if len(functions) > 0:
-
+        if self.lregions :
             stat = opt = None
             for group in functions:
                 for function in group:
                     stat = function.static > 1
                     opt = function.optical > 1
-
             self.lstatic = self.lstatic or stat
             self.loptical = self.loptical or opt
 

@@ -2,16 +2,16 @@ from typing import List, Optional, Union
 from numpy import ndarray
 
 from envyron import Setup
-from representations import EnvironDensity
+from envyron.representations import EnvironDensity
 
-from physical import EnvironIons
-from physical import EnvironElectrons
-from physical import EnvironSystem
-from physical import EnvironCharges
-from physical import EnvironExternals
-from physical import EnvironDielectric
+from envyron.physical import EnvironIons
+from envyron.physical import EnvironElectrons
+from envyron.physical import EnvironSystem
+from envyron.physical import EnvironCharges
+from envyron.physical import EnvironExternals
+from envyron.physical import EnvironDielectric
 
-from boundaries import ElectronicBoundary, IonicBoundary, SystemBoundary
+from envyron.boundaries import ElectronicBoundary, IonicBoundary, SystemBoundary
 
 
 class Main:

@@ -5,7 +5,7 @@ from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient
 from ..physical import EnvironIons
 from .core import NumericalCore
-from ..utils import PI, TPI, FPI, MADELUNG
+from ..utils.constants import TPI, FPI, MADELUNG
 
 
 class Analytic1DCore(NumericalCore):
@@ -68,7 +68,7 @@ class Analytic1DCore(NumericalCore):
             raise ValueError(
                 "Wrong choice of axis for analytic one dimensional core")
         elif self.dim == 2:
-            const = -PI / 3. * charges.charge / self.size - fact * charges.quadrupole[
+            const = -np.pi / 3. * charges.charge / self.size - fact * charges.quadrupole[
                 self.axis]
             correction = -charges.charge * self.r[
                 self.axis, :]**2 + 2. * self.dipole[self.axis] * self.r[
@@ -141,7 +141,7 @@ class Analytic1DCore(NumericalCore):
             else:
                 raise ValueError(
                     "Wrong choice of axis for analytic one dimensional core")
-        
+
         force = force + ftmp
 
         return force
