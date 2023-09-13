@@ -16,6 +16,9 @@ class ERFCGHessianWarning(Exception):
 class ERFCDericativeWarning(Exception):
      pass
 
+class UnexpectedFunctionType(Exception):
+     pass
+
 
 @pytest.fixture
 def environ_erfc(environ_grid):
@@ -219,7 +222,40 @@ def test_compute_derivative(environ_grid):
     assert isinstance(environ_erfc.derivative, EnvironDensity)
     assert environ_erfc.derivative.grid == environ_grid
     assert np.array_equal(environ_erfc.derivative.data, expected_derivative.data)
+
+
+def test_charge(environ_grid):
+    charge= environ_erfc._charge()
+
+    if environ_erfc.kind == 1:
+        with pytest.raises(ValueError):
+            environ_erfc._charge()
+    elif environ_erfc.kind == 2:
+        expected_charge = environ_erfc.volume
+
+        assert charge == expected_charge
+
+    elif environ_erfc.kind == 3:
+
+        expected_charge *= environ_erfc._erfc_volume()
+        assert charge == expected_charge
+
+    elif environ_erfc.kind == 4:
+            
+        expected_charge *= -environ_erfc._erfc_volume()
+        assert charge == expected_charge
+
+    else:
+        with pytest.raises(UnexpectedFunctionType):
+            environ_erfc._charge()
+
+
+
+
+
+
     
+
 
 
 
