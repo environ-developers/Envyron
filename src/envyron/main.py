@@ -107,7 +107,7 @@ class Main:
     def update_electrons(
         self,
         density: EnvironDensity,
-        nelec: Optional[int],
+        nelec: Optional[int] = None,
     ):
         """
         docstring
@@ -156,15 +156,15 @@ class Main:
         """
         docstring
         """
-        self.vzero = EnvironDensity(self.setup.system_cell)
-        self.dvtot = EnvironDensity(self.setup.system_cell)
+        self.vzero = EnvironDensity(self.setup.cell)
+        self.dvtot = EnvironDensity(self.setup.cell)
         if self.setup.lelectrostatic:
-            self.velectrostatic = EnvironDensity(self.setup.system_cell)
-            self.vreference = EnvironDensity(self.setup.system_cell)
+            self.velectrostatic = EnvironDensity(self.setup.cell)
+            self.vreference = EnvironDensity(self.setup.cell)
         if self.setup.lsoftcavity:
-            self.vsoftcavity = EnvironDensity(self.setup.system_cell)
+            self.vsoftcavity = EnvironDensity(self.setup.cell)
         if self.setup.lconfine:
-            self.vconfine = EnvironDensity(self.setup.system_cell)
+            self.vconfine = EnvironDensity(self.setup.cell)
 
     def _init_physical(
         self,
@@ -218,7 +218,7 @@ class Main:
                     self.setup.need_factsqrt,
                     self.setup.lsurface,
                     self.setup.input.solvent.deriv_method,
-                    self.setup.input.solvent.deriv_core,
+                    self.setup.environment_core,
                     self.setup.cell,
                     self.ions,
                     label='solvent')
@@ -232,7 +232,7 @@ class Main:
                     self.setup.need_factsqrt,
                     self.setup.lsurface,
                     self.setup.input.solvent.deriv_method,
-                    self.setup.input.solvent.deriv_core,
+                    self.setup.environment_core,
                     self.setup.cell,
                     self.electrons,
                     label='solvent')
@@ -246,7 +246,7 @@ class Main:
                     self.setup.need_factsqrt,
                     self.setup.lsurface,
                     self.setup.input.solvent.deriv_method,
-                    self.setup.input.solvent.deriv_core,
+                    self.setup.environment_core,
                     self.setup.cell,
                     self.electrons,
                     label='solvent')
