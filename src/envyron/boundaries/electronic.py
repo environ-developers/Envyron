@@ -133,6 +133,7 @@ class ElectronicBoundary(EnvironBoundary):
 
         self._generate_switching_function()
 
+        hessian = None
         if self.deriv_level == 3:
             if self.solvent_aware:
                 hessian = self.hessian
