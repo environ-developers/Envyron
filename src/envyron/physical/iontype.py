@@ -1,4 +1,5 @@
 from typing import Union
+from numpy import int64, float64
 
 from ..utils.constants import BOHR_RADIUS_ANGS
 
@@ -113,10 +114,10 @@ class EnvironIonType:
         if isinstance(ion_id, str):
             self.label = ion_id.capitalize()
             self.number = self._get_atomic_number_by_label(ion_id)
-        elif isinstance(ion_id, int):
+        elif isinstance(ion_id, (int, int64)):
             self.label = self.elements[ion_id - 1]
             self.number = ion_id
-        elif isinstance(ion_id, float):
+        elif isinstance(ion_id, (float, float64)):
             self.number = self._get_atomic_number_by_weight(ion_id)
             self.label = self.elements[self.number - 1]
         else:
