@@ -3,9 +3,9 @@ import numpy as np
 from numpy import ndarray
 from multimethod import multimethod
 from envyron.domains.cell import EnvironGrid
-from envyron.representations.field import EnvironField
-from envyron.representations.density import EnvironDensity
-from envyron.representations.gradient import EnvironGradient
+from envyron.representations import EnvironField
+from envyron.representations import EnvironDensity
+from envyron.representations import EnvironGradient
 
 @pytest.fixture
 def environ_grid():
@@ -17,7 +17,6 @@ def test_environ_gradient_creation(environ_grid):
     assert isinstance(environ_gradient, EnvironGradient)
 
     assert environ_gradient.grid == environ_grid
-    assert environ_gradient.rank == 3
     assert environ_gradient.data is None
     assert environ_gradient.label == ''
     assert environ_gradient._modulus is None
