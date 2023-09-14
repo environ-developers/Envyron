@@ -10,6 +10,11 @@ venv
 *test*.yaml
 *test*.json
 
+# qepy test files
+tests/qepy/*.save
+tests/qepy/*.xml
+tests/qepy/*.out
+
 # build files
 build
 dist
