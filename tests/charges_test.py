@@ -65,3 +65,5 @@ def test_environ_charges_of_potential():
     with pytest.raises(NotImplementedError):
         charges.of_potential(potential)
 
+if __name__ == '__main__':
+    pytest.main()
