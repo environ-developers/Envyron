@@ -1,10 +1,10 @@
 import pytest
 import numpy as np
-from envyron.representations.functions.function import EnvironFunction,  KINDS, FUNC_TOL
+from envyron.representations.functions import EnvironFunction,  KINDS, FUNC_TOL
 from envyron.domains.cell import EnvironGrid
-from envyron.representations.density import EnvironDensity
-from envyron.representations.gradient import EnvironGradient
-from envyron.representations.hessian import EnvironHessian
+from envyron.representations import EnvironDensity
+from envyron.representations import EnvironGradient
+from envyron.representations import EnvironHessian
 
 
 environ_grid = EnvironGrid(dimensions=(10, 10, 10), lattice_vectors=np.eye(3))
