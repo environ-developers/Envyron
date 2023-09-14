@@ -250,6 +250,42 @@ def test_charge(environ_grid):
             environ_erfc._charge()
 
 
+environ_grid = EnvironGrid(dimensions= (10,10,10), lattice_vectors= np.eye(3))
+
+def test_erfc_volume_dim0():
+    environ_erfc = EnvironERFC(environ_grid, kind= 2, dim=0, axis=0, width=1.0, spread=1.0, volume=1.0, pos= np.array([0.0, 0.0, 0.0]), label='test erfc volume')
+    expected_volume = (4.0 / 3.0) * np.pi * 1.0**3
+    assert environ_erfc._erfc_volume() == expected_volume
+
+def test_erfc_volume_dim1():
+    environ_erfc = EnvironERFC(environ_grid, kind= 2, dim=1, axis=0, width=1.0, spread=1.0, volume=1.0, pos= np.array([0.0, 0.0, 0.0]), label='test erfc volume')
+    expected_volume = np.pi * 1.0**2 * 1.0
+    assert environ_erfc._erfc_volume() == expected_volume
+
+def test_erfc_volume_dim2():
+    environ_erfc = EnvironERFC(environ_grid, kind= 2, dim=2, axis=0, width=1.0, spread=1.0, volume=1.0, pos= np.array([0.0, 0.0, 0.0]), label='test erfc volume')
+    expected_volume = 2.0 * 1.0 * 1.0
+    assert environ_erfc._erfc_volume() == expected_volume
+
+def test_erfc_volume_invalid_parameters():
+    environ_erfc = EnvironERFC(environ_grid, kind= 2, dim=3, axis=0, width=0.0, spread=0.0, volume=1.0)
+    try:
+        environ_erfc._erfc_volume()
+        assert False
+    except ValueError:
+        assert True
+
+def test_erfc_volume_invalid_dim():
+    environ_erfc = EnvironERFC(environ_grid, kind= 2, dim=4, axis=0, width=1.0, spread=1.0, volume=1.0, pos= np.array([0.0, 0.0, 0.0]), label='test erfc volume')
+    try:
+        environ_erfc._erfc_volume()
+        assert False
+    except ValueError:
+        assert True
+
+        
+
+
 
 
 
