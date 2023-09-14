@@ -29,6 +29,9 @@ class EnvironDensity(EnvironField):
         if self._charge is None: self._charge: float = self.integral()
         return self._charge
 
+    def compute_charge(self) -> None:
+        self._charge = self.integral()
+
     def compute_multipoles(self, origin: ndarray) -> None:
         """docstring"""
         r, _ = self.grid.get_min_distance(origin)

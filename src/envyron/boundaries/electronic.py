@@ -168,13 +168,19 @@ class ElectronicBoundary(EnvironBoundary):
         else:
             raise ValueError(f"{self.deriv_method} not supported")
 
+        self.switch.compute_charge()
         self.volume = self.switch.charge
 
         if self.deriv_level >= 1:
+            self.gradient.modulus.compute_charge()
             self.surface = self.gradient.modulus.charge
 
     def _generate_switching_function(self) -> None:
         """docstring"""
+
+        self.switch[:] = 0.
+        self.dswitch[:] = 0.
+        self.d2switch[:] = 0.
 
         mask = self.density <= self.rhomin
         if np.any(mask): self.switch[mask] = 1.0
