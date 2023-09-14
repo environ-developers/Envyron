@@ -3,8 +3,8 @@ import numpy as np
 import scipy.special as sp
 from numpy import ndarray
 from envyron.domains.cell import EnvironGrid
-from envyron.representations.functions import EnvironFunction, FUNC_TOL
-from envyron.representations.functions import EnvironERFC
+from envyron.representations.functions.function import EnvironFunction, FUNC_TOL
+from envyron.representations.functions.erfc import EnvironERFC
 from envyron.representations.density import EnvironDensity
 from envyron.representations.gradient import EnvironGradient
 from envyron.utils.constants import SQRTPI
@@ -283,7 +283,7 @@ def test_erfc_volume_invalid_dim():
     except ValueError:
         assert True
 
-        
+
 
 
 
