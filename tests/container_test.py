@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from envyron.representations.functions import FunctionContainer
-from envyron.representations.functions import EnvironGaussian
+from envyron.representations.functions.container import FunctionContainer
+from envyron.representations.functions.gaussian import EnvironGaussian
 from envyron.domains.cell import EnvironGrid
 
 
