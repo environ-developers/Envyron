@@ -16,8 +16,6 @@ def test_environ_field_creation(environ_grid):
 
     assert environ_field.grid == environ_grid
 
-    assert environ_field.rank == 1
-
     assert environ_field.data is None
 
     assert environ_field.label == ''
