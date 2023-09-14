@@ -101,9 +101,9 @@ class EnvironCube:
         R3 = list(map(float, header[2].split()[1:4]))
 
         # -- Get supercell dimensions
-        basis = np.array([R1, R2, R3], dtype='d').T  # store vectors as columns
-        scalars = np.array([N1, N2, N3], dtype='d')
-        self.cell = basis * scalars  # broadcasting
+        self.basis = np.array([R1, R2, R3], dtype='d').T  # store vectors as columns
+        self.scalars = np.array([N1, N2, N3], dtype='d')
+        self.cell = self.basis * self.scalars  # broadcasting
 
         # -- Create an ASE Atoms object
         tmp = np.array([line.split() for line in header[3:]], dtype='d')
@@ -119,7 +119,7 @@ class EnvironCube:
 
         # -- Construct the grid
         mesh = np.mgrid[0:N3, 0:N2, 0:N1]
-        self.grid = np.einsum('ij,jklm->imlk', basis, mesh) + \
+        self.grid = np.einsum('ij,jklm->imlk', self.basis, mesh) + \
             origin[:, None, None, None]
 
         # -- Isolate scalar field data
@@ -127,3 +127,49 @@ class EnvironCube:
         data1D = np.array(
             [float(val) for line in contents for val in line.split()])
         self.data3D = data1D.reshape((N3, N2, N1), order='F')
+
+    def cube2line(self,center,axis):
+        icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
+        icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
+        print(icenter)
+        if axis == 0 :
+            axis = self.grid.T[:,icenter[1],icenter[2],0]
+            value = self.data3D[:,icenter[1],icenter[2]]
+        elif axis == 1 :
+            axis = self.grid.T[icenter[0],:,icenter[2],1]
+            value = self.data3D[icenter[0],:,icenter[2]]
+        elif axis == 2 :
+            axis = self.grid.T[icenter[0],icenter[1],:,2]
+            value = self.data3D[icenter[0],icenter[1],:]
+        return axis, value
+
+    def cubeplanaraverage(self,center,axis):
+        icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
+        icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
+        if axis == 0 :
+            ax = self.grid.T[:,icenter[1],icenter[2],0]
+            value = np.mean(self.data3D,(1,2))
+        elif axis == 1 :
+            ax = self.grid.T[icenter[0],:,icenter[2],1]
+            value = np.mean(self.data3D,(0,2))
+        elif axis == 2 :
+            ax = self.grid.T[icenter[0],icenter[1],:,2]
+            value = np.mean(self.data3D,(0,1))
+        return ax, value
+
+    def cube2contour(self,center,axis):
+        icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
+        icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
+        if axis == 0 :
+            ax1 = self.grid.T[icenter[0],:,:,2]
+            ax2 = self.grid.T[icenter[0],:,:,1]
+            value = self.data3D.T[icenter[0],:,:]
+        elif axis == 1 :
+            ax1 = self.grid.T[:,icenter[1],:,2]
+            ax2 = self.grid.T[:,icenter[1],:,0]
+            value = self.data3D.T[:,icenter[1],:]
+        elif axis == 2 :
+            ax1 = self.grid.T[:,:,icenter[2],1]
+            ax2 = self.grid.T[:,:,icenter[2],0]
+            value = self.data3D.T[:,:,icenter[2]]
+        return ax1, ax2, value
