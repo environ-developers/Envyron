@@ -3,8 +3,8 @@ import numpy as np
 from envyron.representations.functions import EnvironFunction
 from envyron.representations.functions import EnvironGaussian
 from envyron.domains.cell import EnvironGrid
-from envyron.representations import EnvironGradient
-from envyron.representations import EnvironDensity
+from envyron.representations.gradient import EnvironGradient
+from envyron.representations.density import EnvironDensity
 from envyron.utils.constants import SQRTPI , EXP_TOL
 
 @pytest.fixture
@@ -127,5 +127,3 @@ if __name__ == '__main__':
 
 
     
-
-
