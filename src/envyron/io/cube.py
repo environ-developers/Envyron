@@ -161,15 +161,15 @@ class EnvironCube:
         icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
         icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
         if axis == 0 :
-            ax1 = self.grid.T[icenter[0],:,:,2]
-            ax2 = self.grid.T[icenter[0],:,:,1]
+            ax1 = self.grid.T[icenter[0],:,:,1]
+            ax2 = self.grid.T[icenter[0],:,:,2]
             value = self.data3D.T[icenter[0],:,:]
         elif axis == 1 :
-            ax1 = self.grid.T[:,icenter[1],:,2]
-            ax2 = self.grid.T[:,icenter[1],:,0]
+            ax1 = self.grid.T[:,icenter[1],:,0]
+            ax2 = self.grid.T[:,icenter[1],:,2]
             value = self.data3D.T[:,icenter[1],:]
         elif axis == 2 :
-            ax1 = self.grid.T[:,:,icenter[2],1]
-            ax2 = self.grid.T[:,:,icenter[2],0]
+            ax1 = self.grid.T[:,:,icenter[2],0]
+            ax2 = self.grid.T[:,:,icenter[2],1]
             value = self.data3D.T[:,:,icenter[2]]
         return ax1, ax2, value
