@@ -1,10 +1,11 @@
+# Refactored from Stephen Weitzner cube_vizkit
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+#
 from ase import Atoms
 from ase.units import Bohr
 from dataclasses import dataclass, field
-
-
-# From Stephen Weitzner cube_vizkit
 @dataclass
 class EnvironCube:
     """
@@ -53,9 +54,12 @@ class EnvironCube:
     origin: list[tuple] = field(default_factory=list, repr=False)
     prefix: str = field(default_factory=str, repr=False)
 
-    def load_cube(self, fname='', units='Bohr'):
+    def __init__(self, fname='', units='Bohr'):
+        self.read(fname, units)
+
+    def read(self, fname='', units='Bohr'):
         """
-        load_cube(cube_file)
+        load(cube_file)
 
         Extracts numerical data from Gaussian *.cube files.
         Atomic units are assumed
@@ -128,48 +132,86 @@ class EnvironCube:
             [float(val) for line in contents for val in line.split()])
         self.data3D = data1D.reshape((N3, N2, N1), order='F')
 
-    def cube2line(self,center,axis):
+    def toline(self,center,axis,planaraverage=True):
         icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
         icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
-        print(icenter)
         if axis == 0 :
             axis = self.grid.T[:,icenter[1],icenter[2],0]
-            value = self.data3D[:,icenter[1],icenter[2]]
+            if planaraverage :
+                value = np.mean(self.data3D,(1,2))
+            else:
+                value = self.data3D[:,icenter[1],icenter[2]]
         elif axis == 1 :
             axis = self.grid.T[icenter[0],:,icenter[2],1]
-            value = self.data3D[icenter[0],:,icenter[2]]
+            if planaraverage :
+                value = np.mean(self.data3D,(0,2))
+            else :
+                value = self.data3D[icenter[0],:,icenter[2]]
         elif axis == 2 :
             axis = self.grid.T[icenter[0],icenter[1],:,2]
-            value = self.data3D[icenter[0],icenter[1],:]
+            if planaraverage :
+                value = np.mean(self.data3D,(0,1))
+            else :
+                value = self.data3D[icenter[0],icenter[1],:]
         return axis, value
 
-    def cubeplanaraverage(self,center,axis):
+    def tocontour(self,center,axis):
         icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
         icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
         if axis == 0 :
-            ax = self.grid.T[:,icenter[1],icenter[2],0]
-            value = np.mean(self.data3D,(1,2))
+            ax1 = self.grid.T[:,:,icenter[0],1]
+            ax2 = self.grid.T[:,:,icenter[0],0]
+            value = self.data3D[:,:,icenter[0]]
         elif axis == 1 :
-            ax = self.grid.T[icenter[0],:,icenter[2],1]
-            value = np.mean(self.data3D,(0,2))
+            ax1 = self.grid.T[:,icenter[1],:,2]
+            ax2 = self.grid.T[:,icenter[1],:,0]
+            value = self.data3D[:,icenter[1],:]
         elif axis == 2 :
-            ax = self.grid.T[icenter[0],icenter[1],:,2]
-            value = np.mean(self.data3D,(0,1))
-        return ax, value
-
-    def cube2contour(self,center,axis):
-        icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
-        icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
-        if axis == 0 :
-            ax1 = self.grid.T[icenter[0],:,:,1]
-            ax2 = self.grid.T[icenter[0],:,:,2]
-            value = self.data3D.T[icenter[0],:,:]
-        elif axis == 1 :
-            ax1 = self.grid.T[:,icenter[1],:,0]
-            ax2 = self.grid.T[:,icenter[1],:,2]
-            value = self.data3D.T[:,icenter[1],:]
-        elif axis == 2 :
-            ax1 = self.grid.T[:,:,icenter[2],0]
-            ax2 = self.grid.T[:,:,icenter[2],1]
-            value = self.data3D.T[:,:,icenter[2]]
+            ax1 = self.grid.T[icenter[2],:,:,2]
+            ax2 = self.grid.T[icenter[2],:,:,1]
+            value = self.data3D[icenter[2],:,:]
         return ax1, ax2, value
+    
+    def plotprojections(self,center,colormap='plasma',centermap=False):
+        cmap=mpl.colormaps[colormap]
+        axis1_yz, axis2_yz, values_yz = self.tocontour(center,0)
+        axis1_xz, axis2_xz, values_xz = self.tocontour(center,1)
+        axis1_xy, axis2_xy, values_xy = self.tocontour(center,2)
+        width_x = self.cell[0,0] # NEED TO FIX FOR NON ORTHOROMBIC CELLS
+        width_y = self.cell[1,1] # NEED TO FIX FOR NON ORTHOROMBIC CELLS
+        width_z = self.cell[2,2] # NEED TO FIX FOR NON ORTHOROMBIC CELLS
+        vmin = np.min(self.data3D)
+        vmax = np.max(self.data3D)
+        # The following is an option for centering the colorbar on zero
+        if centermap :
+            vmax = -np.max([abs(np.min(self.data3D)),abs(np.max(self.data3D))]) * 0.6
+            vmin = -vmax
+        fig = plt.figure(figsize=(6, 6))
+        gs = fig.add_gridspec(2, 2,  width_ratios=(width_x, width_z), height_ratios=(width_z, width_y),
+                      left=0.1, right=0.9, bottom=0.1, top=0.9,
+                      wspace=0.05, hspace=0.05)
+
+        ax1 = fig.add_subplot(gs[0, 0])
+        cont1 = ax1.contourf(axis1_xz,axis2_xz,values_xz,levels=100,cmap=cmap,vmin=vmin,vmax=vmax)
+        ax1.scatter(center[0],center[2])
+        ax1.tick_params(labelbottom=False)
+        ax1.set_ylabel('Z (a.u.)')
+
+        ax3 = fig.add_subplot(gs[1, 0],sharex=ax1)
+        cont3 = ax3.contourf(axis1_xy,axis2_xy,values_xy,levels=100,cmap=cmap,vmin=vmin,vmax=vmax)
+        ax3.scatter(center[0],center[1])
+        ax3.set_xlabel('X (a.u.)')
+        ax3.set_ylabel('Y (a.u.)')
+
+        ax4 = fig.add_subplot(gs[1, 1],sharey=ax3)
+        cont4 = ax4.contourf(axis2_yz,axis1_yz,values_yz,levels=100,cmap=cmap,vmin=vmin,vmax=vmax)
+        ax4.scatter(center[2],center[1])
+        ax4.tick_params(labelleft=False)
+        ax4.set_xlabel('Z (a.u.)')
+
+        # Colorbar 
+        ax2 = fig.add_subplot(gs[0, 1])
+        ax2_pos = ax2.get_position().bounds
+        ax2.set_position([ax2_pos[0]+ax2_pos[2]*0.35,ax2_pos[1]+ax2_pos[3]*0.05,ax2_pos[2]*0.1,ax2_pos[3]*0.9])
+        fig.colorbar(cont4, cax=ax2)
+        plt.show()
