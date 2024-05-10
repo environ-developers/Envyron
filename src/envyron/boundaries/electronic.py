@@ -163,7 +163,9 @@ class ElectronicBoundary(EnvironBoundary):
                 self.laplacian[:] *= self.dswitch
                 self.laplacian[:] += np.sum(self.gradient**2, 0) * self.dswitch
 
-            if self.deriv_level >= 1: self.gradient[:] *= self.dswitch
+            if self.deriv_level >= 1:
+                self.gradient[:] *= self.dswitch
+                self.gradient.compute_modulus()
 
         else:
             raise ValueError(f"{self.deriv_method} not supported")
@@ -172,7 +174,6 @@ class ElectronicBoundary(EnvironBoundary):
         self.volume = self.switch.charge
 
         if self.deriv_level >= 1:
-            self.gradient.modulus.compute_charge()
             self.surface = self.gradient.modulus.charge
 
     def _generate_switching_function(self) -> None:
