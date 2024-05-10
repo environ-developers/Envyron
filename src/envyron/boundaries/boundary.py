@@ -190,8 +190,9 @@ class EnvironBoundary(ABC):
     ) -> None:
         """docstring"""
 
-        if self.deriv_level == 1:
+        if self.deriv_level >= 1:
             self.gradient[:] = self.cores.derivatives.gradient(density)
+            self.gradient.compute_modulus()
 
         if self.deriv_level == 2:
             self.laplacian[:] = self.cores.derivatives.laplacian(density)
@@ -225,8 +226,7 @@ class EnvironBoundary(ABC):
 
         dsurface = EnvironDensity(gradient.grid)
 
-        grad_mod2 = np.sum(gradient**2, 0)
-        mask = grad_mod2 >= 1e-50
+        mask = gradient.modulus >= 1e-50
 
         g = gradient[:, mask]
         h = hessian.reshape(3, 3, *gradient.grid.nr)[:, :, mask]
@@ -234,7 +234,8 @@ class EnvironBoundary(ABC):
         dsurface[mask] += np.einsum('i...,j...,ij...', g, g, h) - \
                           np.einsum('i...,i...,jj...', g, g, h)
 
-        dsurface[mask] /= grad_mod2[mask] / np.sqrt(grad_mod2[mask])
+        dsurface[mask] /= gradient.modulus[mask] / np.sqrt(
+            gradient.modulus[mask])
 
         return dsurface
 
