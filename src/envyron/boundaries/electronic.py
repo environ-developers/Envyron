@@ -133,6 +133,7 @@ class ElectronicBoundary(EnvironBoundary):
 
         self._generate_switching_function()
 
+        hessian = None
         if self.deriv_level == 3:
             if self.solvent_aware:
                 hessian = self.hessian
@@ -162,11 +163,14 @@ class ElectronicBoundary(EnvironBoundary):
                 self.laplacian[:] *= self.dswitch
                 self.laplacian[:] += np.sum(self.gradient**2, 0) * self.dswitch
 
-            if self.deriv_level >= 1: self.gradient[:] *= self.dswitch
+            if self.deriv_level >= 1:
+                self.gradient[:] *= self.dswitch
+                self.gradient.compute_modulus()
 
         else:
             raise ValueError(f"{self.deriv_method} not supported")
 
+        self.switch.compute_charge()
         self.volume = self.switch.charge
 
         if self.deriv_level >= 1:
@@ -174,6 +178,10 @@ class ElectronicBoundary(EnvironBoundary):
 
     def _generate_switching_function(self) -> None:
         """docstring"""
+
+        self.switch[:] = 0.
+        self.dswitch[:] = 0.
+        self.d2switch[:] = 0.
 
         mask = self.density <= self.rhomin
         if np.any(mask): self.switch[mask] = 1.0

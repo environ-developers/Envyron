@@ -39,8 +39,42 @@ class EnvironCharges:
 
     def update(self) -> None:
         """docstring"""
-        raise NotImplementedError()
+        self.count = 0
+        self.charge = 0.
+        self.density[:] = 0.
+
+        if self.electrons:
+            self.count = self.count + self.electrons.count
+            self.charge = self.charge + self.electrons.charge
+            self.density[:] = self.density[:] + self.electrons.density[:]
+
+        if self.ions:
+            self.count = self.count + self.ions.count
+            self.charge = self.charge + self.ions.charge
+            self.density[:] = self.density[:] + self.ions.density[:]
+
+        if self.externals:
+            self.count = self.count + self.externals.count
+            self.charge = self.charge + self.externals.charge
+            self.density[:] = self.density[:] + self.externals.density[:]
+
+        if self.additional:
+            self.charge = self.charge + self.additional.charge
+            self.density[:] = self.density[:] + self.additional[:]
+
+        local_charge = self.density.integral()
+        error = abs(local_charge - self.charge)
+        if error > 1e-5:
+            raise ValueError(f"{error:.2e} error in integrated charges")
 
     def of_potential(self, potential: EnvironDensity) -> EnvironDensity:
         """docstring"""
-        raise NotImplementedError()
+        total_charge_density = EnvironDensity(self.density.grid)
+        total_charge_density[:] = self.density[:]
+
+        if self.electrolyte:
+            self.electrolyte.base.of_potential(potential)
+            total_charge_density[:] += self.electrolyte.density[:]
+
+        if self.dielectric:
+            self.dielectric.of_potential(total_charge_density, potential)

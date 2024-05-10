@@ -26,16 +26,17 @@ class EnvironGradient(EnvironField):
 
     @property
     def modulus(self) -> EnvironDensity:
-        if self._modulus is None: self._compute_modulus()
+        if self._modulus is None: self.compute_modulus()
         return self._modulus
 
-    def _compute_modulus(self) -> None:
+    def compute_modulus(self) -> None:
         """docstring"""
         self._modulus = EnvironDensity(
             self.grid,
             data=np.sqrt(np.sum(self**2, 0)),
             label=f"{self.label or 'gradient'}_modulus",
         )
+        self._modulus.compute_charge()
 
     @multimethod
     def scalar_product(

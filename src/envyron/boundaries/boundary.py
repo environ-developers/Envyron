@@ -113,6 +113,64 @@ class EnvironBoundary(ABC):
         self.field_max = field_max
         self.field_min = field_min
 
+    def calc_vconfine(
+        self,
+        confine: float,
+    ) -> EnvironDensity:
+        """docstring"""
+        return confine * (1. - self.switch[:])
+
+    def calc_econfine(
+        self,
+        rho: EnvironDensity,
+        vconfine: EnvironDensity,
+    ) -> float:
+        """docstring"""
+        return rho.scalar_product(vconfine)
+
+    def calc_deconfine_dboundary(
+        self,
+        confine: float,
+        rho: EnvironDensity,
+        de_dboundary: EnvironDensity,
+    ) -> None:
+        """docstring"""
+        de_dboundary -= confine * rho[:]
+
+    def calc_evolume(
+        self,
+        pressure: float,
+    ) -> float:
+        """docstring"""
+        return pressure * self.volume
+
+    def calc_devolume_dboundary(
+        self,
+        pressure: float,
+        de_dboundary: EnvironDensity,
+    ) -> None:
+        """docstring"""
+        de_dboundary += pressure
+
+    def calc_esurface(
+        self,
+        surface_tension: float,
+    ) -> float:
+        """docstring"""
+        return surface_tension * self.surface
+
+    def calc_desurface_dboundary(
+        self,
+        surface_tension: float,
+        de_dboundary: EnvironDensity,
+    ) -> None:
+        """docstring"""
+        de_dboundary += surface_tension * self.dsurface
+
+    def calc_solvent_aware_de_dboundary():
+        """docstring"""
+        raise NotImplementedError
+
     @abstractmethod
     def update(self) -> None:
         """docstring"""
@@ -132,7 +190,9 @@ class EnvironBoundary(ABC):
     ) -> None:
         """docstring"""
 
-        self.gradient[:] = self.cores.derivatives.gradient(density)
+        if self.deriv_level >= 1:
+            self.gradient[:] = self.cores.derivatives.gradient(density)
+            self.gradient.compute_modulus()
 
         if self.deriv_level == 2:
             self.laplacian[:] = self.cores.derivatives.laplacian(density)
@@ -166,8 +226,7 @@ class EnvironBoundary(ABC):
 
         dsurface = EnvironDensity(gradient.grid)
 
-        grad_mod2 = np.sum(gradient**2, 0)
-        mask = grad_mod2 >= 1e-50
+        mask = gradient.modulus >= 1e-50
 
         g = gradient[:, mask]
         h = hessian.reshape(3, 3, *gradient.grid.nr)[:, :, mask]
@@ -175,7 +234,8 @@ class EnvironBoundary(ABC):
         dsurface[mask] += np.einsum('i...,j...,ij...', g, g, h) - \
                           np.einsum('i...,i...,jj...', g, g, h)
 
-        dsurface[mask] /= grad_mod2[mask] / np.sqrt(grad_mod2[mask])
+        dsurface[mask] /= gradient.modulus[mask] / np.sqrt(
+            gradient.modulus[mask])
 
         return dsurface
 
