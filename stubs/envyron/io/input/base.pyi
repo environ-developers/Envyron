@@ -1,4 +1,4 @@
-from .types import (
+from envyron.io.input.types import (
     AuxiliaryScheme as AuxiliaryScheme,
     Axis as Axis,
     DerivativeCore as DerivativeCore,
@@ -64,6 +64,7 @@ class RegionModel(CardModel):
 
 class CardContainerModel(BaseModel):
     units: Literal['bohr', 'angstrom']
+    number: NonNegativeInt
 
 
 class ExternalsContainerModel(CardContainerModel):
@@ -80,6 +81,7 @@ class ControlModel(BaseModel):
     verbosity: NonNegativeInt
     threshold: NonNegativeFloat
     nskip: NonNegativeInt
+    ecut: NonNegativeFloat
     nrep: NonNegativeIntVector
     need_electrostatic: bool
 
@@ -128,6 +130,8 @@ class ElectrolyteModel(BaseModel):
 class SemiconductorModel(BaseModel):
     permittivity: FloatGE1
     carrier_density: NonNegativeFloat
+    electrode_charge: NonNegativeFloat
+    charge_threshold: NonNegativeFloat
     distance: NonNegativeFloat
     spread: PositiveFloat
 
@@ -150,6 +154,7 @@ class SolventModel(BaseModel):
     radial_spread: PositiveFloat
     filling_threshold: PositiveFloat
     filling_spread: PositiveFloat
+    field_aware: bool
     field_factor: NonNegativeFloat
     field_asymmetry: Annotated[float, None]
     field_min: NonNegativeFloat

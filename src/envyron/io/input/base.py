@@ -16,7 +16,7 @@ from pydantic import (
     BaseModel as PydanticBaseModel,
 )
 
-from .types import (
+from envyron.io.input.types import (
     AuxiliaryScheme,
     Axis,
     DerivativeCore,
@@ -47,18 +47,14 @@ from .types import (
 
 
 class BaseModel(PydanticBaseModel):
-    """
-    Class for global configuration of validation mechanics.
-    """
+    """Global configurations of validation mechanics."""
 
     class Config:
         validate_assignment = True
 
 
 class CardModel(BaseModel):
-    """
-    Model for card input.
-    """
+    """Card input model."""
     pos: FloatVector = [0.0, 0.0, 0.0]  # type: ignore
     spread: NonNegativeFloat = 0.5
     dim: Dimensions = 0
@@ -66,59 +62,47 @@ class CardModel(BaseModel):
 
 
 class ExternalModel(CardModel):
-    """
-    Model for a single external function.
-    """
+    """External function model."""
     charge: NonZeroFloat
 
 
 class RegionModel(CardModel):
-    """
-    Model for a single region function.
-    """
+    """Region function model."""
     static: FloatGE1 = 1.0
     optical: FloatGE1 = 1.0
     width: NonNegativeFloat = 0.0
 
 
 class CardContainerModel(BaseModel):
-    """
-    Container for card functions.
-    """
+    """Container for card functions."""
     units: Literal['bohr', 'angstrom'] = 'bohr'
+    number: NonNegativeInt = 0
 
 
 class ExternalsContainerModel(CardContainerModel):
-    """
-    Container for external functions.
-    """
+    """Container for external functions."""
     functions: List[List[ExternalModel]] = []
 
 
 class RegionsContainerModel(CardContainerModel):
-    """
-    Container for region functions.
-    """
+    """Container for region functions."""
     functions: List[List[RegionModel]] = []
 
 
 class ControlModel(BaseModel):
-    """
-    Model for control parameters.
-    """
+    """Control input model."""
     debug = False
     restart = False
     verbosity: NonNegativeInt = 0
     threshold: NonNegativeFloat = 0.1
     nskip: NonNegativeInt = 1
+    ecut: NonNegativeFloat = 0.0
     nrep: NonNegativeIntVector = [0, 0, 0]  # type: ignore
     need_electrostatic = False
 
 
 class EnvironmentModel(BaseModel):
-    """
-    Model for environment parameters.
-    """
+    """Environment input model."""
     type: Environment = 'input'
     surface_tension: NonNegativeFloat = 0.0
     pressure = 0.0
@@ -129,18 +113,14 @@ class EnvironmentModel(BaseModel):
 
 
 class IonsModel(BaseModel):
-    """
-    Model for ions parameters.
-    """
+    """Ions input model."""
     atomicspread: PositiveFloatList = [0.5]  # type: ignore
     corespread: NonNegativeFloatList = [0.5]  # type: ignore
     solvationrad: PositiveFloatList = [0.0]  # type: ignore
 
 
 class SystemModel(BaseModel):
-    """
-    Model for system parameters.
-    """
+    """System input model."""
     ntyp: NonNegativeInt = 0
     dim: Dimensions = 0
     axis: Axis = 3
@@ -148,15 +128,13 @@ class SystemModel(BaseModel):
 
 
 class ElectrolyteModel(BaseModel):
-    """
-    Model for electrolyte parameters.
-    """
+    """Electrolyte input model."""
     linearized = False
     mode: SolventMode = 'electronic'
     entropy: EntropyScheme = 'full'
     deriv_method: DerivativeMethod = 'default'
     concentration: NonNegativeFloat = 0.0
-    formula: Optional[List[int]] = None
+    formula: List[int] = [1, 1, 1, -1]
     cionmax: NonNegativeFloat = 0.0
     rion: NonNegativeFloat = 0.0
     distance: NonNegativeFloat = 0.0
@@ -169,19 +147,17 @@ class ElectrolyteModel(BaseModel):
 
 
 class SemiconductorModel(BaseModel):
-    """
-    Model for semiconductor parameters.
-    """
+    """Semiconductor input model."""
     permittivity: FloatGE1 = 1.0
     carrier_density: NonNegativeFloat = 0.0
+    electrode_charge: NonNegativeFloat = 0.0
+    charge_threshold: NonNegativeFloat = 1e-4
     distance: NonNegativeFloat = 0.0
     spread: PositiveFloat = 0.5
 
 
 class SolventModel(BaseModel):
-    """
-    Model for solvent parameters.
-    """
+    """Solvent input model."""
     mode: SolventMode = 'electronic'
     radius_mode: RadiusMode = 'uff'
     deriv_method: DerivativeMethod = 'default'
@@ -199,6 +175,7 @@ class SolventModel(BaseModel):
     radial_spread: PositiveFloat = 0.5
     filling_threshold: PositiveFloat = 0.825
     filling_spread: PositiveFloat = 0.02
+    field_aware = False
     field_factor: NonNegativeFloat = 0.08
     field_asymmetry: Annotated[float, confloat(ge=-1, le=1)] = -0.32
     field_min: NonNegativeFloat = 2.0
@@ -206,9 +183,7 @@ class SolventModel(BaseModel):
 
 
 class ElectrostaticsModel(BaseModel):
-    """
-    Model for numerical parameters.
-    """
+    """Electrostatics input model."""
     problem: ElectrostaticProblem = 'none'
     tol: PositiveFloat = 1e-5
     solver: ElectrostaticSolver = 'none'
@@ -232,9 +207,7 @@ class ElectrostaticsModel(BaseModel):
 
 
 class PBCModel(BaseModel):
-    """
-    Model for PBC parameters.
-    """
+    """PBC input model."""
     correction: PBCCorrection = 'none'
     core: PBCCore = '1da'
     dim: Dimensions = 0

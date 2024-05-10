@@ -19,14 +19,20 @@ keywords = [
 ]
 classifiers = ["Operating System :: OS Independent", "Private :: Do Not Upload"]
 dynamic = ["version", "description"]
-dependencies = ["PyYAML ~= 6.0", "pydantic ~= 1.9"]
+dependencies = [
+    "PyYAML ~= 6.0",
+    "pydantic ~= 1.9",
+    "scipy ~= 1.8",
+    "dftpy @ git+https://gitlab.com/pavanello-research-group/dftpy.git",
+    "multimethod ~= 1.9"
+]
 
 [project.optional-dependencies]
 tester = ["pytest ~= 7.0"]
 linter = ["flake9 ~= 3.0"]
 mypy = ["mypy ~= 0.9", "types-PyYAML ~= 6.0"]
-formatter = ["yapf ~= 0.32"]
-doc = ["sphinx", "sphinx-rtd-theme"]
+formatter = ["yapf ~= 0.32", "toml ~= 0.10"]
+doc = ["sphinx"]
 
 [project.urls]
 Source = "https://github.com/environ-developers/envyron"
@@ -42,7 +48,8 @@ markers = ["datadir: change directory to data location"]
 mypy_path = "stubs"
 strict_optional = false
 ignore_missing_imports = true
+disable_error_code = "no-redef"
 
 [tool.flake8]
-ignore = "E123,E125,E133,E501,E701,F401"
+ignore = "E123,E125,E126,E127,E133,E501,E701,F401,F811"
 hang-closing = true
