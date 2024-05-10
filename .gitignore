@@ -1,6 +1,19 @@
 # developer files
 .vscode
 __pycache__
+venv
+.idea
+
+# test files
+*test*.ini
+*test*.yml
+*test*.yaml
+*test*.json
+
+# qepy test files
+tests/qepy/*.save
+tests/qepy/*.xml
+tests/qepy/*.out
 
 # build files
 build
