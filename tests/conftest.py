@@ -4,6 +4,7 @@ from pytest import fixture, FixtureRequest
 
 import numpy as np
 from envyron.domains.cell import EnvironGrid
+from envyron.representations.density import EnvironDensity
 
 
 @fixture
@@ -63,5 +64,19 @@ def hexagonal_cell(request: FixtureRequest) -> EnvironGrid:
     at[1, 0] = request.param[1] * 0.5
     at[1, 1] *= np.sqrt(3) * 0.5
     at[2, 2] *= request.param[2]
-    nr = np.array([request.param[0], request.param[0], int(request.param[0] * request.param[2])])
+    nr = np.array([
+        request.param[0], request.param[0],
+        int(request.param[0] * request.param[2])
+    ])
     return EnvironGrid(at, nr)
+
+
+@fixture
+def uniform_density():
+    """Create a uniform density on a given cell"""
+
+    def _uniform_density(cell: EnvironGrid, u: float):
+        data = np.ones(cell.nr) * u
+        return EnvironDensity(cell, data=data, label='uniform')
+
+    return _uniform_density
