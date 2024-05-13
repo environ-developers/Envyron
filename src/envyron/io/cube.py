@@ -122,57 +122,61 @@ class EnvironCube:
                            cell=self.cell.T)
 
         # -- Construct the grid
-        mesh = np.mgrid[0:N3, 0:N2, 0:N1]
-        self.grid = np.einsum('ij,jklm->imlk', self.basis, mesh) + \
+        mesh = np.mgrid[0:N1, 0:N2, 0:N3]
+        self.grid = np.einsum('ij,jklm->iklm', self.basis, mesh) + \
             origin[:, None, None, None]
 
         # -- Isolate scalar field data
         del contents[0:num_atoms + 4]
-        data1D = np.array(
+        self.data1D = np.array(
             [float(val) for line in contents for val in line.split()])
-        self.data3D = data1D.reshape((N3, N2, N1), order='F')
+        self.data3D = self.data1D.reshape((N3, N2, N1), order='F').T
 
-    def toline(self,center,axis,planaraverage=True):
+    def toline(self,center,axis,planaraverage=False):
         icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
         icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
         if axis == 0 :
-            axis = self.grid.T[:,icenter[1],icenter[2],0]
+            axis = self.grid[0,:,icenter[1],icenter[2]]
             if planaraverage :
                 value = np.mean(self.data3D,(1,2))
             else:
                 value = self.data3D[:,icenter[1],icenter[2]]
         elif axis == 1 :
-            axis = self.grid.T[icenter[0],:,icenter[2],1]
+            axis = self.grid[1,icenter[0],:,icenter[2]]
             if planaraverage :
                 value = np.mean(self.data3D,(0,2))
             else :
                 value = self.data3D[icenter[0],:,icenter[2]]
         elif axis == 2 :
-            axis = self.grid.T[icenter[0],icenter[1],:,2]
+            axis = self.grid[2,icenter[0],icenter[1],:]
             if planaraverage :
                 value = np.mean(self.data3D,(0,1))
             else :
                 value = self.data3D[icenter[0],icenter[1],:]
+        else:
+            raise ValueError('Axis out of range')
         return axis, value
 
     def tocontour(self,center,axis):
         icenter = np.array([ np.rint(center[i]/self.basis[i,i]) for i in range(3)],dtype='int')
         icenter = icenter - (self.scalars * np.trunc(icenter//self.scalars)).astype('int')
         if axis == 0 :
-            ax1 = self.grid.T[:,:,icenter[0],1]
-            ax2 = self.grid.T[:,:,icenter[0],0]
-            value = self.data3D[:,:,icenter[0]]
+            ax1 = self.grid[1,icenter[0],:,:]
+            ax2 = self.grid[2,icenter[0],:,:]
+            value = self.data3D[icenter[0],:,:]
         elif axis == 1 :
-            ax1 = self.grid.T[:,icenter[1],:,2]
-            ax2 = self.grid.T[:,icenter[1],:,0]
+            ax1 = self.grid[0,:,icenter[1],:]
+            ax2 = self.grid[2,:,icenter[1],:]
             value = self.data3D[:,icenter[1],:]
         elif axis == 2 :
-            ax1 = self.grid.T[icenter[2],:,:,2]
-            ax2 = self.grid.T[icenter[2],:,:,1]
-            value = self.data3D[icenter[2],:,:]
+            ax1 = self.grid[0,:,:,icenter[2]]
+            ax2 = self.grid[1,:,:,icenter[2]]
+            value = self.data3D[:,:,icenter[2]]
+        else:
+            raise ValueError('Axis out of range')
         return ax1, ax2, value
     
-    def plotprojections(self,center,colormap='plasma',centermap=False):
+    def plotprojections(self,center:np.ndarray[np.float64,np.float64,np.float64],colormap='plasma',centermap=False):
         cmap=mpl.colormaps[colormap]
         axis1_yz, axis2_yz, values_yz = self.tocontour(center,0)
         axis1_xz, axis2_xz, values_xz = self.tocontour(center,1)
