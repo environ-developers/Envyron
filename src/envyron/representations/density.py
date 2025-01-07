@@ -26,7 +26,7 @@ class EnvironDensity(EnvironField):
 
     @property
     def charge(self) -> float:
-        if self._charge is None: self._charge: float = self.integral()
+        self._charge: float = self.integral()
         return self._charge
 
     def compute_charge(self) -> None:
