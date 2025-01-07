@@ -200,9 +200,9 @@ class Main:
         # Charges
         self.charges = EnvironCharges(self.setup.cell)
         if self.setup.lconfine or self.setup.lelectrostatic:
-            self.charges.add(self.electrons)
+            self.charges.add(electrons=self.electrons)
         if self.setup.lelectrostatic:
-            self.charges.add(self.ions)
+            self.charges.add(ions=self.ions)
 
         # External Charges TODO: Need to convert input externals for setup
 
