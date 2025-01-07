@@ -176,7 +176,7 @@ class EnvironCube:
             raise ValueError('Axis out of range')
         return ax1, ax2, value
     
-    def plotprojections(self,center:np.ndarray[np.float64,np.float64,np.float64],colormap='plasma',centermap=False):
+    def plotprojections(self,center:np.ndarray[np.float64],colormap='plasma',centermap=False):
         cmap=mpl.colormaps[colormap]
         axis1_yz, axis2_yz, values_yz = self.tocontour(center,0)
         axis1_xz, axis2_xz, values_xz = self.tocontour(center,1)

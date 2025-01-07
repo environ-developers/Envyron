@@ -176,6 +176,12 @@ class EnvironIons:
 
             self.com /= total_weight
 
+        if self.smeared:
+            self.density[:] = 0.
+
+            for i in range(self.count):
+                self.density[:] += self.smeared_ions[i].density
+
         for i in range(self.count):
 
             iontype = self.iontypes[self.itypes[i]]
@@ -191,10 +197,6 @@ class EnvironIons:
                     iontype.zv**2 / iontype.atomicspread * np.sqrt(2.0 / np.pi)
 
         if self.smeared:
-
-            for i in range(self.count):
-                self.density[:] += self.smeared_ions[i].density
-
             self.potential_shift = \
                 self.quadrupole_correction * \
                 TPI * E2 / self.density.grid.volume

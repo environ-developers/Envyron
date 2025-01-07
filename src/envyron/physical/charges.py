@@ -17,6 +17,10 @@ class EnvironCharges:
 
     def __init__(self, grid: EnvironGrid) -> None:
         self.density = EnvironDensity(grid, label='charges')
+        self.electrons = None
+        self.ions = None
+        self.externals = None
+        self.additional = None
 
     def add(
         self,

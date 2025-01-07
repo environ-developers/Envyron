@@ -12,6 +12,8 @@ class EnvironElectrons:
 
     def __init__(self, grid: EnvironGrid) -> None:
         self.density = EnvironDensity(grid, label='electrons')
+        self.charge = self.density.charge
+        self.count = int(np.rint(self.charge))
 
         self.updating = False
 
