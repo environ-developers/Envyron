@@ -30,6 +30,7 @@ class FixedPointSolver(IterativeSolver):
         super().__init__(cores, direct, maxiter, tol, auxiliary)
         self.mixing = mixing
 
+    @IterativeSolver.charge_operation
     def generalized(
         self,
         density: EnvironDensity,

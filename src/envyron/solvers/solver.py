@@ -11,8 +11,33 @@ from ..physical import (
     EnvironDielectric,
 )
 
+class ElectrostaticSolverMeta:
+    """
+    Provides decorator to automatically pass attributes of EnvironCharges object
+    """
 
-class ElectrostaticSolver(ABC):
+    @classmethod
+    def charge_operation(cls, func):
+        func = multimethod(func)
+
+        @func.register(cls, EnvironCharges)
+        def _(self: cls, charges: EnvironCharges, **kwargs):
+            return func(
+                self,
+                density=charges.density,
+                electrons=charges.electrons,
+                ions=charges.ions,
+                externals=charges.externals,
+                dielectric=charges.dielectric,
+                electrolyte=charges.electrolyte,
+                semiconductor=charges.semiconductor,
+                additional=charges.additional,
+                **kwargs
+            )
+
+        return func
+
+class ElectrostaticSolver(ABC, ElectrostaticSolverMeta):
     """
     An Electrostatic Solver.
     """
