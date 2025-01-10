@@ -20,6 +20,9 @@ class EnvironCharges:
         self.electrons = None
         self.ions = None
         self.externals = None
+        self.dielectric = None
+        self.electrolyte = None
+        self.semiconductor = None
         self.additional = None
 
     def add(
