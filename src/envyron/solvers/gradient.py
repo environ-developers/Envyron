@@ -13,6 +13,7 @@ from ..physical import (
     EnvironCharges,
 )
 
+from copy import deepcopy
 
 class GradientSolver(IterativeSolver):
     """docstring"""
@@ -57,7 +58,7 @@ class GradientSolver(IterativeSolver):
             np.reciprocal(np.sqrt(dielectric.epsilon)),
         )
 
-        r = EnvironDensity(grid, density)
+        r = EnvironDensity(grid, deepcopy(density))
         z = EnvironDensity(grid)
         p = EnvironDensity(grid)
         Ap = EnvironDensity(grid)
