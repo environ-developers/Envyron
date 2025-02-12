@@ -106,7 +106,7 @@ class EnvironDielectric:
     ) -> None:
         """docstring"""
         gradient = self.boundary.cores.derivatives.gradient(potential)
-        self.density[:] = gradient.scalar_gradient_product(self.gradlogepsilon)
+        self.density[:] = gradient.scalar_product(self.gradlogepsilon)
 
         self.density[:] = \
             self.density / FPI + (1. - self.epsilon) / self.epsilon * charges
@@ -133,4 +133,4 @@ class EnvironDielectric:
         dgradient = self.boundary.cores.derivatives.gradient(dpotential)
 
         dv_dboundary -= \
-            gradient.scalar_gradient_product(dgradient) * self.depsilon / FPI
+            gradient.scalar_product(dgradient) * self.depsilon / FPI
