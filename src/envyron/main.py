@@ -80,9 +80,6 @@ class Main:
         self.ions.update(coords, center)
         # Update system's properties
         self.system.update(center)
-        # Update system's charges
-        if self.setup.lconfine or self.setup.lelectrostatic:
-            self.charges.update()
         # Update Cores
         if self.setup.l1da:
             self.setup.analytic1d.update_origin(self.system.com)
@@ -100,6 +97,10 @@ class Main:
         if self.setup.lexternals:
             raise NotImplementedError
 # TODO:          self.externals.update()
+
+        # Update system's charges
+        if self.setup.lconfine or self.setup.lelectrostatic:
+            self.charges.update()
 
         self.ions.updating = False
         self.system.updating = False
@@ -280,6 +281,7 @@ class Main:
                                             self.setup.need_gradient,
                                             self.setup.need_factsqrt,
                                             self.setup.need_auxiliary)
+            self.charges.add(dielectric=self.static)
 
         if self.setup.loptical:
             self.optical = EnvironDielectric(self.solvent,
