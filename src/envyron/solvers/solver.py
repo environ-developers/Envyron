@@ -33,17 +33,31 @@ class ElectrostaticSolverMeta:
 
             charge_args = []
 
-            # Get argnames that are attributes of charges, and extract actual arg
-            # if explicit function definition expects arg of same name.
-            for name in argnames[1:]:
-                for arg in dir(charges):
-                    if name == arg:
-                        charge_args.append(getattr(charges, arg))
+            # Get argnames that are attributes of charges, and extract actual attr
+            # if explicit function definition expects arg of same name, and attr is
+            # not None.
+            for argname in argnames[1:]:
+                for attrname in charges.component_names:
+                    if argname == attrname:
+                        attr = getattr(charges, attrname)
+                        if attr is not None:
+                            charge_args.append(attr)
+
+            # Now allow all remaining elements of charges to be passed as (optional)
+            # kwargs, if not passed explicitly.
+            for attrname in charges.component_names:
+                if (not attrname in argnames) and (not attrname in kwargs.keys()):
+                    attr = getattr(charges, attrname)
+                    if attr is not None:
+                        if kwargs is None:
+                            kwargs = {}
+                        kwargs[attrname] = attr
 
             # Pass args that could be extracted from charges to original function.
             # We assume here that the explicit definition expects any args that
             # can be extracted from charges first, and any args that are passed
-            # from somewhere else after that.
+            # from somewhere else after that. Any optional arguments that can be
+            # extracted from charges will be in **kwargs.
             return func(self, *charge_args, *args, **kwargs)
 
         return func

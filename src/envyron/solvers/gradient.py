@@ -38,11 +38,16 @@ class GradientSolver(IterativeSolver):
         self,
         density: EnvironDensity,
         dielectric: EnvironDielectric,
-        electrolyte: EnvironElectrolyte = None,
-        semiconductor: EnvironSemiconductor = None,
-        **kwargs
+        *args, **kwargs
     ) -> EnvironDensity:
         """docstring"""
+
+        # optional arguments
+        if 'electrolyte' in kwargs.keys():
+            electrolyte = kwargs['electrolyte']
+        if 'semiconductor' in kwargs.keys():
+            semiconductor = kwargs['semiconductor']
+
         grid = dielectric.epsilon.grid
 
         phi = EnvironDensity(grid)
