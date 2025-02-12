@@ -8,6 +8,7 @@ from . import (
     EnvironElectrolyte,
     EnvironSemiconductor,
 )
+from inspect import ismethod
 
 
 class EnvironCharges:
@@ -24,6 +25,15 @@ class EnvironCharges:
         self.electrolyte = None
         self.semiconductor = None
         self.additional = None
+
+        # cf. class ElectrostaticSolverMeta in solver.py. Any components
+        # that can, in principle, be passed to solvers should be defined
+        # before this point.
+        self.component_names = []
+        for attrname in dir(self):
+            if (not attrname.startswith('__')) and (not attrname=='component_names'):
+                if not ismethod(getattr(self, attrname)):
+                    self.component_names.append(attrname)
 
     def add(
         self,
