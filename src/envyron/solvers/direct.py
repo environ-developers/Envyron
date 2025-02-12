@@ -16,5 +16,8 @@ class DirectSolver(ElectrostaticSolver):
         self.corrections_method = core_method
 
     @ElectrostaticSolver.charge_operation
-    def poisson(self, density: EnvironDensity) -> EnvironDensity:
-        res = Hartree.compute(density=density, calcType={"V"})
+    def poisson(self, density: EnvironDensity, *args, **kwargs) -> EnvironDensity:
+        res = Hartree.compute(density=density, calcType={"V"}).potential
+
+        # Hartree to Rydberg
+        return 2.*res
