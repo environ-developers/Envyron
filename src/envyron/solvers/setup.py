@@ -86,6 +86,8 @@ class ElectrostaticSolverSetup:
             degauss = -degauss * charges.ions.quadrupole_correction * \
             E2 * TPI / charges.density.cell.volume
 
+        energy = energy + eself + degauss
+
         return energy
 
     def compute_force(self) -> np.ndarray:
