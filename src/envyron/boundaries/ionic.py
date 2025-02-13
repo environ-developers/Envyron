@@ -156,6 +156,7 @@ class IonicBoundary(EnvironBoundary):
 
     def _compute_gradient(self) -> None:
         """docstring"""
+        self.gradient[:,:] = 0.
         for sphere in self.soft_spheres:
             mask = np.abs(sphere.density) > 1e-60
             if not np.any(mask): continue
@@ -165,6 +166,7 @@ class IonicBoundary(EnvironBoundary):
 
     def _compute_laplacian(self) -> None:
         """docstring"""
+        self.laplacian[:] = 0.
         for sphere in self.soft_spheres:
             mask = np.abs(sphere.density) > 1e-60
             if not np.any(mask): continue
