@@ -160,6 +160,7 @@ class ElectronicBoundary(EnvironBoundary):
                     )
 
             if self.deriv_level > 1:
+                raise NotImplementedError("JF: I don't think laplacian has been initialized at this point, need to check")
                 self.laplacian[:] *= self.dswitch
                 self.laplacian[:] += np.sum(self.gradient**2, 0) * self.dswitch
 
