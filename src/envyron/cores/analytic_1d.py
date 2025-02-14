@@ -5,7 +5,7 @@ from ..domains import EnvironGrid
 from ..representations import EnvironDensity, EnvironGradient
 from ..physical import EnvironIons
 from .core import NumericalCore
-from ..utils.constants import TPI, FPI, MADELUNG
+from ..utils.constants import TPI, FPI, MADELUNG, E2
 
 
 class Analytic1DCore(NumericalCore):
@@ -54,11 +54,11 @@ class Analytic1DCore(NumericalCore):
 
         charges.compute_multipoles(self.origin)
 
-        fact = TPI / self.volume
+        fact = E2 * TPI / self.volume
         correction = EnvironDensity(charges.grid)
 
         if self.dim == 0:
-            const = MADELUNG[0] * charges.charge / self.size**(
+            const = MADELUNG[0] * charges.charge * E2 / self.size**(
                 1. / 3.) - fact * np.sum(charges.quadrupole) / 3.
             correction = -charges.charge * np.sum(
                 self.r**2, axis=0) + 2 * np.einsum('i,ij->j', charges.dipole,
@@ -68,7 +68,7 @@ class Analytic1DCore(NumericalCore):
             raise ValueError(
                 "Wrong choice of axis for analytic one dimensional core")
         elif self.dim == 2:
-            const = -np.pi / 3. * charges.charge / self.size - fact * charges.quadrupole[
+            const = -np.pi / 3. * charges.charge / self.size * E2 - fact * charges.quadrupole[
                 self.axis]
             correction = -charges.charge * self.r[
                 self.axis, :]**2 + 2. * self.dipole[self.axis] * self.r[
@@ -91,7 +91,7 @@ class Analytic1DCore(NumericalCore):
 
         charges.compute_multipoles(self.origin)
 
-        fact = FPI / self.volume
+        fact =  E2 * FPI / self.volume
         gradient = EnvironGradient(charges.grid)
 
         if self.dim == 0:
@@ -122,7 +122,7 @@ class Analytic1DCore(NumericalCore):
 
         auxiliary.compute_multipoles(self.origin)
 
-        fact = FPI / self.volume
+        fact = E2 * FPI / self.volume
         ftmp = np.zeros(force.shape)
 
         for i in range(ions.count):

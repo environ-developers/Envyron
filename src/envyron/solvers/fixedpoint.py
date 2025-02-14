@@ -2,7 +2,7 @@ from typing import Optional
 
 import numpy as np
 
-from ..utils.constants import FPI
+from ..utils.constants import FPI, E2
 from ..representations import EnvironDensity
 from ..cores import CoreContainer
 from ..physical import (
@@ -58,7 +58,7 @@ class FixedPointSolver(IterativeSolver):
                 semiconductor,
             )
 
-            residuals[:] = gradlog.scalar_product(gradpoisson) / FPI - rhoiter
+            residuals[:] = gradlog.scalar_product(gradpoisson) / FPI / E2 - rhoiter
             rhoiter[:] += self.mixing * residuals
 
             if residuals.euclidean_norm() < self.tol: break
