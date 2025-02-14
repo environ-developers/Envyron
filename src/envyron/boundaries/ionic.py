@@ -251,4 +251,16 @@ class IonicBoundary(EnvironBoundary):
 
     def _update_soft_spheres(self) -> None:
         """docstring"""
-        pass
+
+        for i in range(self.ions.count):
+            soft_sphere = self.soft_spheres.functions[i]
+            solvationrad = self.ions.iontypes[self.ions.itypes[i]]
+
+            # field-aware scaling of soft-sphere radii
+            if self.field_aware:
+                raise NotImplementedError
+            else:
+                field_scale = 1.
+
+            self.soft_spheres.functions[i].pos = self.ions.coords[:,i]
+            self.soft_spheres.functions[i].width = solvationrad * self.alpha * field_scale
