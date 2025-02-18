@@ -69,7 +69,7 @@ class GradientSolver(IterativeSolver):
             z[:] = self.direct.poisson(r * inv_sqrt) * inv_sqrt
             rznew = z.scalar_product(r)
 
-            if abs(rzold) > 1.e-30 and not self.conjugate:
+            if abs(rzold) > 1.e-30 and self.conjugate:
                 beta = rznew / rzold
             else:
                 beta = 0.0
