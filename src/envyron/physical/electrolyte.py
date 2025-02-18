@@ -19,8 +19,8 @@ class EnvironIonccType:
         grid: EnvironGrid,
     ) -> None:
         self.index = index
-        self.charge = charge
-        self.cbulk = cbulk
+        self.charge = -charge
+        self.cbulk = cbulk * BOHR_RADIUS**3 / AMU
 
         self.concentration = \
             EnvironDensity(grid, label=f'c_electrolyte_{index}')
