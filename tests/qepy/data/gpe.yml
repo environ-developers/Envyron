@@ -1,0 +1,30 @@
+control:
+  debug: False
+  restart: False
+  verbosity: 0
+  threshold: 1e-1
+  need_electrostatic: True
+
+environment:
+  type: input
+  surface_tension: 0
+  pressure: 0
+  confine: 0
+  static_permittivity: 78.3
+
+system:
+  ntyp: 0
+  dim: 0
+  axis: 2
+  pos: [0.]
+
+solvent:
+  mode: ionic
+  radius_mode: uff
+  alpha: 1.0
+
+electrostatics:
+  solver: cg
+  deriv_method: lowmem
+  deriv_core: fft
+  tol: 1.e-8

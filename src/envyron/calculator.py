@@ -85,9 +85,11 @@ class Calculator:
 
         if self.main.setup.lelectrostatic:
             # reference calculation
-            ereference = self.main.setup.reference.compute_energy()
+            ereference = self.main.setup.reference.compute_energy( \
+                self.main.charges, self.main.vreference, reference=True)
             # environment calculation
-            self.main.eelectrostatic = self.main.setup.outer.compute_energy()
+            self.main.eelectrostatic = self.main.setup.outer.compute_energy( \
+                self.main.charges, self.main.velectrostatic, reference=False)
             # energy correction
             self.main.eelectrostatic -= ereference
 
@@ -102,6 +104,11 @@ class Calculator:
         if self.main.setup.lconfine:
             self.main.econfine = self.main.solvent.calc_econfine(
                 self.main.electrons.density, self.main.vconfine)
+
+        total_energy = self.main.eelectrostatic + self.main.esurface + \
+                       self.main.evolume + self.main.econfine + self.main.eelectrolyte
+
+        return total_energy
 
 # TODO:
 #        if self.main.setup.lelectrolyte:

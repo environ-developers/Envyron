@@ -182,6 +182,11 @@ class EnvironIons:
             for i in range(self.count):
                 self.density[:] += self.smeared_ions[i].density
 
+        self.dipole = 0.
+        self.quadrupole_pc = 0.
+        self.quadrupole_correction = 0.
+        self.selfenergy_correction = 0.
+
         for i in range(self.count):
 
             iontype = self.iontypes[self.itypes[i]]

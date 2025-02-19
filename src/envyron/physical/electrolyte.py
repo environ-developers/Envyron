@@ -1,6 +1,6 @@
 from typing import List
 
-from ..utils.constants import FPI, KB_RY, BOHR_RADIUS, AMU
+from ..utils.constants import FPI, KB_RY, BOHR_RADIUS, AMU, E2
 from ..domains import EnvironGrid
 from ..representations import EnvironDensity
 from ..boundaries import EnvironBoundary
@@ -19,8 +19,8 @@ class EnvironIonccType:
         grid: EnvironGrid,
     ) -> None:
         self.index = index
-        self.charge = charge
-        self.cbulk = cbulk
+        self.charge = -charge
+        self.cbulk = cbulk * BOHR_RADIUS**3 / AMU
 
         self.concentration = \
             EnvironDensity(grid, label=f'c_electrolyte_{index}')
@@ -68,7 +68,7 @@ class EnvironElectrolyteBase:
             sumcz2 += ci * zi**2
             maxcbulk = max(maxcbulk, ci)
 
-        self.k2 = sumcz2 * FPI / (KB_RY * self.temperature)
+        self.k2 = sumcz2 * E2 * FPI / (KB_RY * self.temperature)
         self.cionmax = cionmax * BOHR_RADIUS**3 / AMU
 
         if cionmax == 0. and rion > 0.:

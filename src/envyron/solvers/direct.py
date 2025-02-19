@@ -4,6 +4,7 @@ from ..cores import CoreContainer
 from ..representations import EnvironDensity, EnvironGradient
 from ..physical import EnvironCharges
 
+from dftpy.functional.hartree import Hartree
 
 class DirectSolver(ElectrostaticSolver):
     """
@@ -14,18 +15,9 @@ class DirectSolver(ElectrostaticSolver):
         super().__init__(cores)
         self.corrections_method = core_method
 
-    def poisson_density(self, density: EnvironDensity) -> EnvironDensity:
-        """docstring"""
-        raise NotImplementedError()
+    @ElectrostaticSolver.charge_operation
+    def poisson(self, density: EnvironDensity, *args, **kwargs) -> EnvironDensity:
+        res = Hartree.compute(density=density, calcType={"V"}).potential
 
-    def poisson_charges(self, charges: EnvironCharges) -> EnvironDensity:
-        """docstring"""
-        raise NotImplementedError()
-
-    def grad_poisson_density(self, density: EnvironDensity) -> EnvironGradient:
-        """docstring"""
-        raise NotImplementedError()
-
-    def grad_poisson_charges(self, charges: EnvironCharges) -> EnvironGradient:
-        """docstring"""
-        raise NotImplementedError()
+        # Hartree to Rydberg
+        return 2.*res

@@ -1,7 +1,5 @@
 from typing import Optional
 
-from multimethod import multimethod
-
 import numpy as np
 
 from .direct import DirectSolver
@@ -15,6 +13,7 @@ from ..physical import (
     EnvironCharges,
 )
 
+from copy import deepcopy
 
 class GradientSolver(IterativeSolver):
     """docstring"""
@@ -35,15 +34,21 @@ class GradientSolver(IterativeSolver):
         self.conjugate = conjugate
         self.verbosity = verbosity
 
-    @multimethod
+    @IterativeSolver.charge_operation
     def generalized(
         self,
         density: EnvironDensity,
         dielectric: EnvironDielectric,
-        electrolyte: EnvironElectrolyte = None,
-        semiconductor: EnvironSemiconductor = None,
+        *args, **kwargs
     ) -> EnvironDensity:
         """docstring"""
+
+        # optional arguments
+        if 'electrolyte' in kwargs.keys():
+            electrolyte = kwargs['electrolyte']
+        if 'semiconductor' in kwargs.keys():
+            semiconductor = kwargs['semiconductor']
+
         grid = dielectric.epsilon.grid
 
         phi = EnvironDensity(grid)
@@ -53,7 +58,7 @@ class GradientSolver(IterativeSolver):
             np.reciprocal(np.sqrt(dielectric.epsilon)),
         )
 
-        r = EnvironDensity(grid, density)
+        r = EnvironDensity(grid, deepcopy(density))
         z = EnvironDensity(grid)
         p = EnvironDensity(grid)
         Ap = EnvironDensity(grid)
@@ -64,7 +69,7 @@ class GradientSolver(IterativeSolver):
             z[:] = self.direct.poisson(r * inv_sqrt) * inv_sqrt
             rznew = z.scalar_product(r)
 
-            if abs(rzold) > 1.e-30 and not self.conjugate:
+            if abs(rzold) > 1.e-30 and self.conjugate:
                 beta = rznew / rzold
             else:
                 beta = 0.0
@@ -86,37 +91,14 @@ class GradientSolver(IterativeSolver):
 
         return phi
 
-    @multimethod
-    def generalized(self, charges: EnvironCharges) -> EnvironDensity:
-        """docstring"""
-        return self.generalized(
-            charges.density,
-            charges.dielectric,
-            charges.electrolyte,
-            charges.semiconductor,
-        )
-
-    @multimethod
+    @IterativeSolver.charge_operation
     def linearized_pb(
         self,
         density: EnvironDensity,
         electrolyte: EnvironElectrolyte,
         dielectric: EnvironDielectric = None,
         screening: EnvironDensity = None,
+        **kwargs
     ) -> EnvironDensity:
         """docstring"""
         raise NotImplementedError()
-
-    @multimethod
-    def linearized_pb(
-        self,
-        charges: EnvironCharges,
-        screening: EnvironDensity = None,
-    ) -> EnvironDensity:
-        """docstring"""
-        return self.linearized_pb(
-            charges.density,
-            charges.electrolyte,
-            charges.dielectric,
-            screening,
-        )

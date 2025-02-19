@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..utils.constants import FPI
+from ..utils.constants import FPI, E2
 from ..representations import EnvironDensity, EnvironGradient
 from ..boundaries import EnvironBoundary, ElectronicBoundary
 
@@ -97,7 +97,7 @@ class EnvironDielectric:
                 self.boundary.gradient.modulus**2 + \
                 self.depsilon * self.boundary.laplacian
 
-            self.factsqrt[:] *= 0.5 / FPI
+            self.factsqrt[:] *= 0.5 / E2 / FPI
 
     def of_potential(
         self,
@@ -106,10 +106,10 @@ class EnvironDielectric:
     ) -> None:
         """docstring"""
         gradient = self.boundary.cores.derivatives.gradient(potential)
-        self.density[:] = gradient.scalar_gradient_product(self.gradlogepsilon)
+        self.density[:] = gradient.scalar_product(self.gradlogepsilon)
 
         self.density[:] = \
-            self.density / FPI + (1. - self.epsilon) / self.epsilon * charges
+            self.density / FPI / E2 + (1. - self.epsilon) / self.epsilon * charges
 
         self.charge = self.density.charge
 
@@ -120,7 +120,7 @@ class EnvironDielectric:
     ) -> None:
         """docstring"""
         gradient = self.boundary.cores.derivatives.gradient(potential)
-        de_dboundary -= gradient.modulus**2 * self.depsilon * 0.5 / FPI
+        de_dboundary -= gradient.modulus**2 * self.depsilon * 0.5 / FPI / E2
 
     def dv_dboundary(
         self,
@@ -133,4 +133,4 @@ class EnvironDielectric:
         dgradient = self.boundary.cores.derivatives.gradient(dpotential)
 
         dv_dboundary -= \
-            gradient.scalar_gradient_product(dgradient) * self.depsilon / FPI
+            gradient.scalar_product(dgradient) * self.depsilon / FPI / E2
